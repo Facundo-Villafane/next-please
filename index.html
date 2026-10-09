@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Check-in Simulator · EZE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <header id="topbar">
+      <div class="brand">✈ <b>Aeroplata</b> <span>Check-in · EZE</span></div>
+      <div class="stat agentStat"><span id="tAvatar"></span><div><span>Agente</span><b id="tAgent">—</b></div></div>
+      <div class="stat"><span>Hora</span><b id="tClock">--:--</b></div>
+      <div class="stat"><span>Pasajero</span><b id="tPax">0/0</b></div>
+      <div class="stat"><span>En fila</span><b id="tQueue">0</b></div>
+      <div class="stat"><span>Puntaje</span><b id="tScore">0</b></div>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="btnManual">📘 Manual</button>
+      <button class="btn ghost" id="btnPause">⏸ Pausa</button>
+    </header>
+
+    <main id="layout">
+      <section id="left">
+        <div id="view3d">
+          <div id="dialog" class="hidden">
+            <div class="portrait" id="portrait"></div>
+            <div class="talk">
+              <div class="agentLine" id="agentLine"></div>
+              <div class="bubble" id="bubble"></div>
+              <div class="chips" id="chips"></div>
+            </div>
+          </div>
+        </div>
+        <div id="desk">
+          <div class="deskTitle">Documentos sobre el mostrador <small>(clic para ampliar)</small></div>
+          <div id="docs" class="docs"><div class="empty">Solicite la documentación al pasajero.</div></div>
+        </div>
+      </section>
+
+      <section id="dcs">
+        <div class="dcsHead">
+          <span>DCS · DEPARTURE CONTROL</span>
+          <span id="dcsInfo">EZE</span>
+        </div>
+        <nav class="tabs" id="tabs">
+          <button data-tab="ident" class="on">1 · Identificar</button>
+          <button data-tab="pax">2 · Pasajero / APIS</button>
+          <button data-tab="bags">3 · Equipaje</button>
+          <button data-tab="seat">4 · Asientos</button>
+          <button data-tab="timatic">5 · Timatic</button>
+          <button data-tab="ovbk" id="tabOvbk" class="hidden">6 · Sobreventa</button>
+        </nav>
+        <div class="pane" id="pane"></div>
+        <div class="sysmsg" id="sysmsg">&gt; SISTEMA LISTO</div>
+        <div class="decide">
+          <button class="btn ok" id="btnAccept">✔ Aceptar y emitir BP</button>
+          <button class="btn bad" id="btnReject">✖ No aceptar</button>
+          <button class="btn warn" id="btnDerive">↪ Derivar</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal" class="modal hidden"><div class="modalBox" id="modalBox"></div></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
