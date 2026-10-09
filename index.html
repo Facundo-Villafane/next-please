@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Next, please! · Simulador de Check-in EZE</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/theme.css" />
   <script type="importmap">
     { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
   </script>
@@ -14,7 +16,7 @@
 <body>
   <div id="app">
     <header id="topbar">
-      <div class="brand">✈ <b>Next, please!</b> <span>Check-in · EZE</span></div>
+      <div class="brand"><img src="assets/logo-512.png" alt="Next, please!" class="brandLogo" /> <span>Check-in · EZE</span></div>
       <div class="stat agentStat"><span id="tAvatar"></span><div><span>Agente</span><b id="tAgent">—</b></div></div>
       <div class="stat"><span>Hora</span><b id="tClock">--:--</b></div>
       <div class="stat"><span>Pasajero</span><b id="tPax">0/0</b></div>

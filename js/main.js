@@ -82,8 +82,8 @@ function showPractice() {
   openModal(`
     <div class="start">
       <div class="startHero">
-        <div class="logo">✈</div>
-        <h1>Next, please! · Práctica libre</h1>
+        <img src="assets/logo-512.png" alt="Next, please!" class="heroLogo sm" />
+        <h1>Práctica libre</h1>
         <p>Aeropuerto Internacional de Ezeiza · Mostrador ${AIRLINE.name}</p>
       </div>
       <p class="lead">Sos agente de check-in. Atendé a cada pasajero: verificá su documentación y requisitos de ingreso,

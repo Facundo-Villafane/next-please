@@ -1,0 +1,196 @@
+/* =====================================================================
+   TEMA "NEXT, PLEASE!" — kit de interfaz del juego
+   Claro y caricaturesco: paneles crema con encabezado azul marino, bordes
+   gruesos, botones con volumen (sombra inferior) y tipografía redondeada.
+   El DCS sigue siendo una pantalla oscura (es el sistema de la aerolínea).
+   ===================================================================== */
+:root {
+  --bg: #e4ecf6;
+  --panel: #fffaf0;
+  --panel2: #ffffff;
+  --line: #c6d3e4;
+  --text: #172a48;
+  --muted: #5c6e88;
+  --accent: #ffc72c;
+  --navy: #1a4a96;
+  --navy2: #0e2c62;
+  --blue: #1f6fe0;
+  --ok: #22a259;
+  --bad: #e8501c;
+  --warn: #f2a900;
+  --edge: #0e2c62;
+  --font: 'Nunito', system-ui, sans-serif;
+  --display: 'Fredoka', 'Nunito', system-ui, sans-serif;
+}
+/* Zonas oscuras: la pantalla del DCS y el visor de documentos */
+#dcs, .modalBox.doc {
+  --text: #e6edf6;
+  --muted: #8ea0b8;
+  --line: #273650;
+  --panel: #141e2c;
+  --panel2: #1a2638;
+}
+body { background: var(--bg); color: var(--text); }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: .01em; }
+
+/* ---------- Barra superior ---------- */
+#topbar { background: linear-gradient(#2159b3, var(--navy) 55%, #153e80); border-bottom: 4px solid var(--accent); box-shadow: 0 3px 0 var(--navy2); padding: 4px 16px; color: #fff; position: relative; z-index: 3; }
+.brand { display: flex; align-items: center; gap: 6px; }
+.brandLogo { height: 46px; width: auto; margin: -2px 0 -6px; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .25)); }
+.brand span { font-family: var(--display); color: #cfe0ff; }
+.stat span { color: #b9cff2; font-family: var(--display); font-weight: 500; }
+.stat b { color: #fff; }
+#tAvatar svg { border-color: var(--accent); }
+
+/* ---------- Botones ---------- */
+.btn {
+  font-family: var(--display); font-weight: 600; font-size: 14px; letter-spacing: .01em;
+  color: #fff; text-shadow: 0 1px 0 rgba(0, 0, 0, .28);
+  background: linear-gradient(#4a92ff, var(--blue) 55%, #1757c4);
+  border: 2px solid var(--edge); border-radius: 12px;
+  box-shadow: 0 3px 0 var(--edge), inset 0 2px 0 rgba(255, 255, 255, .35);
+  padding: 7px 14px; transition: transform .06s, box-shadow .06s, filter .15s;
+}
+.btn:hover:not(:disabled) { filter: brightness(1.07); }
+.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--edge), inset 0 2px 0 rgba(255, 255, 255, .3); }
+.btn:disabled { opacity: 1; color: #eef2f7; text-shadow: none; background: linear-gradient(#c9d1dc, #aeb8c5); border-color: #8d98a8; box-shadow: 0 3px 0 #8d98a8; }
+.btn.ok { color: #fff; background: linear-gradient(#4fd17f, var(--ok) 55%, #188548); }
+.btn.bad { color: #fff; background: linear-gradient(#ff8a4c, var(--bad) 55%, #c63c0f); }
+.btn.warn { color: var(--navy2); text-shadow: 0 1px 0 rgba(255, 255, 255, .5); background: linear-gradient(#ffe169, var(--accent) 55%, #f0ad00); }
+.btn.ghost { color: var(--navy2); text-shadow: none; background: linear-gradient(#ffffff, #eaf0f8); border-color: var(--edge); }
+.btn.sm { padding: 4px 10px; font-size: 12.5px; border-radius: 10px; }
+.btn.big { padding: 11px 24px; font-size: 17px; border-radius: 14px; }
+#topbar .btn.ghost { box-shadow: 0 3px 0 var(--edge); }
+.btn.suggest { box-shadow: 0 3px 0 var(--edge), 0 0 0 3px var(--accent); }
+
+/* ---------- Ventanas (modales) ---------- */
+.modal { background: rgba(14, 36, 76, .55); backdrop-filter: blur(2px); }
+.modalBox { background: var(--panel); color: var(--text); border: 3px solid var(--edge); border-radius: 20px; box-shadow: 0 6px 0 var(--edge), 0 30px 70px rgba(10, 30, 70, .45); }
+/* El primer título de cada ventana es su encabezado azul */
+.modalBox > div:first-child > h1:first-child, .modalBox > h2:first-child {
+  margin: -20px -22px 16px; padding: 12px 22px 11px; border-radius: 16px 16px 0 0;
+  background: linear-gradient(#2159b3, var(--navy) 60%, #153e80); color: #fff; font-size: 22px;
+  border-bottom: 3px solid var(--edge); text-shadow: 0 2px 0 rgba(0, 0, 0, .25);
+}
+.modalBox h1, .modalBox h2 { color: var(--navy2); }
+.modalBox h3 { color: var(--navy); }
+.lead { color: var(--text); }
+.disclaimer { color: var(--muted); border-color: var(--line); }
+.modalBox .err:not(.btn), .modalBox .hint.err { color: #c4321a; }
+.modalBox .warn:not(.btn) { color: #a86a00; }
+.modalBox .okline { color: #1e8a48; }
+.modalBox.doc { background: #3b2f26; border-color: #2a1f17; box-shadow: 0 6px 0 #2a1f17, 0 30px 70px rgba(0, 0, 0, .5); }
+.modalBox.doc > div:first-child > h1:first-child { background: #2a1f17; }
+
+/* Inicio */
+.startHero { padding: 0 0 4px; }
+.heroLogo { width: min(320px, 70%); height: auto; margin: -34px 0 -40px; filter: drop-shadow(0 6px 10px rgba(14, 44, 98, .25)); }
+.heroLogo.sm { width: 170px; margin: -26px 0 -30px; }
+.startHero h1 { color: var(--navy2); margin-top: 0; }
+.startHero p { color: var(--muted); font-weight: 600; }
+
+/* Campos */
+.start input, .start select, #modalBox select, .online #onCode {
+  background: #fff; color: var(--text); border: 2px solid #9fb3cf; border-radius: 12px; padding: 9px 12px; font-family: var(--font); font-weight: 600;
+  box-shadow: inset 0 2px 0 rgba(14, 44, 98, .06);
+}
+.start input:focus, .start select:focus, #modalBox select:focus, .online #onCode:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(31, 111, 224, .2); }
+.start label { color: var(--navy); font-family: var(--display); font-weight: 500; font-size: 13px; }
+
+/* Tarjetas de inicio */
+.homeCard { background: #fff; color: var(--text); border: 2px solid #b9c8de; border-radius: 18px; box-shadow: 0 4px 0 #b9c8de; transition: transform .1s, border-color .1s, box-shadow .1s; }
+.homeCard:hover { transform: translateY(-3px); border-color: var(--edge); box-shadow: 0 7px 0 var(--edge); }
+.homeCard h2 { color: var(--navy2); }
+.homeCard p { color: var(--muted); }
+.gBtn { background: #fff; border: 2px solid #b9c8de; border-radius: 16px; box-shadow: 0 3px 0 #b9c8de; color: var(--text); }
+.gBtn b { font-family: var(--display); font-weight: 600; color: var(--navy2); }
+.gBtn.on { background: #fff6d6; border-color: var(--edge); box-shadow: 0 3px 0 var(--edge), 0 0 0 3px var(--accent); }
+.gBtn:hover { border-color: var(--navy); }
+.day, .story .says, .kpis div, .balance div, .revCard, .newsItem, .cfSum, .cfNote, .inspectBox, .rSeat, .checks label, .reasons label, .kit label {
+  background: #fff; border-color: #c6d3e4;
+}
+.day { border: 2px solid #c6d3e4; border-radius: 14px; box-shadow: 0 3px 0 #c6d3e4; }
+.day .num { color: var(--navy); font-family: var(--display); }
+.day .stars, .sumStars { color: #f5b400; text-shadow: 0 2px 0 #c98a00; }
+.brief div { background: #fff; border: 2px solid #c6d3e4; }
+.brief b.err { color: #c4321a; } .brief b.warn { color: #a86a00; }
+.reasons label:has(input:checked), .checks label:has(input:checked) { background: #fff6d6; border-color: var(--edge); }
+.story .who svg { border-color: var(--accent); }
+
+/* Resultado de cada pasajero */
+.fbHead { border: 2px solid; }
+.fbHead.ok { background: #dff6e7; border-color: #22a259; color: #10512b; }
+.fbHead.bad { background: #fde6dd; border-color: #e8501c; color: #8a2410; }
+.fbHead h2 { color: inherit; }
+ul.fb li { background: #fff; border: 1px solid #dbe3ee; border-left-width: 5px; }
+ul.fb li p { color: #4a5a72; }
+ul.fb li.ok .pts { color: #1e8a48; }
+ul.fb li.bad .pts { color: #c4321a; }
+.grid th { color: var(--muted); }
+.modalBox .grid td { border-color: #e1e8f2; }
+.grid.rep tr.bad td { background: #fdeee8; }
+.endTabs button { font-family: var(--display); font-weight: 500; }
+.endTabs button.on { color: var(--navy2); border-color: var(--accent); }
+.newsItem p, .rvBody ul, .cfNote { color: #4a5a72; }
+.balance .err { color: #c4321a; } .balance .okc { color: #1e8a48; }
+
+/* Pasajero difícil */
+.cfLine > div:last-child { background: #fff; border-color: #c6d3e4; }
+.cfLine.pax > div:last-child { border-color: #e8a090; background: #fff4f0; }
+.cfLine.agent > div:last-child { background: #e7f0ff; border-color: #9cc0f0; }
+.cfLine.marta > div:last-child { background: #fff6d6; border-color: var(--accent); }
+
+/* ---------- Escena 3D: diálogo y paneles flotantes ---------- */
+#dialog { background: rgba(255, 250, 240, .96); border: 3px solid var(--edge); border-radius: 18px; box-shadow: 0 4px 0 var(--edge), 0 14px 30px rgba(10, 30, 70, .3); backdrop-filter: none; }
+.portrait { border: 3px solid var(--edge); border-radius: 12px; }
+.agentLine { color: var(--navy); }
+.bubble { background: #fff; color: var(--text); border: 2px solid #c6d3e4; border-radius: 14px; font-weight: 600; }
+.chip { background: #fff; color: var(--navy2); border: 2px solid #9fb3cf; border-radius: 999px; font-weight: 700; box-shadow: 0 2px 0 #9fb3cf; }
+.chip:hover { background: #eaf2ff; border-color: var(--blue); }
+.chip.done { opacity: .55; }
+
+.mood, .tm, .evt, .tmAsk { background: rgba(255, 250, 240, .97); color: var(--text); border: 2px solid var(--edge); box-shadow: 0 3px 0 var(--edge), 0 10px 24px rgba(10, 30, 70, .25); }
+.mood .bar, .tmBar { background: #dde5f0; }
+.moodInfo small, .tm b em, .tmAskHead small, .evtHead small { color: var(--muted); }
+.tm { border-radius: 14px; }
+.tm b { font-family: var(--display); font-weight: 600; color: var(--navy2); }
+.tm small { color: #4a5a72; }
+.tm:hover { border-color: var(--blue); }
+.tm.on { background: #fff3c4; border-color: var(--edge); box-shadow: 0 3px 0 var(--edge), 0 0 0 3px var(--accent); }
+.tm.me.back { border-color: var(--ok); }
+.tm .cnt { color: var(--ok); }
+.tmAsk { border-color: var(--edge); border-width: 3px; border-radius: 16px; }
+.tmAsk p.why, .evtFb p { color: #4a5a72; }
+.tmAskHead b { font-family: var(--display); font-weight: 600; color: var(--navy2); }
+.tmQuick .btn { background: linear-gradient(#ffffff, #eaf0f8); color: var(--navy2); text-shadow: none; }
+.evt { border-width: 3px; border-left: 8px solid var(--accent); border-radius: 18px; }
+.evtHead b { font-family: var(--display); font-weight: 600; font-size: 17px; color: var(--navy2); }
+.evtFb > div { background: #f3f6fb; border: 1px solid #dbe3ee; }
+.coach { border: 2px solid var(--edge); border-left: 6px solid var(--accent); box-shadow: 0 3px 0 var(--edge), 0 10px 30px rgba(10, 30, 70, .3); }
+.queueTalk { border: 2px solid var(--edge); box-shadow: 0 3px 0 var(--edge); }
+.annBanner { border: 2px solid var(--edge); border-left: 6px solid var(--accent); }
+
+/* Avisos (toasts) como en el kit */
+.toast { background: #e9f8ef; color: var(--text); border: 2px solid var(--ok); border-left-width: 6px; border-radius: 14px; box-shadow: 0 3px 0 rgba(14, 44, 98, .25), 0 16px 40px rgba(10, 30, 70, .3); }
+.toast.bad { background: #fdeee8; border-color: var(--bad); }
+.toast li.ok { color: #1e8a48; } .toast li.bad { color: #c4321a; } .toast li.info { color: #4a5a72; }
+
+/* ---------- DCS: pantalla oscura con pestañas del kit ---------- */
+#dcs { border-left: 3px solid var(--edge); }
+.dcsHead { background: linear-gradient(#2159b3, var(--navy)); color: #fff; font-family: var(--display); font-weight: 600; border-bottom: 3px solid var(--edge); }
+.tabs { background: var(--navy2); gap: 3px; padding: 5px 6px 0; border-bottom: 3px solid var(--accent); }
+.tabs button { font-family: var(--display); font-weight: 500; color: #cfe0ff; border-radius: 10px 10px 0 0; border: 2px solid transparent; border-bottom: 0; padding: 7px 12px; }
+.tabs button:hover { background: rgba(255, 255, 255, .08); }
+.tabs button.on { background: linear-gradient(#ffe169, var(--accent)); color: var(--navy2); border-color: var(--edge); }
+.decide { background: var(--navy2); border-top: 3px solid var(--edge); }
+.decide .btn { font-size: 15px; }
+#desk { border-top: 3px solid var(--edge); }
+
+/* Sala online */
+.rSeat { border-width: 2px; border-radius: 16px; }
+.rSeat.on { border-color: var(--edge); box-shadow: 0 3px 0 var(--edge); }
+.rSeat b { font-family: var(--display); font-weight: 600; color: var(--navy2); }
+.online .code { color: var(--navy2); background: linear-gradient(#ffe169, var(--accent)); border: 2px solid var(--edge); box-shadow: 0 3px 0 var(--edge); font-family: var(--display); font-weight: 700; }
+
+@media (max-width: 1000px) { .brandLogo { height: 38px; } }
+@media print { .modalBox > div:first-child > h1:first-child, .modalBox > h2:first-child { background: none; color: #000; margin: 0 0 8px; padding: 0; border: 0; } }

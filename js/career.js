@@ -140,8 +140,7 @@ export function showHome() {
   api.openModal(`
     <div class="start home">
       <div class="startHero">
-        <div class="logo">✈</div>
-        <h1>Next, please!</h1>
+        <img src="assets/logo-512.png" alt="Next, please!" class="heroLogo" />
         <p>Simulador de atención al pasajero · Check-in y embarque en Ezeiza con ${AIRLINE.name}</p>
       </div>
       <div class="who">
