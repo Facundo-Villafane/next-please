@@ -22,7 +22,7 @@ const CONFIG = {
 const KEYS = ['ckName', 'ckGender', 'ckCareer', 'ckProgress', 'ckCheckpoint', 'ckShift', 'ckGate', 'ckTeam', 'ckEvents', 'ckBook-checkin', 'ckBook-gate'];
 const OWNER = 'ckCloudUid', DIRTY = 'ckCloudDirty';
 
-let api, fb = null, user = null, applying = false, pushT = null;
+let api, fb = null, user = null, applying = false, pushT = null, justIn = false;
 const C = { ready: false, error: null };
 
 export const cloudUser = () => user;
@@ -123,6 +123,7 @@ async function onUser(u) {
       if (ownedByMe && localStorage.getItem(DIRTY)) await push(); // cambios hechos sin conexión
       else if (!ownedByMe && meaningful(local) && !same(local, cloud)) await chooseCopy(local, cloud);
       else applyLocal(cloud);
+      if (justIn) api.toast?.(`☁ Sesión iniciada como ${esc(u.email || 'tu cuenta')}: tu progreso está sincronizado.`);
       rawSet.call(localStorage, OWNER, u.uid);
     }
     C.error = null;
@@ -130,6 +131,7 @@ async function onUser(u) {
     C.error = e.code || e.message;
     api.toast?.(`☁ No se pudo sincronizar (${esc(C.error)}). Seguís jugando en este navegador.`);
   }
+  justIn = false;
   setBadge();
   api.refresh?.();
 }
@@ -181,10 +183,10 @@ export function openLogin(back) {
   const done = () => { api.closeModal(); (back || api.showHome)(); };
   $('#lgBack').onclick = done;
   $('#lgGoogle').onclick = async () => {
-    try { await fb.signInWithPopup(fb.auth, new fb.GoogleAuthProvider()); done(); } catch (e) { err(errMsg(e)); }
+    try { justIn = true; await fb.signInWithPopup(fb.auth, new fb.GoogleAuthProvider()); done(); } catch (e) { err(errMsg(e)); }
   };
   const mail = () => $('#lgMail').value.trim(), pass = () => $('#lgPass').value;
-  $('#lgIn').onclick = async () => { try { await fb.signInWithEmailAndPassword(fb.auth, mail(), pass()); done(); } catch (e) { err(errMsg(e)); } };
+  $('#lgIn').onclick = async () => { try { justIn = true; await fb.signInWithEmailAndPassword(fb.auth, mail(), pass()); done(); } catch (e) { err(errMsg(e)); } };
   $('#lgNew').onclick = async () => { try { await fb.createUserWithEmailAndPassword(fb.auth, mail(), pass()); done(); } catch (e) { err(errMsg(e)); } };
   $('#lgForgot').onclick = async () => {
     if (!mail()) { err('Escribí tu correo arriba y tocá de nuevo.'); return; }

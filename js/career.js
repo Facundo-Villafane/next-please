@@ -7,7 +7,7 @@ import { dayNews, newsHTML, reviewData, reviewHTML, replayDecks } from './dayend
 import { teamCrew } from './team.js';
 import { askConfirm } from './confirm.js';
 import { careerUnlocked, showCareerHub, showProfileStats } from './endless.js';
-import { cloudBadgeHTML, bindBadge, openLogin, cloudReady } from './cloud.js';
+import { cloudBadgeHTML, bindBadge, openLogin, cloudReady, cloudUser } from './cloud.js';
 import { renameProgress as renameStats } from './progress.js';
 
 const $ = (s) => document.querySelector(s);
@@ -184,7 +184,7 @@ function showProfile({ first }) {
   api.openModal(`
     <div class="start home profile">
       ${first
-        ? `<div class="startHero"><img src="assets/logo-512.png" alt="Next, please!" class="heroLogo sm" /><h1>¡Bienvenida/o a bordo!</h1><p>Antes de tu primer turno, contanos quién sos.</p><button class="btn sm ghost" id="pfLogin"><i class="mdi mdi-cloud-download"></i> ¿Ya jugaste en otra compu? Entrá con tu cuenta</button></div>`
+        ? `<div class="startHero"><img src="assets/logo-512.png" alt="Next, please!" class="heroLogo sm" /><h1>¡Bienvenida/o a bordo!</h1><p>Antes de tu primer turno, contanos quién sos.</p>${cloudUser() ? `<span class="cloudBadge on"><i class="mdi mdi-cloud-check"></i> Conectado como ${esc(cloudUser().email || 'tu cuenta')}: completá tu perfil y queda guardado en la nube</span>` : '<button class="btn sm ghost" id="pfLogin"><i class="mdi mdi-cloud-download"></i> ¿Ya jugaste en otra compu? Entrá con tu cuenta</button>'}</div>`
         : '<h1>Tu perfil</h1>'}
       <div class="pfStep"><span class="pfNum">1</span>
         <label>¿Cómo te llamás?<input id="hName" maxlength="40" placeholder="Ej.: Lucía Pérez" value="${esc(pl.name)}" autocomplete="given-name"></label>
@@ -217,7 +217,7 @@ function showProfile({ first }) {
   preview();
   if (!pl.name) $('#hName').focus();
   if (!first) $('#pfCancel').onclick = showHome;
-  if (first) $('#pfLogin').onclick = () => openLogin(showHome);
+  if (first && $('#pfLogin')) $('#pfLogin').onclick = () => openLogin(showHome);
   $('#pfSave').onclick = () => {
     const n = $('#hName').value.trim();
     if (!n || !gender) { $('#hWarn').classList.remove('hidden'); if (!n) $('#hName').focus(); return; }

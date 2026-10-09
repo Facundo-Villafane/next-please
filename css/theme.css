@@ -402,3 +402,4 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
 .login .start label { margin: 8px 0; }
 .profile .startHero .btn { margin-top: 8px; }
 @media (max-width: 700px) { .profileBar { flex-wrap: wrap; } }
+.toast { z-index: 100; }
