@@ -83,7 +83,7 @@ function showPractice() {
     <div class="start">
       <div class="startHero">
         <div class="logo">✈</div>
-        <h1>Simulador de Check-in</h1>
+        <h1>Next, please! · Práctica libre</h1>
         <p>Aeropuerto Internacional de Ezeiza · Mostrador ${AIRLINE.name}</p>
       </div>
       <p class="lead">Sos agente de check-in. Atendé a cada pasajero: verificá su documentación y requisitos de ingreso,

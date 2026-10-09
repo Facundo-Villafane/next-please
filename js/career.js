@@ -141,8 +141,8 @@ export function showHome() {
     <div class="start home">
       <div class="startHero">
         <div class="logo">✈</div>
-        <h1>Aeroplata · Ezeiza</h1>
-        <p>Simulador de atención al pasajero · Check-in y embarque</p>
+        <h1>Next, please!</h1>
+        <p>Simulador de atención al pasajero · Check-in y embarque en Ezeiza con ${AIRLINE.name}</p>
       </div>
       <div class="who">
         <label>Tu nombre<input id="hName" maxlength="40" placeholder="Ej.: Lucía Pérez" value="${esc(studentName())}"></label>

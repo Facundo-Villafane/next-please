@@ -1,4 +1,4 @@
-# Simulador de Check-in · EZE
+# Next, please! · Simulador de Check-in EZE
 
 Juego web educativo: el alumno es agente de check-in en Ezeiza y atiende pasajeros
 verificando documentación, requisitos de ingreso, reserva, APIS, equipaje, mercancías
