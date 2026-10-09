@@ -194,17 +194,19 @@ export function settleGate(gate, hints = 0, rank = RANKS[0]) {
   const lines = [];
   const add = (label, amount, n = null) => { if (amount) lines.push({ label, amount, n }); };
   const okPax = gate.results.filter((r) => r.decision.kind === r.expected.kind).length;
-  const bad = gate.results.length - okPax;
+  // Embarcar a quien no podía ya es error crítico (multa grande): no se cobra dos veces como "decisión equivocada"
+  const critBoard = gate.results.filter((r) => r.decision.kind === 'board' && r.expected.kind === 'deny').length;
+  const bad = gate.results.length - okPax - critBoard;
   const procBad = gate.proc.filter((x) => x.ok === false).length;
   add(`Jornal (${rank.name})`, rank.pay);
   add('Pasajeros bien resueltos en el podio', okPax * MONEY.gateOk, okPax);
-  if (!bad && !gate.critical) add('Embarque perfecto', MONEY.perfectDay);
+  if (!bad && !critBoard && !gate.critical) add('Embarque perfecto', MONEY.perfectDay);
   add('Multa: errores críticos (embarcó a quien no podía / valija sin pasajero)', (gate.critical || 0) * MONEY.gateCritical, gate.critical || 0);
   add('Multa: decisiones equivocadas en el podio', bad * MONEY.wrongOther, bad);
   add('Descuento: errores de procedimiento', procBad * MONEY.gateProc, procBad);
   add('Descuento: consultas a Viviana', hints * MONEY.hint, hints);
   const net = lines.reduce((s, l) => s + l.amount, 0);
-  return { lines, net, okPax, total: gate.results.length, inad: gate.critical || 0, perfectDay: !bad && !gate.critical, impostors: 0 };
+  return { lines, net, okPax, total: gate.results.length, inad: gate.critical || 0, perfectDay: !bad && !critBoard && !gate.critical, impostors: 0 };
 }
 
 // XP de un día: lo bueno suma, lo grave resta (sin bajar de cero)

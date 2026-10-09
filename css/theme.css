@@ -388,3 +388,4 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
 .slipHead { display: flex; justify-content: space-between; border-bottom: 2px solid #d8c9a0; padding-bottom: 6px; margin-bottom: 6px; color: #5a4a20; }
 .modalBox .kpis div { background: #fff; }
 @media (max-width: 700px) { .weekRow { grid-template-columns: repeat(5, minmax(0, 1fr)); } .wd b { font-size: 10px; } .tp { grid-template-columns: 120px 1fr 44px; } .tp small { display: none; } .rankCard { flex-wrap: wrap; } }
+.rankCard small b { display: inline; font-size: inherit; font-family: inherit; color: var(--navy2); }
