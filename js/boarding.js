@@ -847,7 +847,9 @@ function say(agent, text) {
   b.textContent = '';
   let i = 0;
   clearInterval(say.timer);
-  say.timer = setInterval(() => { b.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(say.timer); }, 14);
+  // Letra por letra según el tiempo real (≈70 letras por segundo): si la compu se traba, no se atrasa
+  const t0 = performance.now();
+  say.timer = setInterval(() => { i = Math.min(text.length, Math.ceil((performance.now() - t0) / 14)); b.textContent = text.slice(0, i); if (i >= text.length) clearInterval(say.timer); }, 30);
 }
 function renderDesk() {
   const docs = B.cur.docs;

@@ -50,6 +50,10 @@ export class AirportScene {
     this.renderer.setPixelRatio(low ? 1 : Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = !low;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Las sombras no se recalculan en cada cuadro (ver tick): es lo que más pesa en compus modestas
+    this.renderer.shadowMap.autoUpdate = false;
+    this.renderer.shadowMap.needsUpdate = true;
+    this.perf = { frame: 0, acc: 0, n: 0, tier: 0, shadowEvery: 3 };
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 0.95;
     container.appendChild(this.renderer.domElement);
@@ -893,7 +897,9 @@ export class AirportScene {
 
   // ----------------------------------------------------------------
   tick() {
-    const dt = Math.min(this.clock.getDelta(), 0.05);
+    const raw = this.clock.getDelta();
+    const dt = Math.min(raw, 0.05);
+    this.adapt(raw);
     const t = this.clock.elapsedTime;
     this.animators.forEach((a) => a(dt, t));
     if (this.queueMood) {
@@ -971,7 +977,24 @@ export class AirportScene {
     const tgt = this.camTarget.clone();
     tgt.x += this.look.x * 6; tgt.y -= this.look.y * 6;
     this.camera.lookAt(tgt);
+    if (this.perf.frame++ % this.perf.shadowEvery === 0) this.renderer.shadowMap.needsUpdate = true;
     this.renderer.render(this.scene, this.camera);
+  }
+
+  // Calidad automática: si la compu no llega a ~30 cuadros por segundo, se baja la resolución
+  // y después se recalculan menos las sombras, para que el juego no se trabe.
+  adapt(raw) {
+    const p = this.perf;
+    if (document.hidden || raw > 0.5) return; // pestaña oculta o pausa larga: no cuenta
+    p.acc += raw; p.n++;
+    if (p.acc < 3) return;
+    const avg = p.acc / p.n;
+    p.acc = 0; p.n = 0;
+    if (avg < 1 / 30 || p.tier >= 3) return;
+    p.tier++;
+    if (p.tier === 1 && this.renderer.getPixelRatio() > 1) { this.renderer.setPixelRatio(1); this.resize?.(); }
+    else if (p.tier <= 2) p.shadowEvery = 8;
+    else p.shadowEvery = 30;
   }
 
   animateLegs(ud, phase, amp) {

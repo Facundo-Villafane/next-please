@@ -1,6 +1,7 @@
 // Personajes 3D: cuerpo con articulaciones, peinados y cara dibujada a partir de los mismos rasgos
 // que el retrato del documento (piel, ojos, cejas, nariz, boca, anteojos, rubor, arrugas).
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { SKIN, EYES } from './docs.js';
 
 const faceCache = new Map();
@@ -235,5 +236,35 @@ export function buildPerson(f) {
     const b = hairPart(new THREE.SphereGeometry(R * 1.03, 22, 12, Math.PI * 1.5 - Math.PI * 0.45, Math.PI * 0.9, Math.PI * 0.62, Math.PI * 0.3));
     b.material = mat(shade(f.hairColor, 0.95), 0.9);
   }
+  // Rendimiento: cada parte rígida (cuerpo, cabeza, cada pierna y cada brazo) se junta en una sola
+  // malla por material. Antes eran ~40 piezas por persona y con la fila llena se trababa todo.
+  [g, headG, ...legs, ...arms].forEach(mergeRigid);
   return { g, legs, arms };
+}
+
+function mergeRigid(group) {
+  const buckets = new Map();
+  group.children.forEach((m) => {
+    if (!m.isMesh || m.material.transparent) return; // la cara y la sombra de contacto quedan aparte
+    const k = `${m.material.uuid}|${m.castShadow}`;
+    if (!buckets.has(k)) buckets.set(k, []);
+    buckets.get(k).push(m);
+  });
+  buckets.forEach((list) => {
+    if (list.length < 2) return;
+    const geos = list.map((m) => {
+      m.updateMatrix();
+      const geo = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()).applyMatrix4(m.matrix);
+      ["position", "normal", "uv"].forEach((a) => { if (!geo.attributes[a]) geo.deleteAttribute(a); });
+      Object.keys(geo.attributes).forEach((a) => { if (!["position", "normal", "uv"].includes(a)) geo.deleteAttribute(a); });
+      return geo;
+    });
+    const merged = mergeGeometries(geos, false);
+    geos.forEach((x) => x.dispose());
+    if (!merged) return;
+    const one = new THREE.Mesh(merged, list[0].material);
+    one.castShadow = list[0].castShadow;
+    list.forEach((m) => { group.remove(m); m.geometry.dispose(); });
+    group.add(one);
+  });
 }
