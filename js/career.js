@@ -184,10 +184,11 @@ export function showHome() {
 function showDays() {
   const name = studentName() || 'Agente';
   const done = progress()[name] || {};
-  const saved = loadCheckpoint(), shift = loadShift();
+  const saved = loadCheckpoint(), shift = loadShift(), gateSave = saved && loadGate();
   // Lo pendiente: un counter a mitad, o el counter terminado y la puerta por hacer
   const pending = shift
     ? { day: shift.day, at: shift.at, where: `Counter: atendiste ${shift.snap.idx + 1} de ${shift.snap.pax.length} pasajeros`, cta: 'Seguir con el counter ▶', go: () => resumeCounter(shift) }
+    : gateSave && gateSave.day === saved.day ? { day: gateSave.day, at: gateSave.at, where: gateSave.closed ? 'Puerta: vuelo cerrado, falta el informe' : `Puerta de embarque: ${gateSave.boarded} de ${gateSave.checked} a bordo`, cta: 'Seguir con el embarque ▶', go: () => resumeGate(gateSave, saved.cp) }
     : saved ? { day: saved.day, at: saved.at, where: 'Counter terminado: falta el embarque', cta: 'Seguir desde la puerta ▶', go: () => resumeDay(saved) } : null;
   const rows = DAYS.map((d, i) => {
     const locked = i > 0 && !done[DAYS[i - 1].id];
@@ -357,12 +358,14 @@ function afterCheckin(day, results, score, queueLog = []) {
 }
 
 function goGate(day, cp) {
+  try { localStorage.removeItem('ckGate'); } catch {}
   const gateFlight = FLIGHTS.find((f) => f.no === day.flight);
   api.startBoarding({
     student: studentName() || 'Agente', level: day.gate.level, mode: day.mode, flightNo: gateFlight.no, cases: day.gate.cases,
     carry: cp.carry, stopped: cp.stopped, standby: cp.standby, ovbk: day.gateOvbk || null,
     onEvent: (ev, B) => gateCoach(day, ev, B),
     onDone: (gate) => endDay(day, cp.ck, gate),
+    saveTag: { name: studentName() || 'Agente', day: day.id },
   });
 }
 
@@ -381,7 +384,7 @@ function loadCheckpoint() {
     return s && s.name === (studentName() || 'Agente') && DAYS.some((d) => d.id === s.day) ? s : null;
   } catch { return null; }
 }
-const clearCheckpoint = () => { try { localStorage.removeItem(CP_KEY); localStorage.removeItem('ckShift'); } catch {} };
+const clearCheckpoint = () => { try { [CP_KEY, 'ckShift', 'ckGate'].forEach((k) => localStorage.removeItem(k)); } catch {} };
 
 function resumeDay(saved) {
   const day = DAYS.find((d) => d.id === saved.day);
@@ -512,4 +515,23 @@ function resumeCounter(saved) {
   story([`¡Volviste! Tu mostrador quedó tal cual: ya atendiste a ${saved.snap.idx + 1} de ${saved.snap.pax.length} pasajeros. Seguimos con el próximo.`], () => {
     api.resumeCheckin(saved, { ...counterOpts(day, flights), saveTag: { name: saved.name, day: day.id } });
   }, 'Volver al counter ▶');
+}
+
+// Puerta de embarque guardada a mitad (después de cada pasajero)
+function loadGate() {
+  try {
+    const s = JSON.parse(localStorage.getItem('ckGate') || 'null');
+    return s && s.name === (studentName() || 'Agente') && DAYS.some((d) => d.id === s.day) ? s : null;
+  } catch { return null; }
+}
+function resumeGate(saved, cp) {
+  const day = DAYS.find((d) => d.id === saved.day);
+  api.setStudent(studentName() || 'Agente');
+  story([`¡Volviste! La puerta ${FLIGHTS.find((f) => f.no === day.flight).gate} quedó como la dejaste: ${saved.closed ? 'el vuelo ya está cerrado, falta ver el informe.' : `${saved.boarded} de ${saved.checked} pasajeros a bordo. Seguimos embarcando.`}`], () => {
+    api.resumeBoarding(saved, {
+      onEvent: (ev, B) => gateCoach(day, ev, B),
+      onDone: (gate) => endDay(day, cp.ck, gate),
+      saveTag: { name: saved.name, day: day.id },
+    });
+  }, 'Volver a la puerta ▶');
 }

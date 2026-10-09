@@ -1,6 +1,6 @@
 // Lógica principal del juego: turno, interfaz del DCS, diálogo y evaluación.
 import { AirportScene } from './scene3d.js';
-import { startBoarding, boardingActive } from './boarding.js';
+import { startBoarding, boardingActive, resumeBoarding } from './boarding.js';
 import { initCareer, showHome } from './career.js';
 import { initQueue, resetQueue, queueTick, queuePaxDone } from './queue.js';
 import { initEvents, planEvents, maybeEvent, eventsOnPax, eventsSummaryHTML } from './events.js';
@@ -1049,6 +1049,7 @@ initCareer({
   showPractice,
   showOnline,
   startBoarding: (opts) => startBoarding({ ...opts, oldScene: scene, ui: { openModal, closeModal, modalOpen } }),
+  resumeBoarding: (saved, opts) => resumeBoarding(saved, { ...opts, oldScene: scene, ui: { openModal, closeModal, modalOpen } }),
   showManual,
 });
 

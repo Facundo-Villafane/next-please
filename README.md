@@ -13,8 +13,8 @@ vuelo y **embarque** del mismo vuelo con los pasajeros que aceptaste (si se te p
 counter, tenés otra oportunidad en la puerta). El Día 1 incluye un tutorial guiado. Los días se
 desbloquean y se puntúan con estrellas. Días configurables en `js/career.js` (`DAYS`).
 
-**Progreso:** se guarda en el navegador: estrellas por día, el counter después de cada pasajero y un punto de guardado al terminar el counter
-(si se corta, la lista de días ofrece "Seguir con el counter" o "Seguir desde la puerta"). Si hay un turno en
+**Progreso:** se guarda en el navegador: estrellas por día, el counter y la puerta de embarque después de cada pasajero, y un punto de guardado al terminar el counter
+(si se corta, la lista de días ofrece "Seguir con el counter", "Seguir desde la puerta" o "Seguir con el embarque"). Si hay un turno en
 curso, el navegador pregunta antes de actualizar o cerrar la pestaña.
 
 Días:

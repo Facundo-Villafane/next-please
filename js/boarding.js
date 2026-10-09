@@ -8,7 +8,7 @@ import { FLIGHTS, AIRLINE, STATION, ENTRY_RULES, EXIT_ROW, SEATMAP, COUNTRIES, e
 import { makePerson, makePassport, makeVisaUS, differentFace, makeEscort } from './generator.js';
 import { isIdDoc } from './rules.js';
 import { faceSVG, renderDoc, docTitle } from './docs.js';
-import { esc, fmtTime, fmtDate, timeToday, dayOnly, norm, pick, rnd, chance, shuffle, addDays } from './util.js';
+import { esc, fmtTime, fmtDate, timeToday, dayOnly, norm, pick, rnd, chance, shuffle, addDays, packGraph, unpackGraph } from './util.js';
 import { gateLines as gateDialog, gateGreeting, AGENT_EN, paxLang } from './dialogues.js';
 import { OVBK_POLICY, compForm, gradeComp, compSummary, protectionsFor } from './overbooking.js';
 import { conflictTrigger, runConflict } from './conflict.js';
@@ -85,7 +85,7 @@ export function startBoarding(opts) {
     zone: 0, boarded: 0, queue: [], waiting: [], cur: null, act: null,
     results: [], proc: [], score: 0, radio: [], tab: 'setup',
     pending: [], searched: new Set(), searchedAt: {}, dechecked: new Set(), called: new Set(), closed: false, closeTime: null,
-    events: {}, paused: false, seq: 40, mode: opts.mode || 'learn', held: [],
+    events: {}, paused: false, seq: 40, mode: opts.mode || 'learn', held: [], saveTag: opts.saveTag || null,
   };
   const retRule = !!ENTRY_RULES[FLIGHT.country].returnTicket;
 
@@ -170,6 +170,58 @@ export function startBoarding(opts) {
 }
 
 function shuffleInPlace(a) { const s = shuffle(a); a.length = 0; a.push(...s); }
+
+// ------------------------------------------------------------------
+// Guardado por pasajero (Modo Historia): el estado de la puerta se guarda en el navegador
+// después de cada decisión y de cada tarea; si se corta, se retoma desde ahí.
+// Si había alguien en el podio, vuelve al frente de la fila.
+// ------------------------------------------------------------------
+const GATE_KEY = 'ckGate';
+function saveGate() {
+  if (!B?.saveTag) return;
+  const snapB = { ...B, timer: undefined, at: undefined, onDone: undefined, lastReal: undefined };
+  if (B.cur) { snapB.queue = [B.cur, ...B.queue]; snapB.cur = null; snapB.act = null; }
+  try {
+    localStorage.setItem(GATE_KEY, JSON.stringify({
+      ...B.saveTag, at: Date.now(), boarded: B.boarded, checked: B.checked, closed: B.closed,
+      data: packGraph({ B: snapB, usedSeats: [...usedSeats] }),
+    }));
+  } catch {}
+}
+function saveGateSoon() {
+  if (!B?.saveTag || saveGateSoon.t) return;
+  saveGateSoon.t = setTimeout(() => { saveGateSoon.t = null; saveGate(); }, 800);
+}
+
+export function resumeBoarding(saved, opts) {
+  ui = opts.ui;
+  onEvent = opts.onEvent || (() => {});
+  const { B: snapB, usedSeats: us } = unpackGraph(saved.data);
+  PACE = PACES[snapB.mode] || PACES.learn;
+  FLIGHT = FLIGHTS.find((f) => f.no === snapB.flight.no);
+  OTHER_FLIGHT = FLIGHTS.find((f) => f.dest !== FLIGHT.dest && f.gate !== FLIGHT.gate && f.no !== FLIGHT.no);
+  opts.oldScene?.dispose();
+  if (scene) scene.dispose();
+  scene = new GateScene($('#view3d'));
+  usedSeats.clear();
+  us.forEach((s) => usedSeats.add(s));
+  B = snapB;
+  const dep = B.dep;
+  B.at = (min) => new Date(dep.getTime() + min * 60000);
+  B.onDone = opts.onDone;
+  B.saveTag = opts.saveTag || null;
+  B.paused = false;
+  buildUI();
+  if (B.setup.layout) scene.showStanchions();
+  radio('Sistema: sesión recuperada. Seguís donde lo dejaste.');
+  tick();
+  B.lastReal = performance.now();
+  if (B.closed) { report(); return; }
+  B.timer = setInterval(drift, 250);
+  scene.syncQueue(B.queue);
+  if (B.queue.length) nextPax(); else renderPane();
+  updateTop();
+}
 
 // ------------------------------------------------------------------
 // Pasajeros de puerta
@@ -385,6 +437,7 @@ function buildUI() {
 function renderTabs() { $('#gTabs').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.tab === B.tab)); }
 function renderPane() {
   ({ setup: paneSetup, board: paneBoard, pend: panePend, radio: paneRadio })[B.tab]($('#gPane'));
+  saveGateSoon();
   renderTimeline();
 }
 function sys(msg, kind = '') { const el = $('#gSys'); el.className = `sysmsg ${kind}`; el.textContent = `> ${msg}`; }
@@ -1145,6 +1198,7 @@ function closeFlight() {
   B.critical = (B.critical || 0) + B.results.filter((r) => r.decision.kind === 'board' && r.expected.kind === 'deny').length;
   scene.updateGate(B.flight, B.now, 'CERRADO', 0);
   onEvent('closed', B);
+  saveGate();
   report();
 }
 
@@ -1176,7 +1230,7 @@ function report() {
     </div>
     <div class="row end gap noprint"><button class="btn ghost" id="rpPrint">🖨 Imprimir / PDF</button><button class="btn ok" id="rpNew">${B.onDone ? 'Continuar ▶' : 'Volver al inicio'}</button></div>`, 'wide report');
   $('#rpPrint').onclick = () => window.print();
-  $('#rpNew').onclick = () => { ui.closeModal(); if (B.onDone) B.onDone(s); else location.reload(); };
+  $('#rpNew').onclick = () => { B.saveTag = null; clearTimeout(saveGateSoon.t); saveGateSoon.t = null; ui.closeModal(); if (B.onDone) B.onDone(s); else location.reload(); };
 }
 
 function showGateManual() {

@@ -79,3 +79,54 @@ export function randomDigits(n) {
   for (let i = 0; i < n; i++) s += Math.floor(Math.random() * 10);
   return s;
 }
+
+// ------------------------------------------------------------------
+// Guardado de estados complejos (la puerta de embarque): conserva referencias compartidas
+// y ciclos (p. ej. la pareja con tarjetas cruzadas), fechas y Sets. Omite funciones.
+// ------------------------------------------------------------------
+export function packGraph(value) {
+  const nodes = [];
+  const ids = new Map();
+  const enc = (v) => {
+    if (typeof v === 'function' || v === undefined) return undefined;
+    if (v === null || typeof v !== 'object') return v;
+    if (v instanceof Date) return { $d: v.toISOString() };
+    if (ids.has(v)) return { $r: ids.get(v) };
+    const id = nodes.length;
+    ids.set(v, id);
+    nodes.push(null);
+    let out;
+    if (v instanceof Set) out = { $s: [...v].map(enc) };
+    else if (Array.isArray(v)) out = v.map((x) => { const e = enc(x); return e === undefined ? null : e; });
+    else {
+      out = {};
+      Object.keys(v).forEach((k) => { const e = enc(v[k]); if (e !== undefined) out[k] = e; });
+    }
+    nodes[id] = out;
+    return { $r: id };
+  };
+  const root = enc(value);
+  return JSON.stringify({ root, nodes });
+}
+
+export function unpackGraph(str) {
+  const { root, nodes } = JSON.parse(str);
+  const built = [];
+  const dec = (v) => {
+    if (v === null || typeof v !== 'object') return v;
+    if ('$d' in v) return new Date(v.$d);
+    if ('$r' in v) return get(v.$r);
+    return v;
+  };
+  const get = (i) => {
+    if (built[i]) return built[i];
+    const n = nodes[i];
+    if (n && !Array.isArray(n) && '$s' in n) { const s = new Set(); built[i] = s; n.$s.forEach((x) => s.add(dec(x))); return s; }
+    if (Array.isArray(n)) { const a = []; built[i] = a; n.forEach((x) => a.push(dec(x))); return a; }
+    const o = {};
+    built[i] = o;
+    Object.keys(n).forEach((k) => { o[k] = dec(n[k]); });
+    return o;
+  };
+  return dec(root);
+}
