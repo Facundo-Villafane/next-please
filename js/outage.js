@@ -174,11 +174,25 @@ export function paneApi(pane) {
     const d = p.docs.find((x) => x.id === $('#mDoc').value);
     const num = $('#mNum').value, nat = $('#mNat').value, exp = $('#mExp').value.trim();
     if (!num || !nat || !exp) { api.sys('COMPLETÁ TODOS LOS CAMPOS DE LA PLANILLA', 'err'); return; }
-    const clean = (s) => s.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    // Se acepta el número con o sin puntos, guiones o espacios (34.567.890 = 34567890)
+    const clean = (s) => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const numsOf = (x) => [x.number, x.dni].filter(Boolean).map(clean);
+    if (!numsOf(d).includes(clean(num))) {
+      // ¿Copió el número de otro documento del pasajero? Entonces eligió mal el documento en la lista
+      const other = docs.find((x) => x !== d && numsOf(x).includes(clean(num)));
+      if (other) { api.sys(`ESE NÚMERO ES DEL ${docTitle(other).toUpperCase()} · Elegí ese documento en la lista "Documento"`, 'err'); $('#mDoc').value = other.id; return; }
+    }
+    // Fecha: acepta 5/3/2030, 05-03-2030, 05.03.30...
+    const sameDate = (txt, date) => {
+      const m = txt.match(/^(\d{1,2})\D(\d{1,2})\D(\d{2}|\d{4})$/);
+      if (!m) return false;
+      const y = m[3].length === 2 ? 2000 + +m[3] : +m[3];
+      return +m[1] === date.getDate() && +m[2] === date.getMonth() + 1 && y === date.getFullYear();
+    };
     const errors = [];
-    if (clean(num) !== clean(d.number)) errors.push(`N° de documento (anotaste ${num.trim()}, es ${d.number})`);
+    if (!numsOf(d).includes(clean(num))) errors.push(`N° de documento (anotaste ${num.trim()}, es ${d.dni || d.number})`);
     if (nat !== d.nationality) errors.push(`nacionalidad (anotaste ${COUNTRIES[nat].iso3}, es ${COUNTRIES[d.nationality].iso3})`);
-    if (exp.replace(/[-.]/g, '/') !== fmtDate(d.expiry)) errors.push(`vencimiento (anotaste ${exp}, es ${fmtDate(d.expiry)})`);
+    if (!sameDate(exp, d.expiry)) errors.push(`vencimiento (anotaste ${exp}, es ${fmtDate(d.expiry)})`);
     a.apiManual = { docId: d.id, errors, summary: `${docTitle(d)} N° ${num.trim()} · ${COUNTRIES[nat].iso3} · vence ${exp}` };
     a.apis = { docId: d.id, docTitle: docTitle(d), response: 'PLANILLA API MANUAL (PENDIENTE DE TRANSMISIÓN)', okBoard: true, manual: true };
     a.apisBy = { lead: a.apis };
