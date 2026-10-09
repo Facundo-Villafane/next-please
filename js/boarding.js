@@ -341,19 +341,19 @@ function buildUI() {
     <div class="dcsHead"><span>SISTEMA DE EMBARQUE · ${AIRLINE.code}</span><span>${FLIGHT.no} ${STATION.code}-${FLIGHT.dest} · STD ${FLIGHT.dep} · PTA ${FLIGHT.gate}</span></div>
     <div class="timeline" id="gTimeline"></div>
     <nav class="tabs" id="gTabs">
-      <button data-tab="setup" class="on">1 · Apertura</button>
-      <button data-tab="board">2 · Embarque</button>
-      <button data-tab="pend">3 · Pendientes y cierre</button>
-      <button data-tab="radio">4 · Radio</button>
+      <button data-tab="setup" class="on"><i class="mdi mdi-door-open"></i> 1 · Apertura</button>
+      <button data-tab="board"><i class="mdi mdi-airplane-takeoff"></i> 2 · Embarque</button>
+      <button data-tab="pend"><i class="mdi mdi-clipboard-check"></i> 3 · Pendientes y cierre</button>
+      <button data-tab="radio"><i class="mdi mdi-radio-handheld"></i> 4 · Radio</button>
     </nav>
     <div class="pane" id="gPane"></div>
     <div class="sysmsg" id="gSys">&gt; SISTEMA DE EMBARQUE</div>
     <div class="decide">
-      <button class="btn ok" id="gBoard" disabled>✔ Embarcar</button>
-      <button class="btn" id="gWait" disabled>⏸ Esperar zona</button>
-      <button class="btn" id="gHold" disabled>⚠ Apartar</button>
-      <button class="btn bad" id="gDeny" disabled>✖ No embarcar</button>
-      <button class="btn warn" id="gRedirect" disabled>↪ Otra puerta</button>
+      <button class="btn ok" id="gBoard" disabled><i class="mdi mdi-check-bold"></i> Embarcar</button>
+      <button class="btn" id="gWait" disabled><i class="mdi mdi-timer-sand"></i> Esperar zona</button>
+      <button class="btn" id="gHold" disabled><i class="mdi mdi-hand-back-left"></i> Apartar</button>
+      <button class="btn bad" id="gDeny" disabled><i class="mdi mdi-close-thick"></i> No embarcar</button>
+      <button class="btn warn" id="gRedirect" disabled><i class="mdi mdi-sign-direction"></i> Otra puerta</button>
     </div>`;
   $('#gTabs').addEventListener('click', (e) => {
     const b = e.target.closest('button'); if (!b) return;

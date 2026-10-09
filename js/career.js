@@ -154,9 +154,9 @@ export function showHome() {
       </div>
       <p class="hint err hidden" id="hWarn">Elegí tu nombre y cómo querés que te traten para empezar.</p>
       <div class="homeGrid">
-        <button class="homeCard" id="hStory"><span class="big">🧑‍✈️</span><h2>Modo Historia</h2><p id="hStoryTxt">${gtxt('Sos agente recién ingresado/a. Briefing, counter y puerta de embarque, día a día, con tu supervisora.')}</p></button>
-        <button class="homeCard" id="hPractice"><span class="big">🎯</span><h2>Práctica libre</h2><p>Elegí puesto (counter o puerta), nivel y modo (aprendizaje o desafío contra reloj).</p></button>
-        <button class="homeCard" id="hOnline"><span class="big">🌐</span><h2>Jugar en sala</h2><p>Con hasta dos compañeros en línea: cada uno en su mostrador, misma fila y mismos vuelos.</p></button>
+        <button class="homeCard" id="hStory"><span class="icoTile y"><i class="mdi mdi-airplane-takeoff"></i></span><h2>Modo Historia</h2><p id="hStoryTxt">${gtxt('Sos agente recién ingresado/a. Briefing, counter y puerta de embarque, día a día, con tu supervisora.')}</p></button>
+        <button class="homeCard" id="hPractice"><span class="icoTile b"><i class="mdi mdi-bullseye-arrow"></i></span><h2>Práctica libre</h2><p>Elegí puesto (counter o puerta), nivel y modo (aprendizaje o desafío contra reloj).</p></button>
+        <button class="homeCard" id="hOnline"><span class="icoTile o"><i class="mdi mdi-account-group"></i></span><h2>Jugar en sala</h2><p>Con hasta dos compañeros en línea: cada uno en su mostrador, misma fila y mismos vuelos.</p></button>
       </div>
       <p class="disclaimer">Las reglas documentarias están simplificadas con fines didácticos. En la operación real siempre se consulta Timatic y los procedimientos vigentes de la compañía.</p>
     </div>`, 'wide');
@@ -247,14 +247,14 @@ function runCoach(steps, onFinish) {
 }
 
 const CHECKIN_TUTORIAL = [
-  { text: 'Saludá al pasajero y pedile la <b>documentación y la reserva</b> (botón 📄 abajo).', until: (G) => G.act.docsRequested, target: () => '[data-q="docs"]' },
+  { text: 'Saludá al pasajero y pedile la <b>documentación y la reserva</b> (botón <i class="mdi mdi-passport"></i> abajo).', until: (G) => G.act.docsRequested, target: () => '[data-q="docs"]' },
   { text: 'Los documentos quedaron sobre el mostrador. <b>Hacé clic en uno</b> para ampliarlo y comparar la foto con la persona.', until: (G) => G.act.docViewed, target: () => '.docThumb' },
   { text: 'Ahora el sistema: pestaña <b>1 · Identificar</b>. Escribí el <b>código de reserva</b> (está en el e-ticket) y tocá Buscar. Después, Abrir.', until: (G) => G.act.bookingLoaded, target: () => '#tabs [data-tab="ident"], #q, #qGo, [data-pick]' },
   { text: 'Pestaña <b>2 · APIS</b>: tocá <b>Leer MRZ</b> con el documento con el que viaja y después <b>Enviar APIS</b>.', until: (G) => !!G.act.apis, target: () => '#tabs [data-tab="pax"], #apScan, #apSend' },
-  { text: 'Equipaje: preguntá si <b>despacha</b> 🧳 y hacé la <b>cartilla de mercancías peligrosas</b> ⚠. También conviene preguntar por <b>artículos de valor</b> 💎.', until: (G) => G.act.asked.bags && G.act.asked.security, target: () => '[data-q="bags"], [data-q="security"]' },
+  { text: 'Equipaje: preguntá si <b>despacha</b> <i class="mdi mdi-bag-suitcase"></i> y hacé la <b>cartilla de mercancías peligrosas</b> <i class="mdi mdi-alert-octagon"></i>. También conviene preguntar por <b>artículos de valor</b> <i class="mdi mdi-diamond-stone"></i>.', until: (G) => G.act.asked.bags && G.act.asked.security, target: () => '[data-q="bags"], [data-q="security"]' },
   { text: 'Pestaña <b>3 · Equipaje</b>: <b>Inspección 360°</b> y <b>Etiquetar</b> cada valija. Si se pasa de peso, cobrá el exceso al final.', until: (G) => G.act.bagsShown && G.act.bags.every((b) => b.tagged), target: () => '#tabs [data-tab="bags"], [data-insp], [data-tag]' },
-  { text: 'Pestaña <b>4 · Asientos</b>: preguntale su preferencia 💺 y elegí un asiento libre.', until: (G) => !!G.act.seat, target: () => '#tabs [data-tab="seat"], [data-q="seat"]' },
-  { text: 'Todo en regla: <b>✔ Aceptar y emitir la tarjeta de embarque</b>. ¡Tu primer pasajero!', until: (G) => G.idx > 0, target: () => '#btnAccept' },
+  { text: 'Pestaña <b>4 · Asientos</b>: preguntale su preferencia <i class="mdi mdi-seat-passenger"></i> y elegí un asiento libre.', until: (G) => !!G.act.seat, target: () => '#tabs [data-tab="seat"], [data-q="seat"]' },
+  { text: 'Todo en regla: <b><i class="mdi mdi-check-bold"></i> Aceptar y emitir la tarjeta de embarque</b>. ¡Tu primer pasajero!', until: (G) => G.idx > 0, target: () => '#btnAccept' },
 ];
 
 const GATE_TIPS = {

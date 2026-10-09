@@ -47,8 +47,8 @@ export function showOnline() {
     <p class="lead">Hasta tres agentes atienden el mismo turno, cada uno en su mostrador, con la misma fila y los mismos vuelos.
     Ves lo que hacen tus compañeros y les podés mandar mensajes rápidos. Si son menos de tres, los mostradores vacíos los atiende un bot.</p>
     <div class="homeGrid">
-      <button class="homeCard" id="onCreate"><span class="big">🏠</span><h2>Crear una sala</h2><p>Te damos un código para compartir con tus compañeros.</p></button>
-      <div class="homeCard join"><span class="big">🔑</span><h2>Unirme a una sala</h2>
+      <button class="homeCard" id="onCreate"><span class="icoTile y"><i class="mdi mdi-home-plus"></i></span><h2>Crear una sala</h2><p>Te damos un código para compartir con tus compañeros.</p></button>
+      <div class="homeCard join"><span class="icoTile b"><i class="mdi mdi-key-variant"></i></span><h2>Unirme a una sala</h2>
         <div class="row gap"><input id="onCode" maxlength="4" placeholder="CÓDIGO" autocomplete="off"><button class="btn ok" id="onJoin">Entrar</button></div></div>
     </div>
     <p class="hint" id="onMsg"></p>

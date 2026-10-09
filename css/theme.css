@@ -194,3 +194,21 @@ ul.fb li.bad .pts { color: #c4321a; }
 
 @media (max-width: 1000px) { .brandLogo { height: 38px; } }
 @media print { .modalBox > div:first-child > h1:first-child, .modalBox > h2:first-child { background: none; color: #000; margin: 0 0 8px; padding: 0; border: 0; } }
+
+/* ---------- Íconos (Material Design Icons) ---------- */
+.mdi::before { line-height: 1; }
+.btn .mdi, .chip .mdi, .tabs .mdi { font-size: 1.2em; vertical-align: -0.14em; margin-right: 1px; }
+.btn.big .mdi { font-size: 1.25em; }
+.chip .mdi { color: var(--blue); }
+.chip.done .mdi { color: var(--muted); }
+.tabs button.on .mdi { color: var(--navy2); }
+.coach .mdi, .story .mdi { color: var(--blue); font-size: 1.15em; vertical-align: -0.12em; }
+/* Cuadrado de ícono con volumen (como los "icon buttons" del kit) */
+.icoTile { display: inline-grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; border: 2px solid var(--edge); box-shadow: 0 3px 0 var(--edge), inset 0 2px 0 rgba(255, 255, 255, .4); font-size: 30px; color: #fff; text-shadow: 0 2px 0 rgba(0, 0, 0, .25); background: linear-gradient(#4a92ff, var(--blue) 55%, #1757c4); }
+.icoTile.y { color: var(--navy2); text-shadow: 0 1px 0 rgba(255, 255, 255, .5); background: linear-gradient(#ffe169, var(--accent) 55%, #f0ad00); }
+.icoTile.o { background: linear-gradient(#ff8a4c, var(--bad) 55%, #c63c0f); }
+.icoTile.g { background: linear-gradient(#4fd17f, var(--ok) 55%, #188548); }
+.homeCard:hover .icoTile { transform: rotate(-4deg) scale(1.05); }
+.icoTile { transition: transform .12s; }
+.decide .btn .mdi { font-size: 1.5em; vertical-align: -0.2em; }
+#dcs .decide .btn { font-size: 13.5px; }

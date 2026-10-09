@@ -56,9 +56,9 @@ function setLook() {
   $('#dcs').classList.toggle('down', down);
   $('.dcsHead span').textContent = down ? '📵 SIN SISTEMA · ATENCIÓN MANUAL' : 'DCS · DEPARTURE CONTROL';
   const labels = down
-    ? { ident: '1 · Lista de pasajeros', pax: '2 · Planilla API', bags: '3 · Bag tag manual', seat: '4 · Plano de asientos' }
-    : { ident: '1 · Identificar', pax: '2 · Pasajero / APIS', bags: '3 · Equipaje', seat: '4 · Asientos' };
-  Object.entries(labels).forEach(([k, t]) => { const b = document.querySelector(`#tabs [data-tab="${k}"]`); if (b) b.textContent = t; });
+    ? { ident: ['clipboard-list', '1 · Lista de pasajeros'], pax: ['file-document-edit', '2 · Planilla API'], bags: ['tag', '3 · Bag tag manual'], seat: ['seat-passenger', '4 · Plano de asientos'] }
+    : { ident: ['magnify', '1 · Identificar'], pax: ['passport', '2 · Pasajero / APIS'], bags: ['bag-suitcase', '3 · Equipaje'], seat: ['seat-passenger', '4 · Asientos'] };
+  Object.entries(labels).forEach(([k, [ic, t]]) => { const b = document.querySelector(`#tabs [data-tab="${k}"]`); if (b) b.innerHTML = `<i class="mdi mdi-${ic}"></i> ${t}`; });
 }
 
 function goDown(onReady) {

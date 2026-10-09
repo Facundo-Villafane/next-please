@@ -258,16 +258,16 @@ function lockDecision(lock) {
 }
 
 const QUESTIONS = [
-  { k: 'docs', label: '📄 Documentación y reserva', q: 'Buenas tardes. ¿Me permite su documento de viaje y la reserva, por favor?' },
-  { k: 'reason', label: '🎯 Motivo del viaje', q: '¿Cuál es el motivo de su viaje?' },
-  { k: 'ret', label: '📅 Regreso', q: '¿Cuándo regresa?' },
-  { k: 'visa', label: '🛂 Visa / autorización', q: '¿Cuenta con visa o autorización de ingreso para su destino?' },
-  { k: 'minor', label: '👥 ¿Viaja solo/a?', q: '¿Viaja solo/a o acompañado/a?' },
-  { k: 'health', label: '🩺 Salud / embarazo', q: '¿Tiene alguna condición médica que debamos saber, o se encuentra embarazada?' },
-  { k: 'bags', label: '🧳 Equipaje a despachar', q: '¿Va a despachar equipaje? Colóquelo en la balanza, por favor.' },
-  { k: 'security', label: '⚠ Cartilla MMPP', q: '(Señalando la cartilla de mercancías peligrosas) ¿Empacó usted mismo su equipaje y lo tuvo siempre bajo su control? ¿Alguien le dio algo para llevar? ¿Lleva en su equipaje facturado aerosoles, gas butano, encendedores, pilas o baterías de litio, power banks, cigarrillos electrónicos, líquidos inflamables o corrosivos?' },
-  { k: 'valuables', label: '💎 Artículos de valor', q: 'Sr./Sra., ¿lleva algún artículo de valor dentro de su equipaje? Si es así, le pedimos que lo lleve como equipaje de mano: la compañía no se hace responsable por la pérdida de elementos en bodega.' },
-  { k: 'seat', label: '💺 Asiento', q: '¿Tiene alguna preferencia de asiento? Tengo disponibles asientos en salida de emergencia.' },
+  { k: 'docs', ic: 'passport', label: 'Documentación y reserva', q: 'Buenas tardes. ¿Me permite su documento de viaje y la reserva, por favor?' },
+  { k: 'reason', ic: 'map-marker-question', label: 'Motivo del viaje', q: '¿Cuál es el motivo de su viaje?' },
+  { k: 'ret', ic: 'calendar-arrow-left', label: 'Regreso', q: '¿Cuándo regresa?' },
+  { k: 'visa', ic: 'card-account-details', label: 'Visa / autorización', q: '¿Cuenta con visa o autorización de ingreso para su destino?' },
+  { k: 'minor', ic: 'account-child', label: '¿Viaja solo/a?', q: '¿Viaja solo/a o acompañado/a?' },
+  { k: 'health', ic: 'stethoscope', label: 'Salud / embarazo', q: '¿Tiene alguna condición médica que debamos saber, o se encuentra embarazada?' },
+  { k: 'bags', ic: 'bag-suitcase', label: 'Equipaje a despachar', q: '¿Va a despachar equipaje? Colóquelo en la balanza, por favor.' },
+  { k: 'security', ic: 'alert-octagon', label: 'Cartilla MMPP', q: '(Señalando la cartilla de mercancías peligrosas) ¿Empacó usted mismo su equipaje y lo tuvo siempre bajo su control? ¿Alguien le dio algo para llevar? ¿Lleva en su equipaje facturado aerosoles, gas butano, encendedores, pilas o baterías de litio, power banks, cigarrillos electrónicos, líquidos inflamables o corrosivos?' },
+  { k: 'valuables', ic: 'diamond-stone', label: 'Artículos de valor', q: 'Sr./Sra., ¿lleva algún artículo de valor dentro de su equipaje? Si es así, le pedimos que lo lleve como equipaje de mano: la compañía no se hace responsable por la pérdida de elementos en bodega.' },
+  { k: 'seat', ic: 'seat-passenger', label: 'Asiento', q: '¿Tiene alguna preferencia de asiento? Tengo disponibles asientos en salida de emergencia.' },
 ];
 
 const inOvbk = (p) => G.ovbk && p && p.flight.no === G.ovbk.flightNo;
@@ -275,11 +275,11 @@ const seatsLeft = () => (G.ovbk ? G.ovbk.capacity - G.checkedCount[G.ovbk.flight
 // Asientos que faltan si todos los pasajeros que quedan en la fila (incluido el actual) viajaran
 const projectedShort = () => (G.ovbk ? Math.max(0, (G.pax.length - G.idx) - seatsLeft()) : 0);
 function questionList() {
-  return inOvbk(G.cur) ? [...QUESTIONS, { k: 'volunteer', label: '🙋 ¿Voluntario?', q: '' }] : QUESTIONS;
+  return inOvbk(G.cur) ? [...QUESTIONS, { k: 'volunteer', ic: 'hand-back-right', label: '¿Voluntario?', q: '' }] : QUESTIONS;
 }
 
 function renderChips() {
-  $('#chips').innerHTML = questionList().map((q) => `<button class="chip ${G.act.asked[q.k] ? 'done' : ''}" data-q="${q.k}">${q.label}</button>`).join('');
+  $('#chips').innerHTML = questionList().map((q) => `<button class="chip ${G.act.asked[q.k] ? 'done' : ''}" data-q="${q.k}"><i class="mdi mdi-${q.ic}"></i> ${q.label}</button>`).join('');
   $('#chips').querySelectorAll('.chip').forEach((b) => { b.onclick = () => ask(b.dataset.q); });
 }
 

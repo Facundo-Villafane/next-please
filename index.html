@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/theme.css" />
   <script type="importmap">
@@ -23,8 +24,8 @@
       <div class="stat"><span>En fila</span><b id="tQueue">0</b></div>
       <div class="stat"><span>Puntaje</span><b id="tScore">0</b></div>
       <div class="spacer"></div>
-      <button class="btn ghost" id="btnManual">📘 Manual</button>
-      <button class="btn ghost" id="btnPause">⏸ Pausa</button>
+      <button class="btn ghost" id="btnManual"><i class="mdi mdi-book-open-variant"></i> Manual</button>
+      <button class="btn ghost" id="btnPause"><i class="mdi mdi-pause"></i> Pausa</button>
     </header>
 
     <main id="layout">
@@ -51,19 +52,19 @@
           <span id="dcsInfo">EZE</span>
         </div>
         <nav class="tabs" id="tabs">
-          <button data-tab="ident" class="on">1 · Identificar</button>
-          <button data-tab="pax">2 · Pasajero / APIS</button>
-          <button data-tab="bags">3 · Equipaje</button>
-          <button data-tab="seat">4 · Asientos</button>
-          <button data-tab="timatic">5 · Timatic</button>
-          <button data-tab="ovbk" id="tabOvbk" class="hidden">6 · Sobreventa</button>
+          <button data-tab="ident" class="on"><i class="mdi mdi-magnify"></i> 1 · Identificar</button>
+          <button data-tab="pax"><i class="mdi mdi-passport"></i> 2 · Pasajero / APIS</button>
+          <button data-tab="bags"><i class="mdi mdi-bag-suitcase"></i> 3 · Equipaje</button>
+          <button data-tab="seat"><i class="mdi mdi-seat-passenger"></i> 4 · Asientos</button>
+          <button data-tab="timatic"><i class="mdi mdi-earth"></i> 5 · Timatic</button>
+          <button data-tab="ovbk" id="tabOvbk" class="hidden"><i class="mdi mdi-account-multiple-plus"></i> 6 · Sobreventa</button>
         </nav>
         <div class="pane" id="pane"></div>
         <div class="sysmsg" id="sysmsg">&gt; SISTEMA LISTO</div>
         <div class="decide">
-          <button class="btn ok" id="btnAccept">✔ Aceptar y emitir BP</button>
-          <button class="btn bad" id="btnReject">✖ No aceptar</button>
-          <button class="btn warn" id="btnDerive">↪ Derivar</button>
+          <button class="btn ok" id="btnAccept"><i class="mdi mdi-check-bold"></i> Aceptar y emitir BP</button>
+          <button class="btn bad" id="btnReject"><i class="mdi mdi-close-thick"></i> No aceptar</button>
+          <button class="btn warn" id="btnDerive"><i class="mdi mdi-account-arrow-right"></i> Derivar</button>
         </div>
       </section>
     </main>

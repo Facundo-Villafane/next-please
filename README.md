@@ -153,3 +153,9 @@ y esposado), deportado con escolta y deportado sin escolta (DEPU).
 
 > Las reglas documentarias están simplificadas con fines didácticos. Verificar y ajustar
 > `js/data.js` según la normativa vigente y los procedimientos de la compañía.
+
+## Créditos
+
+- Íconos: [Material Design Icons](https://pictogrammers.com/library/mdi/) (Apache 2.0), cargados desde CDN.
+- 3D: [Three.js](https://threejs.org/) (MIT). Sala online: [PeerJS](https://peerjs.com/) (MIT).
+- Tipografías: Fredoka y Nunito (Google Fonts, OFL).
