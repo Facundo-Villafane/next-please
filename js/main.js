@@ -1,6 +1,6 @@
 // Lógica principal del juego: turno, interfaz del DCS, diálogo y evaluación.
 import { AirportScene } from './scene3d.js';
-import { startBoarding } from './boarding.js';
+import { startBoarding, boardingActive } from './boarding.js';
 import { initCareer, showHome } from './career.js';
 import { initQueue, resetQueue, queueTick, queuePaxDone } from './queue.js';
 import { initEvents, planEvents, maybeEvent, eventsOnPax, eventsSummaryHTML } from './events.js';
@@ -1008,6 +1008,13 @@ function showManual(after) {
     ],
   });
 }
+
+// Si hay un turno en curso, el navegador pregunta antes de actualizar o cerrar la pestaña
+window.addEventListener('beforeunload', (e) => {
+  if (!G.running && !boardingActive()) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
 
 $('#btnManual').onclick = () => showManual();
 $('#btnPause').onclick = () => {

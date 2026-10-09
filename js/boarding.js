@@ -297,6 +297,9 @@ function gateLines(p) {
 }
 
 // La reimpresión requiere sistema conectado y tiempo: hasta el minuto −10
+// Hay un embarque en curso (para avisar antes de cerrar la pestaña)
+export const boardingActive = () => !!B && !B.closed;
+
 export function canReprint() {
   return B.setup.system && !B.closed && B.now < B.at(-10);
 }

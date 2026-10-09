@@ -278,3 +278,8 @@ ul.fb li.bad .pts { color: #c4321a; }
 .bookNav { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .bookNav span { color: #fff; font-family: var(--display); font-weight: 500; text-shadow: 0 2px 0 rgba(0, 0, 0, .35); min-width: 150px; text-align: center; }
 .bookNav .btn .mdi { font-size: 1.4em; }
+.resume { display: flex; align-items: center; gap: 12px; margin: 12px 0 4px; padding: 10px 12px; background: #fff6d6; border: 2px solid var(--edge); border-radius: 16px; box-shadow: 0 3px 0 var(--edge); }
+.resume > div { flex: 1; min-width: 0; }
+.resume b { display: block; font-family: var(--display); font-weight: 600; color: var(--navy2); font-size: 16px; }
+.resume small { color: #5a5030; }
+@media (max-width: 700px) { .resume { flex-wrap: wrap; } }

@@ -11,7 +11,13 @@ evalúa con una explicación, y al final del turno se genera un informe imprimib
 (Marta), **briefing** del vuelo (ocupación, SSR, asientos inoperativos, novedades), **check-in** de ese
 vuelo y **embarque** del mismo vuelo con los pasajeros que aceptaste (si se te pasó alguien en el
 counter, tenés otra oportunidad en la puerta). El Día 1 incluye un tutorial guiado. Los días se
-desbloquean y se puntúan con estrellas. Días configurables en `js/career.js` (`DAYS`):
+desbloquean y se puntúan con estrellas. Días configurables en `js/career.js` (`DAYS`).
+
+**Progreso:** se guarda en el navegador (estrellas por día y un punto de guardado al terminar el counter:
+si se corta antes de la puerta, la lista de días ofrece "Seguir desde la puerta"). Si hay un turno en
+curso, el navegador pregunta antes de actualizar o cerrar la pestaña.
+
+Días:
 
 1. Bienvenida a Aeroplata · São Paulo (un vuelo, tutorial)
 2. Rumbo a Miami · visas, ESTA, katana, asado con hielo seco, tarjetas cruzadas, **sobreventa en el counter** (voluntarios con opción de stand-by que se resuelve en la puerta) y asiento inoperativo

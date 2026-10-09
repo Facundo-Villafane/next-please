@@ -183,6 +183,7 @@ export function showHome() {
 function showDays() {
   const name = studentName() || 'Agente';
   const done = progress()[name] || {};
+  const saved = loadCheckpoint();
   const rows = DAYS.map((d, i) => {
     const locked = i > 0 && !done[DAYS[i - 1].id];
     const stars = done[d.id] ? '★'.repeat(done[d.id]) + '☆'.repeat(3 - done[d.id]) : '';
@@ -193,9 +194,18 @@ function showDays() {
   }).join('');
   api.openModal(`<div class="home"><h1>🧑‍✈️ Tu primer mes en ${AIRLINE.name}</h1>
     <p class="hint">Cada día se desbloquea al terminar el anterior. Las estrellas dependen de tus decisiones y de los errores críticos (pasajeros inadmisibles, valijas sin su pasajero).</p>
+    ${saved ? `<div class="resume"><span class="icoTile y"><i class="mdi mdi-content-save-check"></i></span>
+      <div><b>Tenés el Día ${saved.day} a mitad de camino</b><small>El counter quedó guardado ${fmtAgo(saved.at)}. Podés seguir directo desde el embarque.</small></div>
+      <button class="btn ok" id="dResume">Seguir desde la puerta ▶</button></div>` : ''}
     <div class="days">${rows}</div>
     <div class="row end"><button class="btn ghost" id="dBack">← Volver</button></div></div>`, 'wide');
-  document.querySelectorAll('[data-day]').forEach((b) => { b.onclick = () => startDay(DAYS.find((d) => d.id === +b.dataset.day)); });
+  document.querySelectorAll('[data-day]').forEach((b) => {
+    b.onclick = () => {
+      if (saved && !window.confirm(`Tenés el embarque del Día ${saved.day} pendiente. Si empezás un día nuevo, se descarta. ¿Seguir igual?`)) return;
+      startDay(DAYS.find((d) => d.id === +b.dataset.day));
+    };
+  });
+  if (saved) $('#dResume').onclick = () => resumeDay(saved);
   $('#dBack').onclick = showHome;
 }
 
@@ -271,6 +281,7 @@ const GATE_TIPS = {
 // Un día de trabajo
 // ------------------------------------------------------------------
 function startDay(day) {
+  clearCheckpoint();
   const name = studentName() || 'Agente';
   api.setStudent(name);
   story(day.intro, () => briefing(day), 'Ir al briefing ▶');
@@ -341,13 +352,43 @@ function afterCheckin(day, results, score, queueLog = []) {
   const extra = ck.critical
     ? `Ah, y una cosa: aceptaste ${ck.critical === 1 ? 'a un pasajero que no cumplía' : `a ${ck.critical} pasajeros que no cumplían`} los requisitos. ${toGate < ck.critical ? `Los problemas de documentación no pasan el control de ${ctl}: te van a avisar por radio y vas a tener que bajar su equipaje.` : ''} ${toGate > 0 ? 'Y lo que no es de documentación, en la puerta tenés otra oportunidad de frenarlo.' : ''}`
     : ok === results.length ? '¡Counter perfecto! Ni una decisión mal. Así da gusto.' : `Hiciste ${ok} de ${results.length} decisiones correctas en el counter.`;
-  story([`${msg}`, extra], () => {
-    api.startBoarding({
-      student: studentName() || 'Agente', level: day.gate.level, mode: day.mode, flightNo: gateFlight.no, cases: day.gate.cases, carry, stopped, standby, ovbk: day.gateOvbk || null,
-      onEvent: (ev, B) => gateCoach(day, ev, B),
-      onDone: (gate) => endDay(day, ck, gate),
-    });
-  }, 'Ir a la puerta ▶');
+  // Punto de guardado: si se corta antes de terminar la puerta, el día sigue desde el embarque
+  const cp = { ck, carry, stopped, standby };
+  saveCheckpoint(day.id, cp);
+  story([`${msg}`, extra], () => goGate(day, cp), 'Ir a la puerta ▶');
+}
+
+function goGate(day, cp) {
+  const gateFlight = FLIGHTS.find((f) => f.no === day.flight);
+  api.startBoarding({
+    student: studentName() || 'Agente', level: day.gate.level, mode: day.mode, flightNo: gateFlight.no, cases: day.gate.cases,
+    carry: cp.carry, stopped: cp.stopped, standby: cp.standby, ovbk: day.gateOvbk || null,
+    onEvent: (ev, B) => gateCoach(day, ev, B),
+    onDone: (gate) => endDay(day, cp.ck, gate),
+  });
+}
+
+// ------------------------------------------------------------------
+// Punto de guardado entre el counter y la puerta (en el navegador)
+// Las fechas se guardan como texto ISO y se vuelven a convertir al leer.
+// ------------------------------------------------------------------
+const CP_KEY = 'ckCheckpoint';
+const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+function saveCheckpoint(dayId, cp) {
+  try { localStorage.setItem(CP_KEY, JSON.stringify({ name: studentName() || 'Agente', day: dayId, at: Date.now(), cp })); } catch {}
+}
+function loadCheckpoint() {
+  try {
+    const s = JSON.parse(localStorage.getItem(CP_KEY) || 'null', (k, v) => (typeof v === 'string' && ISO.test(v) ? new Date(v) : v));
+    return s && s.name === (studentName() || 'Agente') && DAYS.some((d) => d.id === s.day) ? s : null;
+  } catch { return null; }
+}
+const clearCheckpoint = () => { try { localStorage.removeItem(CP_KEY); } catch {} };
+
+function resumeDay(saved) {
+  const day = DAYS.find((d) => d.id === saved.day);
+  api.setStudent(studentName() || 'Agente');
+  story([`¡Volviste! Te estaba esperando. El counter del día ${day.id} ya está cerrado: tus pasajeros van camino a la puerta ${FLIGHTS.find((f) => f.no === day.flight).gate}. Seguimos desde el embarque.`], () => goGate(day, saved.cp), 'Ir a la puerta ▶');
 }
 
 function gateCoach(day, ev, B) {
@@ -371,6 +412,7 @@ function endDay(day, ck, gate) {
   const crit = Math.max(0, ck.critical - caught) + gate.critical;
   const stars = pct >= 0.9 && crit === 0 ? 3 : pct >= 0.7 && crit <= 1 ? 2 : 1;
   saveStars(studentName() || 'Agente', day.id, stars);
+  clearCheckpoint();
   const comments = {
     3: ['¡Impecable! Si seguís así, el mes que viene me reemplazás... no, mentira, pero casi.', 'Tres estrellas. Me hiciste quedar bien con la gerencia. Te ganaste un café de la máquina (el bueno).'],
     2: ['Muy bien. Algunos detalles para pulir, pero los pasajeros llegaron a destino y eso es lo importante.', 'Buen día. Repasá las observaciones del informe y mañana sale perfecto.'],
@@ -434,4 +476,14 @@ function crewIntro() {
   const c = teamCrew();
   if (c.length < 2) return '';
   return `Te acompañan <b>${esc(c[0].name)}</b> en el 21 y <b>${esc(c[1].name)}</b> en el 23: la fila es una sola. Tocá sus tarjetas (arriba a la derecha) para ver cómo atienden${c[1].role === 'nuevo' ? `, y si ${esc(c[1].name)} te consulta algo, dale una mano` : ''}.`;
+}
+
+// "hace 5 minutos", "hace 2 horas", "el 08/10"
+function fmtAgo(t) {
+  const m = Math.round((Date.now() - t) / 60000);
+  if (m < 1) return 'recién';
+  if (m < 60) return `hace ${m} min`;
+  if (m < 24 * 60) return `hace ${Math.round(m / 60)} h`;
+  const d = new Date(t);
+  return `el ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
