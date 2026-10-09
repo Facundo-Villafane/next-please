@@ -16,6 +16,9 @@ evalúa con una explicación, y al final del turno se genera un informe imprimib
   la nube, perfil y borrar el progreso. Se guarda en este navegador (`ckSettings`).
 - **Sonido** (`js/sound.js`): sintetizado con Web Audio, sin archivos: llamado de la fila, impresora, cinta,
   escáner, errores del sistema, anuncios, radio, alarma de imprevistos, caja registradora y murmullo de la terminal.
+- **Voces en los anuncios**: síntesis de voz del navegador (gong + castellano + inglés) en embarque, zonas, llamado
+  final, llamados por nombre, voluntarios, demoras y cancelaciones; la PSA ordena el desalojo en voz alta. Voz,
+  velocidad e inglés sí/no en Configuración.
 
 ## Modo Historia
 

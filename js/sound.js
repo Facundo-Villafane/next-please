@@ -2,7 +2,7 @@
 // (llamado, impresora, escáner, error del sistema, anuncios) y ambiente de aeropuerto (murmullo).
 // Volúmenes en Configuración, guardados en este navegador (ckSettings).
 const KEY = 'ckSettings';
-const DEF = { master: 0.8, sfx: 0.8, amb: 0.4, mute: false, bubbles: true, quality: 'high' };
+const DEF = { master: 0.8, sfx: 0.8, amb: 0.4, voice: 0.9, mute: false, voices: true, english: true, voiceEs: '', voiceEn: '', rate: 1, bubbles: true, quality: 'high' };
 let S = { ...DEF };
 try { S = { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch {}
 
@@ -136,3 +136,68 @@ export function ambience(on) {
 
 // Clic suave en todos los botones
 document.addEventListener('click', (e) => { if (e.target.closest?.('.btn, .homeCard, button')) sfx('click'); }, { capture: true });
+
+// ------------------------------------------------------------------
+// Voces de los anuncios (síntesis de voz del navegador): gong + castellano + inglés
+// ------------------------------------------------------------------
+const synth = window.speechSynthesis || null;
+let VOICES = [];
+const loadVoices = () => { VOICES = synth ? synth.getVoices() : []; };
+if (synth) { loadVoices(); synth.addEventListener?.('voiceschanged', loadVoices); }
+// Las voces "naturales" / en línea suenan mucho mejor que las clásicas
+const score = (v, pref) => (pref.indexOf(v.lang) >= 0 ? 40 - pref.indexOf(v.lang) * 4 : v.lang.slice(0, 2) === pref[0].slice(0, 2) ? 10 : -99)
+  + (/natural|online|neural/i.test(v.name) ? 20 : 0) + (/google/i.test(v.name) ? 8 : 0);
+const PREF = { es: ['es-AR', 'es-419', 'es-US', 'es-MX', 'es-CL', 'es-UY', 'es-ES'], en: ['en-US', 'en-GB', 'en-AU', 'en-CA'] };
+export function voicesFor(lang) {
+  if (!VOICES.length) loadVoices();
+  return VOICES.filter((v) => v.lang.slice(0, 2) === lang).sort((a, b) => score(b, PREF[lang]) - score(a, PREF[lang]));
+}
+const pickVoice = (lang) => {
+  const list = voicesFor(lang);
+  return list.find((v) => v.name === S[lang === 'es' ? 'voiceEs' : 'voiceEn']) || list[0] || null;
+};
+export const canSpeak = () => !!synth;
+
+// Texto para leer en voz alta: "AP1250" → "A P 1250", sin etiquetas ni emojis
+function forSpeech(t) {
+  return String(t)
+    .replace(/<[^>]+>/g, '')
+    .replace(/\b([A-Z]{2})(\d{2,4})\b/g, (m, a, n) => `${a.split('').join(' ')} ${n}`)
+    .replace(/\bPSA\b/g, 'P S A')
+    .replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu, '');
+}
+function say(text, lang) {
+  return new Promise((res) => {
+    const u = new SpeechSynthesisUtterance(forSpeech(text));
+    const v = pickVoice(lang);
+    if (v) u.voice = v;
+    u.lang = v?.lang || (lang === 'es' ? 'es-AR' : 'en-US');
+    u.rate = S.rate * (lang === 'es' ? 1 : 0.95);
+    u.pitch = 1;
+    u.volume = Math.min(1, S.master * S.voice);
+    u.onend = u.onerror = () => res();
+    synth.speak(u);
+    setTimeout(res, 30000); // por si el navegador nunca avisa el final
+  });
+}
+let annSeq = 0;
+// Anuncio por altoparlante: corta el anterior, suena el gong y después la voz
+export async function announce(es, en = null) {
+  sfx('pa');
+  if (!synth || S.mute || !S.voices) return;
+  const my = ++annSeq;
+  synth.cancel();
+  await new Promise((r) => setTimeout(r, 1300));
+  if (my !== annSeq) return;
+  await say(es, 'es');
+  if (en && S.english && my === annSeq) { await new Promise((r) => setTimeout(r, 350)); if (my === annSeq) await say(en, 'en'); }
+}
+export function stopVoices() { annSeq++; synth?.cancel(); }
+// Una frase dicha en vivo (sin gong): por ejemplo, la PSA ordenando desalojar
+export function voiceLine(text, lang = 'es') {
+  if (!synth || S.mute || !S.voices) return;
+  annSeq++;
+  synth.cancel();
+  say(text, lang);
+}
+window.addEventListener('pagehide', () => synth?.cancel());

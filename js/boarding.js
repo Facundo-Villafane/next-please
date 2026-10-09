@@ -14,7 +14,7 @@ import { gateLines as gateDialog, gateGreeting, AGENT_EN, paxLang } from './dial
 import { OVBK_POLICY, compForm, gradeComp, compSummary, protectionsFor } from './overbooking.js';
 import { conflictTrigger, runConflict } from './conflict.js';
 import { pauseMenu } from './menu.js';
-import { sfx, ambience, settings } from './sound.js';
+import { sfx, ambience, settings, announce } from './sound.js';
 
 const $ = (s) => document.querySelector(s);
 // Ritmo del reloj según el modo:
@@ -61,6 +61,16 @@ const ANN = {
   final: (F) => `Su atención por favor: llamado final de embarque a pasajeros del vuelo ${F.no} con destino a ${F.city}. Les pedimos embarcar de inmediato por la puerta ${F.gate}.`,
   name: (F, n) => `Pasajero ${n}, le solicitamos embarcar de forma inmediata por la puerta ${F.gate}; de lo contrario su equipaje será removido por razones de seguridad.`,
 };
+// Los mismos anuncios en inglés (en Ezeiza se anuncia en castellano y en inglés)
+const ANN_EN = {
+  pre: (F) => `Good evening. ${AIRLINE.name} informs passengers on flight ${F.no} to ${F.city} that boarding will begin shortly.`,
+  boarding: (F) => `Good evening. ${AIRLINE.name} welcomes passengers on flight ${F.no} to ${F.city}. Boarding will take place at gate ${F.gate}, according to the zone on your boarding pass. We now invite Zone 1: passengers needing special assistance and priority boarding. Please have your boarding pass and ID ready. Thank you!`,
+  zone: (F, z) => `We now invite passengers on flight ${F.no} in Zone ${z} to board.`,
+  final: (F) => `Your attention please: this is the final boarding call for passengers on flight ${F.no} to ${F.city}. Please proceed immediately to gate ${F.gate}.`,
+  name: (F, n) => `Passenger ${n}, please proceed immediately to gate ${F.gate} for boarding; otherwise your baggage will be removed for security reasons.`,
+};
+// "PÉREZ" → "Pérez": los nombres se leen, no se deletrean
+const tc = (s) => String(s).toLowerCase().replace(/(^|[\s'-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
 
 let B, scene, ui, FLIGHT, OTHER_FLIGHT, onEvent;
 
@@ -461,10 +471,11 @@ function radio(msg) {
   sys(`📻 ${msg}`, 'warn');
   if (B.tab === 'radio') renderPane();
 }
-function announceBanner(text) {
+// Cartel del anuncio + voz por altoparlante (en: versión en inglés; spoken: false = sólo el cartel)
+function announceBanner(text, en = null, spoken = text) {
   const el = $('#annBanner');
   el.innerHTML = `<b>📢</b> ${esc(text)}`;
-  sfx('pa');
+  if (spoken) announce(spoken, en); else sfx('pa');
   el.classList.remove('hidden');
   clearTimeout(announceBanner.t);
   announceBanner.t = setTimeout(() => el.classList.add('hidden'), 7000);
@@ -694,7 +705,7 @@ function microphone(id) {
     if (B.now < B.crewReadyAt) first('annNoCrew', false, 'Anunció el embarque sin autorización de la tripulación', 'El TCP informa por radio cuándo la cabina está lista (seguridad, mantenimiento, aseo, meteorología, MEL). Recién ahí se anuncia.', -15);
     if (id === 'boarding' && !B.ann.pre) first('annNoPre', false, 'Faltó el anuncio de preembarque', 'Primero se avisa que el embarque comenzará en breves minutos.', -5);
     B.ann[id] = true;
-    announceBanner(ANN[id](FLIGHT));
+    announceBanner(ANN[id](FLIGHT), ANN_EN[id](FLIGHT));
     if (id === 'boarding' && B.ann.pre && B.now >= B.crewReadyAt) procItem(true, 'Anuncios de preembarque y embarque en orden', '', 10);
     if (id === 'boarding' && B.depa.length) { radio('Escoltas: traslado de detenido listo en la puerta para embarcar primero.'); enqueue(B.depa.splice(0)); }
     advance(PACE.ann);
@@ -703,7 +714,7 @@ function microphone(id) {
   }
   if (id === 'final') {
     B.ann.final = true;
-    announceBanner(ANN.final(FLIGHT));
+    announceBanner(ANN.final(FLIGHT), ANN_EN.final(FLIGHT));
     procItem(true, 'Llamado final', 'Ahora: llamar por nombre a los no presentados con equipaje en bodega (pestaña 3).', 5);
     onEvent('final', B);
     advance(PACE.ann);
@@ -725,7 +736,7 @@ function callZone(z) {
   if (B.ovbk && !B.events.ovbkLate && (B.ovbk.noSeat.length || (B.ovbk.called && B.queue.some((p) => p.kind === 'no_seat')))) { B.events.ovbkLate = true; procItem(false, 'Empezó a embarcar con pasajeros sin asiento sin resolver', 'Con sobreventa en el embarque, los voluntarios se buscan ANTES de empezar a embarcar.', -15); }
   if (z !== B.zone + 1) procItem(false, `Llamó la Zona ${z} fuera de orden`, 'Zona 1 (prioridades) y luego 2, 3 y 4.', -10);
   B.zone = Math.max(B.zone, z);
-  announceBanner(ANN.zone(FLIGHT, z));
+  announceBanner(ANN.zone(FLIGHT, z), ANN_EN.zone(FLIGHT, z));
   scene.boardFlow(5);
   B.boarded += REGULAR[z];
   if (z === 4) { B.binsFull = true; setTimeout(() => radio('TCP: compartimientos superiores completos. Despachar en puerta (Gate Dispatch) el equipaje de mano adicional.'), 600); }
@@ -740,7 +751,7 @@ function callZone(z) {
 function searchVolunteers() {
   const o = B.ovbk;
   o.searches++;
-  announceBanner(`Su atención por favor: el vuelo ${FLIGHT.no} a ${FLIGHT.city} se encuentra completo. Buscamos pasajeros voluntarios para viajar en el próximo vuelo, con una compensación de USD ${o.offer} en voucher de servicios. Acérquense al podio.`);
+  announceBanner(`Su atención por favor: el vuelo ${FLIGHT.no} a ${FLIGHT.city} se encuentra completo. Buscamos pasajeros voluntarios para viajar en el próximo vuelo, con una compensación de USD ${o.offer} en voucher de servicios. Acérquense al podio.`, `Your attention please: flight ${FLIGHT.no} to ${FLIGHT.city} is full. We are looking for volunteers to travel on the next flight, with compensation of ${o.offer} US dollars in a service voucher. Please come to the podium.`);
   advance(PACE.ann);
   let n = 0;
   if (o.authorized && o.poolRaised > 0) { n = o.poolRaised; o.poolRaised = 0; }
@@ -934,7 +945,7 @@ function callHeld() {
     p.lines.greet = p.resolved ? p.lines.returnOk : p.lines.returnBad;
   });
   B.pending = B.pending.filter((x) => !x.held);
-  announceBanner('Pasajeros apartados, por favor acérquense al podio.');
+  announceBanner('Pasajeros apartados, por favor acérquense al podio.', 'Passengers asked to wait, please come to the podium.');
   enqueue(list);
   renderPane();
 }
@@ -1121,7 +1132,7 @@ function standbyBoard(i) {
   x.pax.bp.zone = 4;
   x.pax.docs[0] = { ...x.pax.bp, id: x.pax.docs[0].id };
   x.compWhenFree = standbyFree() + 1;
-  announceBanner(`Pasajero ${x.pax.first.toUpperCase()} ${x.pax.last.toUpperCase()}, en stand-by para el vuelo ${FLIGHT.no}: acérquese a la puerta ${FLIGHT.gate} para su embarque.`);
+  announceBanner(`Pasajero ${x.pax.first.toUpperCase()} ${x.pax.last.toUpperCase()}, en stand-by para el vuelo ${FLIGHT.no}: acérquese a la puerta ${FLIGHT.gate} para su embarque.`, `Stand-by passenger ${tc(x.pax.first)} ${tc(x.pax.last)}, please come to gate ${FLIGHT.gate} for boarding.`, `Pasajero ${tc(x.pax.first)} ${tc(x.pax.last)}, en stand-by para el vuelo ${FLIGHT.no}: acérquese a la puerta ${FLIGHT.gate} para su embarque.`);
   sys(`BOARDING MANUAL · TARJETA IMPRESA ASIENTO ${x.pax.bp.seat}`, 'ok');
   enqueue([x.pax]);
   renderPane();
@@ -1147,7 +1158,7 @@ function standbyComp(i) {
 function callByName(k) {
   const ns = B.noShows.find((n) => keyOf(n) === k);
   B.called.add(k);
-  announceBanner(ANN.name(FLIGHT, `${ns.first.toUpperCase()} ${ns.last.toUpperCase()}`));
+  announceBanner(ANN.name(FLIGHT, `${ns.first.toUpperCase()} ${ns.last.toUpperCase()}`), ANN_EN.name(FLIGHT, `${tc(ns.first)} ${tc(ns.last)}`), ANN.name(FLIGHT, `${tc(ns.first)} ${tc(ns.last)}`));
   advance(PACE.ann);
   if (ns.pax && !ns.sleeper) {
     setTimeout(() => { B.noShows = B.noShows.filter((n) => n !== ns); enqueue([ns.pax]); }, 2500);
@@ -1160,7 +1171,7 @@ function walkRoom(k) {
   const ns = B.noShows.find((n) => keyOf(n) === k);
   ns.found = true;
   advance(2);
-  announceBanner(`Encontraste a ${ns.first} ${ns.last} dormido en la fila 3 de asientos, abrazado a su mochila. 😴`);
+  announceBanner(`Encontraste a ${ns.first} ${ns.last} dormido en la fila 3 de asientos, abrazado a su mochila. 😴`, null, false);
   setTimeout(() => { B.noShows = B.noShows.filter((n) => n !== ns); enqueue([ns.pax]); }, 1800);
   renderPane();
 }
