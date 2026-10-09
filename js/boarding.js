@@ -427,6 +427,7 @@ function buildUI() {
   if (!$('#toast')) document.body.insertAdjacentHTML('beforeend', '<div id="toast" class="toast hidden"></div>');
   if (!$('#annBanner')) $('#view3d').insertAdjacentHTML('beforeend', '<div id="annBanner" class="annBanner hidden"></div>');
   $('#btnPause').onclick = () => {
+    if (ui.modalOpen()) return;
     B.paused = true;
     ui.openModal('<div class="pause"><h1>⏸ Pausa</h1><p>El reloj está detenido.</p><button class="btn ok big" id="resume">Continuar</button></div>');
     $('#resume').onclick = () => { ui.closeModal(); B.paused = false; };
@@ -1283,4 +1284,28 @@ function gateBubbles(dt) {
   else if (B.zone === 0 && B.now >= B.at(-40)) lv = 1;
   gateBubbleIn = lv >= 2 ? 2 + Math.random() * 2 : lv === 1 ? 3.5 + Math.random() * 3 : 5 + Math.random() * 5;
   scene.queueBubble?.(...bubbleFor(lv));
+}
+
+// "Preguntale a Viviana" en la puerta: el próximo paso del procedimiento (nunca la decisión)
+export function gateHint() {
+  const cost = B.mode === 'challenge' && !B.closed ? 5 : 0;
+  if (cost) { B.score -= cost; updateTop(); }
+  const s = B.setup;
+  const keyOf2 = (r) => `${r.last}/${r.first}`;
+  let text;
+  if (B.closed) text = 'El vuelo ya está cerrado. Ahora se mira el informe y se aprende. Yo me voy a tomar un café que no voy a terminar.';
+  else if (!s.system || s.materials === null || !s.layout || s.pmr === null) text = 'Pestaña <b>1 · Apertura</b>: sistema, materiales, layout de zonas y requerimientos especiales (PMR). Las cuatro. No tres.';
+  else if (B.ovbk?.noSeat.length && !B.ovbk.called && B.zone === 0) text = 'Hay pasajeros <b>sin asiento</b>: antes de embarcar, buscá <b>voluntarios</b> (pestaña 2). Si nadie se ofrece, pedile al gerente un aumento. Si no alcanza, DNBD con protección.';
+  else if (!B.ann.pre) text = 'Micrófono, en orden: primero el anuncio de <b>preembarque</b>. Pestaña 2.';
+  else if (!B.crewAnnounced) text = 'Esperá que la <b>tripulación autorice</b> por radio. Sin el OK del TCP no embarca nadie, aunque la sala te mire feo.';
+  else if (!B.ann.boarding) text = 'La tripulación autorizó: ahora el anuncio de <b>embarque</b> (bienvenida, puerta y orden de zonas).';
+  else if (B.cur && !B.act?.scanned && !B.cur.noBp) text = '<b>Escaneá la tarjeta</b> antes que nada. El embarque se hace por sistema. Siempre.';
+  else if (B.cur) text = 'Compará <b>tarjeta y documento</b>: nombre, foto, vuelo, fecha, zona y asiento. Si viene por web check-in, verificá sus papeles. Si algo no cierra, se aparta o no embarca: eso lo decidís vos.';
+  else if (B.zone < 4 && !B.queue.length) text = `Llamá la <b>Zona ${B.zone + 1}</b>. En orden: 1 (prioridades), 2, 3 y 4.`;
+  else if (B.zone >= 4 && !B.ann.final && !B.queue.length) text = 'Ya llamaste las cuatro zonas: falta el <b>llamado final</b>.';
+  else if (B.ann.final && pendingList().some((r) => r.noShow && r.bags > 0 && !B.called.has(keyOf2(r)))) text = 'Pestaña <b>3</b>: llamá <b>por nombre</b> a los que faltan y tienen valija. ¿No aparecen? Recorré la sala. Siempre hay uno dormido.';
+  else if (B.now >= B.at(-15) && pendingList().some((r) => r.bags > 0 && !B.searched.has(keyOf2(r)))) text = 'Minuto <b>−15</b>: búsqueda de equipaje de los que no embarcan y <b>des-chequeo</b>. El avión no vuela con valijas sin su pasajero.';
+  else if (B.ann.final) text = 'Si no queda nadie por embarcar ni equipaje por bajar, <b>cerrá el vuelo por sistema</b>, idealmente antes del −5. El comandante no espera, y me llama a mí.';
+  else text = 'Seguí embarcando, en orden. Y mirá el reloj, que yo ya lo estoy mirando.';
+  return { text, cost };
 }

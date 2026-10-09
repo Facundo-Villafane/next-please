@@ -1,6 +1,7 @@
 // Lógica principal del juego: turno, interfaz del DCS, diálogo y evaluación.
 import { AirportScene } from './scene3d.js';
-import { startBoarding, boardingActive, resumeBoarding } from './boarding.js';
+import { startBoarding, boardingActive, resumeBoarding, gateHint } from './boarding.js';
+import { vivSay, HINT_COST, resetHints } from './hints.js';
 import { initCareer, showHome } from './career.js';
 import { initQueue, resetQueue, queueTick, queuePaxDone } from './queue.js';
 import { initEvents, planEvents, maybeEvent, eventsOnPax, eventsSummaryHTML } from './events.js';
@@ -67,11 +68,12 @@ function updateTop() {
 // ------------------------------------------------------------------
 const modalOpen = () => !$('#modal').classList.contains('hidden');
 function openModal(html, cls = '') {
+  document.body.classList.add('modalUp');
   $('#modalBox').className = `modalBox ${cls}`;
   $('#modalBox').innerHTML = html;
   $('#modal').classList.remove('hidden');
 }
-function closeModal() { $('#modal').classList.add('hidden'); }
+function closeModal() { $('#modal').classList.add('hidden'); document.body.classList.remove('modalUp'); }
 $('#modal').addEventListener('click', (e) => {
   if (e.target.id === 'modal' && $('#modalBox').classList.contains('dismissable')) closeModal();
 });
@@ -155,6 +157,7 @@ function startShift(opts = {}) {
   G.onEnd = opts.onEnd || null;
   G.career = opts.career || null;
   G.saveTag = opts.saveTag || null;
+  resetHints();
   $('.brand span').textContent = `Check-in · EZE · ${G.mode === 'challenge' ? '⏱ Desafío' : '📘 Aprendizaje'}`;
   const today = dayOnly(new Date());
   G.now = timeToday(today, opts.start || SHIFT_START);
@@ -1019,6 +1022,45 @@ function showManual(after) {
   });
 }
 
+// ------------------------------------------------------------------
+// "Preguntale a Viviana" en el counter: el próximo paso del procedimiento (nunca la decisión)
+// ------------------------------------------------------------------
+function counterHint() {
+  const p = G.cur, a = G.act;
+  if (!G.running) return 'No estás atendiendo a nadie. Si querés charlar, pedí turno con Recursos Humanos.';
+  if (!p || $('#dialog').classList.contains('hidden')) return 'Esperá a que el pasajero llegue al mostrador. Sí, se puede esperar sin hacer nada. Disfrutalo, dura poco.';
+  if (a.manual && !a.bookingLoaded) return 'Sin sistema, se trabaja en papel: buscá al pasajero en la <b>lista impresa</b> (pestaña 1) por apellido y nombre, controlá vuelo y boleto, y tildalo.';
+  if (!a.docsRequested) return 'Empezá por el principio: saludo y <b>documento de viaje y reserva</b>. El botón del pasaporte, abajo.';
+  if (!a.docViewed) return 'Los documentos no se leen solos: hacé clic en cada uno. <b>Foto contra cara, nombre, vencimiento</b>. Con atención, no de reojo.';
+  if (!a.bookingLoaded) return 'Pestaña <b>1 · Identificar</b>: buscá la reserva por código o apellido. Fijate que sea el pasajero, el <b>vuelo</b>, la <b>fecha de hoy</b> y el <b>boleto emitido</b>.';
+  if (inOvbk(p) && !a.offered) return 'Vuelo en <b>sobreventa</b>: ¿le preguntaste si quiere ser voluntario? Botón 🙋. Si acepta, en la pestaña <b>6</b> está la protección, la compensación según la matriz y los servicios. El manual tiene el capítulo, por si tu memoria es como la de Ventas.';
+  if (a.manual && !a.apiManual) return 'En manual no hay APIS: copiá el documento en la <b>planilla API manual</b> (pestaña 2). Letra clara, que después la tengo que leer yo.';
+  if (!a.manual && !a.apis) return 'Pestaña <b>2 · APIS</b>: leé el documento con el que <b>viaja</b> y enviá. Y leé la respuesta, que para algo está.';
+  if (p.party && !a.asked.minor) return 'Viaja una familia: preguntá <b>quién viaja con quién</b> y revisá los papeles de cada chico, uno por uno. Partida de nacimiento, autorizaciones, a qué destino. Leé todo.';
+  if (!a.asked.visa) return '¿Revisaste los requisitos del destino? Preguntale por la visa o autorización y, si dudás, <b>Timatic</b> (pestaña 5). No se adivina.';
+  if (!a.asked.bags) return 'Preguntale si <b>despacha equipaje</b>. Las valijas no se suben solas a la balanza. Ojalá.';
+  if (!a.asked.security) return 'La <b>cartilla de mercancías peligrosas</b>. Siempre. Aunque te jure por su madre que lleva solo ropa.';
+  if (p.pet && !a.pet) return 'Hay una <b>mascota en cabina</b> sin resolver (pestaña 3): especie, peso con transportín (8 kg), medidas. Está en el manual, capítulo de mascotas.';
+  if (p.firearm && !a.firearm) return 'Declaró un <b>arma de fuego</b>: gestionala en la pestaña 3. Documento ORIGINAL, estuche rígido, retenido. No me hagas llamar a la PSA por un trámite.';
+  if (p.avih && !a.avih) return 'Hay una <b>mascota en bodega</b> sin resolver (pestaña 3): raza, canil, peso. Los braquicéfalos no vuelan en bodega. Leé bien.';
+  if (p.sword && !a.retained) return 'Esa katana no va en la mano de nadie: gestionala como <b>retenido</b> (pestaña 3).';
+  if (p.dryIce && !a.dryIceFixed) return 'El <b>hielo seco</b> es mercancía peligrosa: hay un límite. Pestaña 3.';
+  if (a.dgRevealed && !a.dgRemoved) return 'Apareció una <b>mercancía peligrosa</b> en la valija: hay que retirarla antes de despachar (pestaña 3).';
+  if (p.party?.hasInfant && !a.stroller) return 'El <b>cochecito</b> del bebé: ¿se despacha acá o se entrega en la puerta? Pestaña 3.';
+  if (a.bags.some((b) => !b.tagged)) return 'Pestaña <b>3 · Equipaje</b>: inspección 360° de cada valija, y <b>etiquetá solo si el pasajero viaja</b>. Los excesos se cobran: no somos una ONG.';
+  if (!a.asked.valuables) return '¿Le preguntaste por <b>artículos de valor</b>? Después reclaman la notebook y me llaman a mí.';
+  if (!p.party && !a.seat) return 'Pestaña <b>4 · Asientos</b>: preguntale su preferencia. Y la salida de emergencia, solo a quien cumple los requisitos.';
+  return 'Ya tenés todo para decidir. <b>Aceptar, no aceptar o derivar</b>: eso no te lo voy a decir yo. Repasá documentos, requisitos del destino y lo que viste en la atención.';
+}
+$('#btnViv').onclick = () => {
+  if (boardingActive()) { const h = gateHint(); vivSay(h.text, h.cost); updateTop(); return; }
+  const cost = G.running && G.mode === 'challenge' ? HINT_COST : 0;
+  const text = counterHint();
+  if (cost && G.cur) { G.score -= cost; (G.queueLog = G.queueLog || []).push({ type: 'pts', n: -cost, why: 'Le preguntó a Viviana' }); }
+  vivSay(text, G.cur ? cost : 0);
+  updateTop();
+};
+
 // Si hay un turno en curso, el navegador pregunta antes de actualizar o cerrar la pestaña
 window.addEventListener('beforeunload', (e) => {
   if (!G.running && !boardingActive()) return;
@@ -1028,7 +1070,7 @@ window.addEventListener('beforeunload', (e) => {
 
 $('#btnManual').onclick = () => showManual();
 $('#btnPause').onclick = () => {
-  if (!G.running) return;
+  if (!G.running || modalOpen()) return;
   G.paused = true;
   openModal('<div class="pause"><h1>⏸ Pausa</h1><p>El reloj del turno está detenido.</p><button class="btn ok big" id="resume">Continuar</button></div>');
   $('#resume').onclick = () => { closeModal(); G.paused = false; };
@@ -1072,6 +1114,7 @@ function resumeShift(saved, opts) {
   G.onEnd = opts.onEnd || null;
   G.career = null;
   G.saveTag = opts.saveTag || null;
+  resetHints();
   G.level = s.level; G.mode = s.mode;
   $('.brand span').textContent = `Check-in · EZE · ${G.mode === 'challenge' ? '⏱ Desafío' : '📘 Aprendizaje'}`;
   Object.assign(G, { now: s.now, flights: s.flights, deck: s.deck, pax: s.pax, idx: s.idx, results: s.results, score: s.score, checkedCount: s.checkedCount, ovbk: s.ovbk, cancelled: [], lastBoardMinute: -1 });

@@ -7,7 +7,7 @@ const FLIP_MS = 650;
 
 // opts: { id, title, subtitle, chapters: [{ icon, title, html }], openModal, closeModal, onClose }
 export function openBook(opts) {
-  const { id, title, subtitle, chapters, openModal, closeModal, onClose } = opts;
+  const { id, title, subtitle, chapters, onClose } = opts;
   // Páginas: 0 = tapa, 1 = índice, 2.. = capítulos (y una contratapa si hace falta para cerrar la doble página)
   const pages = [
     { cover: true },
@@ -43,7 +43,9 @@ export function openBook(opts) {
       </div>`;
   };
 
-  openModal(`<div class="book ${single() ? 'single' : ''}">
+  // Capa propia, por encima de cualquier ventana abierta: al cerrar el manual se vuelve a lo que se estaba haciendo
+  document.querySelector('#bookLayer')?.remove();
+  document.body.insertAdjacentHTML('beforeend', `<div id="bookLayer" class="bookLayer"><div class="book ${single() ? 'single' : ''}">
       <div class="spread" id="bkSpread">
         <div class="page left" id="bkL"></div>
         <div class="page right" id="bkR"></div>
@@ -56,7 +58,7 @@ export function openBook(opts) {
         <button class="btn sm ghost" id="bkNext" title="Página siguiente (→)"><i class="mdi mdi-chevron-right"></i></button>
         <button class="btn sm ok" id="bkClose"><i class="mdi mdi-check-bold"></i> Entendido</button>
       </div>
-    </div>`, 'bookBox');
+    </div></div>`);
 
   const step = () => (single() ? 1 : 2);
   const norm = (i) => (single() ? i : i - (i % 2));
@@ -121,7 +123,7 @@ export function openBook(opts) {
 
   const close = () => {
     document.removeEventListener('keydown', onKey);
-    closeModal();
+    document.querySelector('#bookLayer')?.remove();
     onClose?.();
   };
   const onKey = (e) => {
