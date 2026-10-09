@@ -91,7 +91,6 @@ function showPractice() {
       <p class="lead">Sos agente de check-in. Atendé a cada pasajero: verificá su documentación y requisitos de ingreso,
       identificá la reserva en el sistema, cargá APIS, despachá el equipaje, asigná asiento y decidí si
       <b>acepta</b>, <b>no acepta</b> o <b>derivás</b>. Cada decisión se evalúa con una explicación.</p>
-      <label>Nombre del alumno/a<input id="stName" maxlength="40" placeholder="Ej.: Lucía Pérez" value="${esc(localStorage.getItem('ckName') || '')}"></label>
       <label>Puesto de trabajo
         <select id="stMode">
           <option value="checkin">Counter de check-in</option>
@@ -133,8 +132,7 @@ function showPractice() {
   try { if (localStorage.getItem('ckTeam') === 'off') $('#stTeam').value = 'off'; } catch {}
   try { if (localStorage.getItem('ckEvents') === 'off') $('#stEvents').value = 'off'; } catch {}
   $('#stGo').onclick = () => {
-    G.student = $('#stName').value.trim() || 'Agente';
-    try { localStorage.setItem('ckName', G.student); } catch {}
+    G.student = getPlayer().name || 'Agente';
     G.level = $('#stLevel').value;
     G.mode = $('#stPace').value;
     G.teamPref = $('#stTeam').value === 'on';

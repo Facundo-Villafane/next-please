@@ -295,3 +295,23 @@ h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: .01e
 .cfmIco.warn { background: linear-gradient(#ffe169, var(--accent)); color: var(--navy2); }
 .cfmIco.bad { background: linear-gradient(#ff8a4c, var(--bad)); }
 .cfmBtns { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 18px 16px; }
+
+/* Inicio: barra del perfil y perfil del agente */
+.profileBar { display: flex; align-items: center; gap: 12px; margin: 4px 0 14px; padding: 8px 12px; background: #fff; border: 2px solid #c6d3e4; border-radius: 16px; box-shadow: 0 3px 0 #c6d3e4; }
+.profileBar svg { border-radius: 50%; border: 3px solid var(--accent); flex: none; }
+.profileBar > div { flex: 1; min-width: 0; }
+.profileBar small { display: block; color: var(--muted); font-weight: 700; }
+.profileBar b { display: block; font-family: var(--display); font-weight: 600; font-size: 20px; color: var(--navy2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profile { max-width: 560px; margin: 0 auto; }
+.profile .startHero h1 { font-size: 24px; margin: 4px 0 2px; }
+.pfStep { display: flex; gap: 12px; align-items: flex-start; margin: 14px 0; }
+.pfNum { flex: none; display: grid; place-items: center; width: 32px; height: 32px; margin-top: 18px; border-radius: 50%; font-family: var(--display); font-weight: 700; color: var(--navy2); background: linear-gradient(#ffe169, var(--accent)); border: 2px solid var(--edge); box-shadow: 0 2px 0 var(--edge); }
+.pfStep > label, .pfStep > .gPick { flex: 1; margin: 0; }
+.profile .gPick > span { font-family: var(--display); font-weight: 500; font-size: 13px; color: var(--navy); margin-bottom: 6px; }
+.profile .gOpts { gap: 12px; }
+.profile .gBtn { padding: 10px 8px; }
+.pfPreview { display: flex; gap: 10px; align-items: center; background: #fff6d6; border: 2px solid var(--accent); border-radius: 14px; padding: 8px 12px; margin: 6px 0 0 44px; animation: pop .2s ease-out; }
+.pfPreview svg { border-radius: 50%; flex: none; }
+.pfPreview p { margin: 0; line-height: 1.4; }
+.pfPreview b { color: var(--navy2); }
+@media (max-width: 560px) { .pfPreview { margin-left: 0; } .profileBar .btn { padding: 4px 8px; } }

@@ -138,47 +138,95 @@ function saveStars(name, day, stars) {
 const studentName = () => { try { return localStorage.getItem('ckName') || ''; } catch { return ''; } };
 
 export function showHome() {
+  const pl = getPlayer();
+  // La primera vez (o si falta algo), se pide el perfil; después se recuerda
+  if (!pl.name || !pl.gender) { showProfile({ first: true }); return; }
+  api.setStudent(pl.name);
   api.openModal(`
     <div class="start home">
       <div class="startHero">
         <img src="assets/logo-512.png" alt="Next, please!" class="heroLogo" />
         <p>Simulador de atención al pasajero · Check-in y embarque en Ezeiza con ${AIRLINE.name}</p>
       </div>
-      <div class="who">
-        <label>Tu nombre<input id="hName" maxlength="40" placeholder="Ej.: Lucía Pérez" value="${esc(studentName())}"></label>
-        <div class="gPick"><span>¿Cómo querés que te traten?</span>
-          <div class="gOpts">
-            <button class="gBtn ${getPlayer().gender === 'F' ? 'on' : ''}" data-g="F">${api.faceSVG(playerFace('F'), { w: 64, h: 80, bg: '#dce7f0' })}<b>Agente mujer</b><small>"Bienvenida, compañera"</small></button>
-            <button class="gBtn ${getPlayer().gender === 'M' ? 'on' : ''}" data-g="M">${api.faceSVG(playerFace('M'), { w: 64, h: 80, bg: '#dce7f0' })}<b>Agente hombre</b><small>"Bienvenido, compañero"</small></button>
-          </div>
-        </div>
+      <div class="profileBar">
+        ${api.faceSVG(playerFace(), { w: 52, h: 65, bg: '#dce7f0' })}
+        <div><small>${esc(gtxt('¡Bienvenido/a de nuevo!'))}</small><b>${esc(pl.name)}</b></div>
+        <button class="btn sm ghost" id="hEdit"><i class="mdi mdi-pencil"></i> Editar perfil</button>
       </div>
-      <p class="hint err hidden" id="hWarn">Elegí tu nombre y cómo querés que te traten para empezar.</p>
       <div class="homeGrid">
-        <button class="homeCard" id="hStory"><span class="icoTile y"><i class="mdi mdi-airplane-takeoff"></i></span><h2>Modo Historia</h2><p id="hStoryTxt">${gtxt('Sos agente recién ingresado/a. Briefing, counter y puerta de embarque, día a día, con tu supervisora.')}</p></button>
+        <button class="homeCard" id="hStory"><span class="icoTile y"><i class="mdi mdi-airplane-takeoff"></i></span><h2>Modo Historia</h2><p>${gtxt('Sos agente recién ingresado/a. Briefing, counter y puerta de embarque, día a día, con tu supervisora.')}</p></button>
         <button class="homeCard" id="hPractice"><span class="icoTile b"><i class="mdi mdi-bullseye-arrow"></i></span><h2>Práctica libre</h2><p>Elegí puesto (counter o puerta), nivel y modo (aprendizaje o desafío contra reloj).</p></button>
         <button class="homeCard" id="hOnline"><span class="icoTile o"><i class="mdi mdi-account-group"></i></span><h2>Jugar en sala</h2><p>Con hasta dos compañeros en línea: cada uno en su mostrador, misma fila y mismos vuelos.</p></button>
       </div>
       <p class="disclaimer">Las reglas documentarias están simplificadas con fines didácticos. En la operación real siempre se consulta Timatic y los procedimientos vigentes de la compañía.</p>
     </div>`, 'wide');
-  let gender = getPlayer().gender;
+  $('#hEdit').onclick = () => showProfile({ first: false });
+  $('#hStory').onclick = showDays;
+  $('#hPractice').onclick = () => { api.closeModal(); api.showPractice(); };
+  $('#hOnline').onclick = () => api.showOnline();
+}
+
+// Perfil del agente: nombre y trato. La primera vez es una bienvenida; después, "Editar perfil".
+function showProfile({ first }) {
+  const pl = getPlayer();
+  let gender = pl.gender;
+  const opt = (g, label, hello) => `<button class="gBtn ${gender === g ? 'on' : ''}" data-g="${g}">${api.faceSVG(playerFace(g), { w: 64, h: 80, bg: '#dce7f0' })}<b>${label}</b><small>"${hello}"</small></button>`;
+  api.openModal(`
+    <div class="start home profile">
+      ${first
+        ? `<div class="startHero"><img src="assets/logo-512.png" alt="Next, please!" class="heroLogo sm" /><h1>¡Bienvenida/o a bordo!</h1><p>Antes de tu primer turno, contanos quién sos.</p></div>`
+        : '<h1>Tu perfil</h1>'}
+      <div class="pfStep"><span class="pfNum">1</span>
+        <label>¿Cómo te llamás?<input id="hName" maxlength="40" placeholder="Ej.: Lucía Pérez" value="${esc(pl.name)}" autocomplete="given-name"></label>
+      </div>
+      <div class="pfStep"><span class="pfNum">2</span>
+        <div class="gPick"><span>¿Cómo querés que te traten?</span>
+          <div class="gOpts">${opt('F', 'Agente mujer', 'Bienvenida, compañera')}${opt('M', 'Agente hombre', 'Bienvenido, compañero')}</div>
+        </div>
+      </div>
+      <div class="pfPreview" id="pfPrev"></div>
+      <p class="hint err hidden" id="hWarn">Escribí tu nombre y elegí cómo querés que te traten.</p>
+      <div class="row end gap">${first ? '' : '<button class="btn ghost" id="pfCancel">Cancelar</button>'}<button class="btn ok big" id="pfSave">${first ? '¡Empezar! ▶' : 'Guardar'}</button></div>
+    </div>`, 'wide');
+  const preview = () => {
+    const n = $('#hName').value.trim();
+    $('#pfPrev').innerHTML = n && gender
+      ? `${api.faceSVG(MARTA.face, { w: 40, h: 50, bg: '#dce7f0' })}<p><b>${MARTA.name}:</b> ${esc(gtxt(`¡Bienvenido/a a ${AIRLINE.name}, ${n}! Vas a estar en el mostrador 22, conmigo cerca.`, gender))}</p>`
+      : '';
+    $('#pfPrev').classList.toggle('hidden', !(n && gender));
+  };
   document.querySelectorAll('.gBtn').forEach((b) => {
     b.onclick = () => {
       gender = b.dataset.g;
       document.querySelectorAll('.gBtn').forEach((x) => x.classList.toggle('on', x === b));
-      $('#hStoryTxt').textContent = gtxt('Sos agente recién ingresado/a. Briefing, counter y puerta de embarque, día a día, con tu supervisora.', gender);
+      preview();
     };
   });
-  const saveName = () => {
+  $('#hName').oninput = preview;
+  $('#hName').onkeydown = (e) => { if (e.key === 'Enter') $('#pfSave').click(); };
+  preview();
+  if (!pl.name) $('#hName').focus();
+  if (!first) $('#pfCancel').onclick = showHome;
+  $('#pfSave').onclick = () => {
     const n = $('#hName').value.trim();
-    if (!n || !gender) { $('#hWarn').classList.remove('hidden'); if (!n) $('#hName').focus(); return null; }
+    if (!n || !gender) { $('#hWarn').classList.remove('hidden'); if (!n) $('#hName').focus(); return; }
+    if (pl.name && pl.name !== n) renameProgress(pl.name, n);
     setPlayer(n, gender);
     api.setStudent(n);
-    return n;
+    showHome();
   };
-  $('#hStory').onclick = () => { if (saveName()) showDays(); };
-  $('#hPractice').onclick = () => { if (saveName()) { api.closeModal(); api.showPractice(); } };
-  $('#hOnline').onclick = () => { if (saveName()) api.showOnline(); };
+}
+
+// Las estrellas y lo guardado van por nombre: al cambiarlo, el progreso se muda al nombre nuevo
+function renameProgress(from, to) {
+  try {
+    const p = progress();
+    if (p[from] && !p[to]) { p[to] = p[from]; delete p[from]; localStorage.setItem('ckCareer', JSON.stringify(p)); }
+    ['ckShift', 'ckGate', 'ckCheckpoint'].forEach((k) => {
+      const s = JSON.parse(localStorage.getItem(k) || 'null');
+      if (s && s.name === from) { s.name = to; localStorage.setItem(k, JSON.stringify(s)); }
+    });
+  } catch {}
 }
 
 function showDays() {
