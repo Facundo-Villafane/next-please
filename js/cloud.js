@@ -147,7 +147,8 @@ function chooseCopy(local, cloud) {
     api.openModal(`<div class="home"><h1>☁ ¿Qué progreso conservás?</h1>
       <p class="lead">Tu cuenta ya tiene un progreso guardado en la nube, y en esta compu hay otro distinto. Elegí con cuál seguir: <b>el otro se reemplaza</b>.</p>
       <div class="homeGrid">${card('ccCloud', 'El de la nube', cloud)}${card('ccLocal', 'El de esta compu', local)}</div></div>`, 'wide');
-    $('#ccCloud').onclick = () => { applyLocal(cloud); api.closeModal(); resolve(); };
+    // Con la copia de la nube recargamos: así nombre, perfil y partidas arrancan con esos datos
+    $('#ccCloud').onclick = () => { applyLocal(cloud); rawSet.call(localStorage, OWNER, user.uid); location.reload(); };
     $('#ccLocal').onclick = async () => { await push(); api.closeModal(); resolve(); };
   });
 }

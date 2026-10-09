@@ -1177,7 +1177,11 @@ initOnline({ openModal, closeModal, showHome, startOnline, toast });
 initCloud({
   openModal, closeModal, showHome, toast, confirm: askConfirm,
   // Si cambió lo guardado (vino de la nube) y estás en el inicio, se redibuja
-  refresh: () => { if (!G.running && !boardingActive() && document.querySelector('#modalBox .profileBar, #modalBox .profile')) showHome(); },
+  refresh: () => {
+    if (G.running || boardingActive()) return;
+    const empty = document.querySelector('#modal')?.classList.contains('hidden');
+    if (empty || document.querySelector('#modalBox .profileBar, #modalBox .profile')) showHome();
+  },
 });
 // Carrera (modo sin fin)
 initEndless({
