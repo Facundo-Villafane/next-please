@@ -106,15 +106,15 @@ h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: .01e
 .gBtn b { font-family: var(--display); font-weight: 600; color: var(--navy2); }
 .gBtn.on { background: #fff6d6; border-color: var(--edge); box-shadow: 0 3px 0 var(--edge), 0 0 0 3px var(--accent); }
 .gBtn:hover { border-color: var(--navy); }
-.day, .story .says, .kpis div, .balance div, .revCard, .newsItem, .cfSum, .cfNote, .inspectBox, .rSeat, .checks label, .reasons label, .kit label {
+.modalBox :is(.day, .story .says, .kpis div, .balance div, .revCard, .newsItem, .cfSum, .cfNote, .inspectBox, .rSeat, .checks label, .reasons label, .kit label) {
   background: #fff; border-color: #c6d3e4;
 }
 .day { border: 2px solid #c6d3e4; border-radius: 14px; box-shadow: 0 3px 0 #c6d3e4; }
 .day .num { color: var(--navy); font-family: var(--display); }
 .day .stars, .sumStars { color: #f5b400; text-shadow: 0 2px 0 #c98a00; }
-.brief div { background: #fff; border: 2px solid #c6d3e4; }
-.brief b.err { color: #c4321a; } .brief b.warn { color: #a86a00; }
-.reasons label:has(input:checked), .checks label:has(input:checked) { background: #fff6d6; border-color: var(--edge); }
+.modalBox .brief div { background: #fff; border: 2px solid #c6d3e4; }
+.modalBox .brief b.err { color: #c4321a; } .modalBox .brief b.warn { color: #a86a00; }
+.modalBox :is(.reasons, .checks) label:has(input:checked) { background: #fff6d6; border-color: var(--edge); }
 .story .who svg { border-color: var(--accent); }
 
 /* Resultado de cada pasajero */
@@ -122,16 +122,16 @@ h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: .01e
 .fbHead.ok { background: #dff6e7; border-color: #22a259; color: #10512b; }
 .fbHead.bad { background: #fde6dd; border-color: #e8501c; color: #8a2410; }
 .fbHead h2 { color: inherit; }
-ul.fb li { background: #fff; border: 1px solid #dbe3ee; border-left-width: 5px; }
-ul.fb li p { color: #4a5a72; }
-ul.fb li.ok .pts { color: #1e8a48; }
-ul.fb li.bad .pts { color: #c4321a; }
+.modalBox ul.fb li { background: #fff; border: 1px solid #dbe3ee; border-left-width: 5px; }
+.modalBox ul.fb li p { color: #4a5a72; }
+.modalBox ul.fb li.ok .pts { color: #1e8a48; }
+.modalBox ul.fb li.bad .pts { color: #c4321a; }
 .grid th { color: var(--muted); }
 .modalBox .grid td { border-color: #e1e8f2; }
 .grid.rep tr.bad td { background: #fdeee8; }
 .endTabs button { font-family: var(--display); font-weight: 500; }
 .endTabs button.on { color: var(--navy2); border-color: var(--accent); }
-.newsItem p, .rvBody ul, .cfNote { color: #4a5a72; }
+.modalBox :is(.newsItem p, .rvBody ul, .cfNote) { color: #4a5a72; }
 .balance .err { color: #c4321a; } .balance .okc { color: #1e8a48; }
 
 /* Pasajero difícil */
@@ -283,3 +283,15 @@ ul.fb li.bad .pts { color: #c4321a; }
 .resume b { display: block; font-family: var(--display); font-weight: 600; color: var(--navy2); font-size: 16px; }
 .resume small { color: #5a5030; }
 @media (max-width: 700px) { .resume { flex-wrap: wrap; } }
+
+/* Ventana de confirmación (reemplaza al cartel nativo del navegador) */
+.cfm { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px; background: rgba(14, 36, 76, .5); animation: cfmFade .15s ease-out; }
+@keyframes cfmFade { from { opacity: 0; } }
+.cfmBox { width: min(440px, 100%); background: var(--panel); border: 3px solid var(--edge); border-radius: 18px; box-shadow: 0 6px 0 var(--edge), 0 24px 60px rgba(10, 30, 70, .45); overflow: hidden; animation: pop .2s ease-out; }
+.cfmHead { display: flex; align-items: center; gap: 8px; padding: 9px 16px; background: linear-gradient(#2159b3, var(--navy) 60%, #153e80); color: #fff; font-family: var(--display); font-weight: 600; font-size: 17px; border-bottom: 3px solid var(--edge); }
+.cfmBody { display: flex; gap: 12px; align-items: center; padding: 16px 18px 6px; }
+.cfmBody p { margin: 0; font-weight: 600; color: var(--text); line-height: 1.45; }
+.cfmIco { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; font-size: 26px; color: #fff; border: 2px solid var(--edge); }
+.cfmIco.warn { background: linear-gradient(#ffe169, var(--accent)); color: var(--navy2); }
+.cfmIco.bad { background: linear-gradient(#ff8a4c, var(--bad)); }
+.cfmBtns { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 18px 16px; }

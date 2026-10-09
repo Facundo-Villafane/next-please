@@ -5,6 +5,7 @@ import { esc, fmtTime, timeToday, dayOnly } from './util.js';
 import { getPlayer, setPlayer, gtxt, playerFace } from './player.js';
 import { dayNews, newsHTML, reviewData, reviewHTML, replayDecks } from './dayend.js';
 import { teamCrew } from './team.js';
+import { askConfirm } from './confirm.js';
 
 const $ = (s) => document.querySelector(s);
 let api;
@@ -183,7 +184,11 @@ export function showHome() {
 function showDays() {
   const name = studentName() || 'Agente';
   const done = progress()[name] || {};
-  const saved = loadCheckpoint();
+  const saved = loadCheckpoint(), shift = loadShift();
+  // Lo pendiente: un counter a mitad, o el counter terminado y la puerta por hacer
+  const pending = shift
+    ? { day: shift.day, at: shift.at, where: `Counter: atendiste ${shift.snap.idx + 1} de ${shift.snap.pax.length} pasajeros`, cta: 'Seguir con el counter ▶', go: () => resumeCounter(shift) }
+    : saved ? { day: saved.day, at: saved.at, where: 'Counter terminado: falta el embarque', cta: 'Seguir desde la puerta ▶', go: () => resumeDay(saved) } : null;
   const rows = DAYS.map((d, i) => {
     const locked = i > 0 && !done[DAYS[i - 1].id];
     const stars = done[d.id] ? '★'.repeat(done[d.id]) + '☆'.repeat(3 - done[d.id]) : '';
@@ -194,18 +199,17 @@ function showDays() {
   }).join('');
   api.openModal(`<div class="home"><h1>🧑‍✈️ Tu primer mes en ${AIRLINE.name}</h1>
     <p class="hint">Cada día se desbloquea al terminar el anterior. Las estrellas dependen de tus decisiones y de los errores críticos (pasajeros inadmisibles, valijas sin su pasajero).</p>
-    ${saved ? `<div class="resume"><span class="icoTile y"><i class="mdi mdi-content-save-check"></i></span>
-      <div><b>Tenés el Día ${saved.day} a mitad de camino</b><small>El counter quedó guardado ${fmtAgo(saved.at)}. Podés seguir directo desde el embarque.</small></div>
-      <button class="btn ok" id="dResume">Seguir desde la puerta ▶</button></div>` : ''}
+${pending ? `<div class="resume"><span class="icoTile y"><i class="mdi mdi-content-save-check"></i></span>      <div><b>Tenés el Día ${pending.day} a mitad de camino</b><small>${pending.where}, guardado ${fmtAgo(pending.at)}.</small></div>      <button class="btn ok" id="dResume">${pending.cta}</button></div>` : ''}
     <div class="days">${rows}</div>
     <div class="row end"><button class="btn ghost" id="dBack">← Volver</button></div></div>`, 'wide');
   document.querySelectorAll('[data-day]').forEach((b) => {
-    b.onclick = () => {
-      if (saved && !window.confirm(`Tenés el embarque del Día ${saved.day} pendiente. Si empezás un día nuevo, se descarta. ¿Seguir igual?`)) return;
-      startDay(DAYS.find((d) => d.id === +b.dataset.day));
+    b.onclick = async () => {
+      const day = DAYS.find((d) => d.id === +b.dataset.day);
+      if (pending && !(await askConfirm({ title: "Día pendiente", text: `Tenés el Día ${pending.day} a mitad de camino. Si empezás ${day.id === pending.day ? "este día de nuevo" : "otro día"}, se descarta lo guardado. ¿Seguir igual?`, ok: "Empezar igual", cancel: "Volver", icon: "content-save-alert" }))) return;
+      startDay(day);
     };
   });
-  if (saved) $('#dResume').onclick = () => resumeDay(saved);
+  if (pending) $("#dResume").onclick = pending.go;
   $('#dBack').onclick = showHome;
 }
 
@@ -311,13 +315,7 @@ function briefing(day) {
 
 function goCounter(day, flights) {
   const label = flights.length === 1 ? `${flights[0].no} ${flights[0].city}` : `${flights.length} vuelos`;
-  api.startCheckin({
-    deck: day.checkin, flights: flights.map((f) => f.no), start: day.start, mode: day.mode, level: day.level, blocked: day.briefing.blocked,
-    ovbk: day.ovbk || null, outage: day.outage || null,
-    team: true, consults: !day.tutorial,
-    counterLabel: `Mostrador 22 · ${label}`, signLabel: flights.map((f) => `${f.no} ${f.city.toUpperCase()}`).join('  ·  '),
-    onEnd: (results, score, queueLog) => afterCheckin(day, results, score, queueLog),
-  });
+  api.startCheckin({ ...counterOpts(day, flights), saveTag: { name: studentName() || 'Agente', day: day.id } });
   if (day.ovbk) coachSay('Hoy hay <b>sobreventa</b>: preguntá 🙋 <b>¿Voluntario?</b> a cada pasajero desde el principio. Todo lo de la sobreventa está en la pestaña <b>6</b>.', 12000);
   else if (day.tutorial) {
     runCoach(CHECKIN_TUTORIAL, () => coachSay(`¡Excelente! Desde ahora seguís sin mí. ${crewIntro()} Yo ando cerca: si te trabás, tocá <b>📘 Manual</b>.`, 11000));
@@ -383,7 +381,7 @@ function loadCheckpoint() {
     return s && s.name === (studentName() || 'Agente') && DAYS.some((d) => d.id === s.day) ? s : null;
   } catch { return null; }
 }
-const clearCheckpoint = () => { try { localStorage.removeItem(CP_KEY); } catch {} };
+const clearCheckpoint = () => { try { localStorage.removeItem(CP_KEY); localStorage.removeItem('ckShift'); } catch {} };
 
 function resumeDay(saved) {
   const day = DAYS.find((d) => d.id === saved.day);
@@ -486,4 +484,32 @@ function fmtAgo(t) {
   if (m < 24 * 60) return `hace ${Math.round(m / 60)} h`;
   const d = new Date(t);
   return `el ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+// Opciones del counter de un día (las usan el inicio normal y el retomado)
+function counterOpts(day, flights) {
+  const label = flights.length === 1 ? `${flights[0].no} ${flights[0].city}` : `${flights.length} vuelos`;
+  return {
+    deck: day.checkin, flights: flights.map((f) => f.no), start: day.start, mode: day.mode, level: day.level, blocked: day.briefing.blocked,
+    ovbk: day.ovbk || null, outage: day.outage || null,
+    team: true, consults: !day.tutorial,
+    counterLabel: `Mostrador 22 · ${label}`, signLabel: flights.map((f) => `${f.no} ${f.city.toUpperCase()}`).join('  ·  '),
+    onEnd: (results, score, queueLog) => afterCheckin(day, results, score, queueLog),
+  };
+}
+
+// Counter guardado a mitad (después de cada pasajero)
+function loadShift() {
+  try {
+    const s = JSON.parse(localStorage.getItem('ckShift') || 'null', (k, v) => (typeof v === 'string' && ISO.test(v) ? new Date(v) : v));
+    return s && s.name === (studentName() || 'Agente') && DAYS.some((d) => d.id === s.day) ? s : null;
+  } catch { return null; }
+}
+function resumeCounter(saved) {
+  const day = DAYS.find((d) => d.id === saved.day);
+  const flights = (day.flights || [day.flight]).map((no) => FLIGHTS.find((f) => f.no === no));
+  api.setStudent(studentName() || 'Agente');
+  story([`¡Volviste! Tu mostrador quedó tal cual: ya atendiste a ${saved.snap.idx + 1} de ${saved.snap.pax.length} pasajeros. Seguimos con el próximo.`], () => {
+    api.resumeCheckin(saved, { ...counterOpts(day, flights), saveTag: { name: saved.name, day: day.id } });
+  }, 'Volver al counter ▶');
 }

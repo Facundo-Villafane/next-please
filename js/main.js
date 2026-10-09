@@ -7,6 +7,7 @@ import { initEvents, planEvents, maybeEvent, eventsOnPax, eventsSummaryHTML } fr
 import { initTeam, teamStart, teamStop, teamTick, teamSyncQueue, teamOn, teamWaiting, teamSummaryHTML, teamLocal } from './team.js';
 import { initOnline, showOnline } from './online.js';
 import { openBook } from './book.js';
+import { askConfirm } from './confirm.js';
 import { conflictTrigger, runConflict, MARTA } from './conflict.js';
 import { firearmModal, avihModal } from './restricted.js';
 import { playerFace, getPlayer } from './player.js';
@@ -155,6 +156,7 @@ function showPractice() {
 function startShift(opts = {}) {
   G.onEnd = opts.onEnd || null;
   G.career = opts.career || null;
+  G.saveTag = opts.saveTag || null;
   $('.brand span').textContent = `Check-in · EZE · ${G.mode === 'challenge' ? '⏱ Desafío' : '📘 Aprendizaje'}`;
   const today = dayOnly(new Date());
   G.now = timeToday(today, opts.start || SHIFT_START);
@@ -778,13 +780,16 @@ function paneTimatic(pane) {
 // ------------------------------------------------------------------
 $('#btnAccept').onclick = () => {
   if (!G.act.bookingLoaded) { sys('NO SE PUEDE EMITIR TARJETA DE EMBARQUE: SIN PNR CARGADO', 'err'); return; }
-  if (G.act.bags.some((b) => b.state === 'scale') && !confirmPending()) return;
+  if (G.act.bags.some((b) => b.state === 'scale') && !G.pendingOk) {
+    askConfirm({ title: 'Valija sin etiquetar', text: 'Hay una valija en la balanza sin etiquetar. ¿Finalizar de todos modos?', ok: 'Finalizar igual', cancel: 'Volver', icon: 'bag-suitcase-off' })
+      .then((yes) => { if (yes) { G.pendingOk = true; $('#btnAccept').click(); G.pendingOk = false; } });
+    return;
+  }
   if (inOvbk(G.cur) && seatsLeft() < (G.cur.party?.seatHolders || 1)) { sys('SIN ASIENTOS DISPONIBLES · VUELO EN SOBREVENTA · Gestioná voluntario o DNBD (pestaña 6)', 'err'); G.tab = 'ovbk'; renderTabs(); renderPane(); return; }
   if (G.cur.party) autoSeatParty(); else if (!G.act.seat) autoSeat();
   if (G.act.manual) { manualBp(G.act.seat || G.act.autoSeat, (v) => { G.act.manualBp = v; finish({ kind: 'accept', reason: null }); }); return; }
   finish({ kind: 'accept', reason: null });
 };
-function confirmPending() { return window.confirm('Hay una valija en la balanza sin etiquetar. ¿Finalizar de todos modos?'); }
 function autoSeatParty() {
   const occ = G.seatMaps[G.cur.flight.no];
   const taken = new Set([...occ, ...Object.values(G.act.seats)]);
@@ -852,6 +857,7 @@ function finish(decision) {
   } else say(null, p.lines[decision.kind]);
   scene.dismiss(decision.kind);
   updateTop();
+  saveShift();
   setTimeout(() => showFeedback(p, decision, ev, seat), 600);
 }
 
@@ -897,6 +903,7 @@ function endShift() {
   teamLocal('end', { score: G.score, ok: G.results.filter((r) => r.ev.correct).length, total: G.results.length });
   const teamSum = teamStop();
   if (teamSum) (G.queueLog = G.queueLog || []).push(teamSum);
+  if (G.saveTag) { clearShift(); G.saveTag = null; }
   if (G.onEnd) { const cb = G.onEnd; G.onEnd = null; cb(G.results, G.score, G.queueLog || []); return; }
   G.cur = null;
   renderPane();
@@ -976,9 +983,14 @@ function showManual(after) {
         <p>Documento de viaje vigente (DNI o pasaporte; extranjeros, pasaporte o documento del Mercosur).</p>
         <p>Por <b>extravío o robo</b>: licencia de conducir vigente, denuncia policial o certificado de trámite. Sin documento no embarca.</p>
         <p>Datos del documento en el sistema, obligatorios. Control previo al embarque: PSA.</p>`),
-      ch('pistol', 'Armas y mascotas en bodega', `
+      ch('pistol', 'Armas de fuego', `
         <p><b>Armas de fuego (en este juego, sólo en vuelos de cabotaje):</b> son retenidos. Documento ORIGINAL de tenencia y portación y estuche RÍGIDO. La PSA revisa el documento, SSR WEAP, aviso a operaciones, bolsa de retenidos y entrega en la puerta al equipo de seguridad con la aeronave en posición. DGR 2024: sin NOTOC si la munición pesa menos de 5 kg.</p>
-        <p><b>Mascotas en bodega (AVIH):</b> perros y gatos, salvo braquicéfalos y razas peligrosas. Canil rígido, en buen estado, con ventilación, fondo impermeable y tamaño para pararse, darse vuelta y acostarse; precintos en las puertas. Hasta 2 adultos (14 kg c/u) o 3 cachorros de la misma camada por canil. CVI de SENASA para el exterior. SSR AVIH y NOTOC con aviso al capitán.</p>`),
+        `),
+      ch('paw', 'Mascotas: cabina (PETC) y bodega (AVIH)', `
+        <p><b>En cabina (PETC):</b> sólo perros, gatos, peces, tortugas y aves (excepto aves de rapiña), con autorización previa. El agente lo acredita en el counter completando el formulario de IATA.</p>
+        <ul><li><b>Peso:</b> máximo 8 kg, incluyendo el transportín o bolso.</li><li><b>Medidas:</b> máximo 45 × 35 × 25 cm, y la suma de las tres no puede superar 105 cm.</li><li><b>Transportín:</b> consistente, ventilado (al menos el 16 % de los cuatro costados), con fondo impermeable y seguro. Pájaros: jaula resistente, con cerradura, siempre cubierta.</li><li><b>Cantidad:</b> dos animales de la misma especie en un mismo contenedor, si son de tamaño reducido.</li><li><b>Durante el vuelo:</b> viaja con su dueño, bajo su responsabilidad, dentro del bolso todo el vuelo y sin molestar.</li></ul>
+        <p>Documentación: dentro de Argentina, vacuna antirrábica vigente (mayores de 3 meses) y certificado de buena salud de los 10 días previos; al exterior, lo que pida SENASA y el destino. No viajan animales que puedan molestar (mal olor, etc.). Se ingresa el SSR <b>PETC</b> y la mascota <b>nunca</b> va en salida de emergencia.</p>
+        <p><b>En bodega (AVIH):</b> perros y gatos, salvo braquicéfalos y razas peligrosas. Canil rígido, en buen estado, con ventilación, fondo impermeable y tamaño para pararse, darse vuelta y acostarse; precintos en las puertas. Hasta 2 adultos (14 kg c/u) o 3 cachorros de la misma camada por canil. CVI de SENASA para el exterior. SSR AVIH y NOTOC con aviso al capitán.</p>`),
       ch('handcuffs', 'Condiciones legales', `<ul>
         <li><b>DEPA</b> (detenido/extraditado): reserva con 24 h, mínimo 2 escoltas de una fuerza reconocida por el Estado (uno del mismo sexo si es mujer), ropa de civil, 1 por vuelo, esposado desde la puerta, embarca primero, última fila.</li>
         <li><b>Deportado con escolta:</b> al menos 1 escolta (del mismo sexo si es uno), sin esposas, última fila, sin límite de horas.</li>
@@ -1033,11 +1045,53 @@ initCareer({
   getCheckin: () => G,
   setStudent: (name) => { G.student = name; $('#tAvatar').innerHTML = faceSVG(playerFace(), { w: 30, h: 37, bg: '#dce7f0' }); },
   startCheckin: (opts) => { G.level = opts.level || 'basico'; G.mode = opts.mode || 'learn'; startShift(opts); },
+  resumeCheckin: (saved, opts) => resumeShift(saved, opts),
   showPractice,
   showOnline,
   startBoarding: (opts) => startBoarding({ ...opts, oldScene: scene, ui: { openModal, closeModal, modalOpen } }),
   showManual,
 });
+
+// ------------------------------------------------------------------
+// Guardado por pasajero (Modo Historia): después de cada atención se guarda el turno en el
+// navegador; si se corta, se retoma desde el pasajero siguiente.
+// ------------------------------------------------------------------
+const SHIFT_KEY = 'ckShift';
+function saveShift() {
+  if (!G.saveTag) return;
+  const snap = {
+    now: G.now, flights: G.flights, deck: G.deck, pax: G.pax, idx: G.idx, results: G.results, score: G.score,
+    checkedCount: G.checkedCount, seatMaps: Object.fromEntries(Object.entries(G.seatMaps).map(([k, s]) => [k, [...s]])),
+    ovbk: G.ovbk, outage: G.outage, queueLog: G.queueLog, level: G.level, mode: G.mode, patience: G.patience,
+  };
+  try { localStorage.setItem(SHIFT_KEY, JSON.stringify({ ...G.saveTag, at: Date.now(), snap })); } catch {}
+}
+const clearShift = () => { try { localStorage.removeItem(SHIFT_KEY); } catch {} };
+
+function resumeShift(saved, opts) {
+  const s = saved.snap;
+  G.onEnd = opts.onEnd || null;
+  G.career = null;
+  G.saveTag = opts.saveTag || null;
+  G.level = s.level; G.mode = s.mode;
+  $('.brand span').textContent = `Check-in · EZE · ${G.mode === 'challenge' ? '⏱ Desafío' : '📘 Aprendizaje'}`;
+  Object.assign(G, { now: s.now, flights: s.flights, deck: s.deck, pax: s.pax, idx: s.idx, results: s.results, score: s.score, checkedCount: s.checkedCount, ovbk: s.ovbk, cancelled: [], lastBoardMinute: -1 });
+  G.seatMaps = Object.fromEntries(Object.entries(s.seatMaps).map(([k, a]) => [k, new Set(a)]));
+  G.running = true; G.paused = false;
+  resetQueue();
+  G.queueLog = s.queueLog || [];
+  if (s.patience != null) G.patience = s.patience;
+  G.outage = s.outage || null;
+  resetOutageLook();
+  $('#tabOvbk').classList.toggle('hidden', !G.ovbk);
+  scene.setCounterLabel(opts.counterLabel || 'Mostrador 22 · Todos los vuelos', opts.signLabel);
+  teamStart({ on: true, consults: opts.consults !== false });
+  scene.setQueue([]); teamSyncQueue();
+  planEvents({ on: false });
+  scene.updateBoard(boardFlights(), G.now);
+  updateTop();
+  nextPassenger();
+}
 
 // Sala online: todos arrancan el mismo turno; el anfitrión comparte la ocupación de los vuelos
 function startOnline(o) {

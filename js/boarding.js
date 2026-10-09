@@ -2,6 +2,7 @@
 // control documental, búsqueda de equipaje (−15), des-chequeo y cierre del vuelo.
 // En el Modo Historia, los pasajeros que el agente aceptó en el check-in vuelven a aparecer en la puerta.
 import { openBook } from './book.js';
+import { askConfirm } from './confirm.js';
 import { GateScene } from './gate3d.js';
 import { FLIGHTS, AIRLINE, STATION, ENTRY_RULES, EXIT_ROW, SEATMAP, COUNTRIES, exitControl, EXIT_CONTROL_REASON } from './data.js';
 import { makePerson, makePassport, makeVisaUS, differentFace, makeEscort } from './generator.js';
@@ -1113,7 +1114,11 @@ function procItem(ok, title, detail, pts) {
 function closeFlight() {
   if (B.cur || B.queue.length) { sys('HAY PASAJEROS EN EL PODIO O EN FILA', 'err'); return; }
   if (B.standby.some((x) => x.status === 'called')) { sys('HAY UN STAND-BY LLAMADO QUE TODAVÍA NO EMBARCÓ', 'err'); return; }
-  if (!window.confirm('¿Cerrar el vuelo por sistema? Después no se puede embarcar a nadie más.')) return;
+  if (!B.closeOk) {
+    askConfirm({ title: 'Cierre del vuelo', text: '¿Cerrar el vuelo por sistema? Después no se puede embarcar a nadie más.', ok: 'Cerrar el vuelo', cancel: 'Todavía no', icon: 'lock', tone: 'bad' })
+      .then((yes) => { if (yes) { B.closeOk = true; closeFlight(); B.closeOk = false; } });
+    return;
+  }
   B.closed = true; B.closeTime = new Date(B.now);
   clearInterval(B.timer);
   B.stopped.forEach((x) => { if (!x.informed) informStopped(x); });

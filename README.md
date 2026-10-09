@@ -13,8 +13,8 @@ vuelo y **embarque** del mismo vuelo con los pasajeros que aceptaste (si se te p
 counter, tenés otra oportunidad en la puerta). El Día 1 incluye un tutorial guiado. Los días se
 desbloquean y se puntúan con estrellas. Días configurables en `js/career.js` (`DAYS`).
 
-**Progreso:** se guarda en el navegador (estrellas por día y un punto de guardado al terminar el counter:
-si se corta antes de la puerta, la lista de días ofrece "Seguir desde la puerta"). Si hay un turno en
+**Progreso:** se guarda en el navegador: estrellas por día, el counter después de cada pasajero y un punto de guardado al terminar el counter
+(si se corta, la lista de días ofrece "Seguir con el counter" o "Seguir desde la puerta"). Si hay un turno en
 curso, el navegador pregunta antes de actualizar o cerrar la pestaña.
 
 Días:
@@ -108,6 +108,7 @@ Abrir http://localhost:5173. También funciona en cualquier hosting estático
 | `js/overbooking.js` | Sobreventa: matriz de compensación (USD 160/200), protección, servicios, formulario VDBC/DNBD y su corrección. |
 | `js/career.js` | Modo Historia: días, supervisora, briefing, tutorial guiado y progreso. |
 | `js/events.js` | Imprevistos de Práctica libre: equipaje desatendido (protocolo PSA con cinemática: evacuación, vallado, brigada de explosivos) y vuelo cancelado (Res. ANAC 1532/98, piquete si se maneja mal). |
+| `js/confirm.js` | Ventana de confirmación con el estilo del juego (reemplaza al cartel nativo del navegador). |
 | `js/book.js` | Manual como librito: tapa, índice y capítulos, hojas que giran en 3D (doble página o una sola en el celular), recuerda la última página. |
 | `js/online.js` | Sala online: crear/unirse con código, sala de espera, anfitrión que reparte mostradores, corre los bots y reenvía los eventos; latido para detectar desconexiones. |
 | `js/team.js` | Trabajo en equipo: compañeros bot en los mostradores 21 y 23 (veterano/a, nuevo/a, charlatana) que atienden la misma fila única y el mismo vuelo (asientos y aceptados compartidos), panel del equipo, mirar el mostrador vecino y consultas entre compañeros con consecuencias. Pensado para que luego un puesto lo maneje un compañero conectado. |
