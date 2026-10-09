@@ -77,6 +77,18 @@ En medio del turno pueden pasar cosas, y se ven en el hall (no son sólo pregunt
 
 Uno por turno (dos en avanzado), elegido entre los que sean posibles con los vuelos abiertos en ese momento. Se pueden desactivar en la pantalla de Práctica libre.
 
+## Carrera (después de la historia)
+
+Se habilita al terminar el Día 4. Turnos sin fin con rango, XP, hitos y plata:
+
+- **Jornal por día** (según rango) más bonos y multas. Se acumula y **el sueldo se cobra al cerrar la semana 4**, junto con los gastos del mes.
+- **Mi vida**: vivienda (pieza, monoambiente, depto, casa; cuanto más lejos, más barata), transporte (colectivo, remis,
+  moto, auto con seguro y nafta) y comida (vianda o comer en el aeropuerto). Cada uno cambia el gasto mensual y la
+  chance de llegar tarde (entrás 20 minutos después, la fila más impaciente y descuento), tener un imprevisto o olvidarte la vianda.
+- **Compras**: moto, auto, curso de idiomas (+$600 por pasajero extranjero), zapatillas (la fila se impacienta menos),
+  cafetera (chau gasto de café de la máquina) y decoración del mostrador (mate, planta, foto) que se ve en 3D.
+- Si cerrás el mes en rojo, la deuda cobra 8 % de interés; si supera un mes de gastos, te mudás a la pieza.
+
 ## Modos de juego
 
 - **Aprendizaje**: el reloj se detiene mientras se atiende (avanza con cada acción). Sin puntaje por velocidad.

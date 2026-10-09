@@ -136,7 +136,7 @@ export const fmtMoney = (n) => `${n < 0 ? '−' : ''}$ ${Math.abs(Math.round(n))
 
 export const MILESTONES = [
   { k: 'first_day', icon: 'briefcase-check', name: 'Primer día', desc: 'Terminaste tu primer día de carrera.' },
-  { k: 'first_pay', icon: 'cash', name: 'Primer sueldo', desc: 'Cobraste tu primera semana.' },
+  { k: 'first_pay', icon: 'cash', name: 'Primer sueldo', desc: 'Cobraste tu primer mes.' },
   { k: 'pax100', icon: 'account-multiple', name: '100 pasajeros', desc: 'Atendiste 100 pasajeros.' },
   { k: 'pax500', icon: 'account-group', name: '500 pasajeros', desc: 'Atendiste 500 pasajeros.' },
   { k: 'streak10', icon: 'fire', name: 'Racha de 10', desc: '10 decisiones correctas seguidas.' },
@@ -148,11 +148,14 @@ export const MILESTONES = [
   { k: 'rank_max', icon: 'crown', name: 'Supervisor/a', desc: 'Llegaste al rango máximo. Viviana tiembla.' },
   { k: 'million', icon: 'bank', name: 'Millonario/a', desc: 'Ganaste $ 1.000.000 en total.' },
   { k: 'all_events', icon: 'alert-decagram', name: 'Lo vi todo', desc: 'Viviste los cinco imprevistos.' },
-  { k: 'in_debt', icon: 'emoticon-cry-outline', name: 'Le debo a la empresa', desc: 'Terminaste una semana con saldo negativo.' },
+  { k: 'in_debt', icon: 'emoticon-cry-outline', name: 'Vivo en cuotas', desc: 'Cerraste un mes con los ahorros en negativo.' },
+  { k: 'saver', icon: 'piggy-bank', name: 'Ahorrista', desc: 'Juntaste $ 1.000.000 de ahorros.' },
+  { k: 'first_car', icon: 'car-side', name: 'Primer auto', desc: 'Te compraste un auto. Chau colectivo.' },
+  { k: 'nice_home', icon: 'home-heart', name: 'Mudanza con estilo', desc: 'Te mudaste a un depto o a una casa.' },
 ];
 
 // Liquidación de un día de counter: devuelve las líneas del recibo y el neto
-export function settleCounter(results, eventLog = [], hints = 0, rank = RANKS[0]) {
+export function settleCounter(results, eventLog = [], hints = 0, rank = RANKS[0], extra = [], perks = {}) {
   const lines = [];
   const add = (label, amount, n = null) => { if (amount) lines.push({ label, amount, n }); };
   let streak = 0, streakBonus = 0, okPax = 0, perfect = 0, inad = 0, wrongDeny = 0, wrongOther = 0, proc = 0, impostors = 0;
@@ -185,12 +188,14 @@ export function settleCounter(results, eventLog = [], hints = 0, rank = RANKS[0]
   add('Descuento: errores de procedimiento', proc * MONEY.procError, proc);
   add('Descuento: imprevistos mal manejados', evBad * MONEY.eventBad, evBad);
   add('Descuento: consultas a Viviana ("su tiempo vale")', hints * MONEY.hint, hints);
+  if (perks.idiomas) { const n = results.filter((r) => r.ev.correct && r.pax.lang && r.pax.lang !== 'es').length; add('Bono por idiomas (pasajeros extranjeros)', n * 600, n); }
+  extra.forEach((l) => add(l.label, l.amount));
   const net = lines.reduce((s, l) => s + l.amount, 0);
   return { lines, net, okPax, total: results.length, inad, perfectDay, impostors };
 }
 
 // Liquidación de un día de puerta
-export function settleGate(gate, hints = 0, rank = RANKS[0]) {
+export function settleGate(gate, hints = 0, rank = RANKS[0], extra = []) {
   const lines = [];
   const add = (label, amount, n = null) => { if (amount) lines.push({ label, amount, n }); };
   const okPax = gate.results.filter((r) => r.decision.kind === r.expected.kind).length;
@@ -205,9 +210,80 @@ export function settleGate(gate, hints = 0, rank = RANKS[0]) {
   add('Multa: decisiones equivocadas en el podio', bad * MONEY.wrongOther, bad);
   add('Descuento: errores de procedimiento', procBad * MONEY.gateProc, procBad);
   add('Descuento: consultas a Viviana', hints * MONEY.hint, hints);
+  extra.forEach((l) => add(l.label, l.amount));
   const net = lines.reduce((s, l) => s + l.amount, 0);
   return { lines, net, okPax, total: gate.results.length, inad: gate.critical || 0, perfectDay: !bad && !critBoard && !gate.critical, impostors: 0 };
 }
 
 // XP de un día: lo bueno suma, lo grave resta (sin bajar de cero)
 export const xpOf = (settle) => Math.max(40, settle.okPax * 30 + (settle.perfectDay ? 150 : 0) - settle.inad * 60);
+
+// ------------------------------------------------------------------
+// ECONOMÍA MENSUAL: cómo vive el agente (vivienda, transporte, comida) y lo que compra.
+// El sueldo se acumula día a día y se cobra al terminar la semana 4 de cada mes.
+// ------------------------------------------------------------------
+export const WEEKS_PER_MONTH = 4;
+export const LIFE = {
+  home: {
+    label: 'Vivienda', icon: 'home',
+    options: {
+      pieza: { name: 'Pieza compartida en Monte Grande', cost: 120000, far: 2, desc: 'Barata. Lejos, y el baño se comparte con cuatro.' },
+      mono: { name: 'Monoambiente en Ezeiza', cost: 230000, far: 1, desc: 'Chiquito, pero a quince minutos del aeropuerto.' },
+      depto: { name: 'Depto de 2 ambientes en Ezeiza', cost: 340000, far: 0, desc: 'Cerca del trabajo y con lugar para la bicicleta fija que nunca usás.' },
+      casa: { name: 'Casa con patio en Canning', cost: 520000, far: 1, desc: 'Parrilla, patio y vecinos que cortan el pasto un domingo a las ocho.' },
+    },
+  },
+  transport: {
+    label: 'Transporte', icon: 'bus',
+    options: {
+      colectivo: { name: 'Colectivo', cost: 30000, late: [0.1, 0.2, 0.32], desc: 'Barato. A veces llegás tarde: descuento y una fila de mal humor.' },
+      remis: { name: 'Remis', cost: 160000, late: [0.04, 0.05, 0.07], desc: 'Caro, pero casi siempre llegás a horario.' },
+      moto: { name: 'Moto propia', cost: 55000, late: [0.03, 0.04, 0.05], needs: 'moto', incident: 0.05, desc: 'Seguro y nafta. Rápida, salvo que llueva.' },
+      auto: { name: 'Auto propio', cost: 145000, late: [0.02, 0.02, 0.03], needs: 'auto', incident: 0.06, desc: 'Seguro, nafta y patente. Llegás seco y a horario... salvo una goma pinchada.' },
+    },
+  },
+  food: {
+    label: 'Comida', icon: 'food',
+    options: {
+      vianda: { name: 'Vianda casera', cost: 110000, forget: 0.15, desc: 'Barata. A veces queda en la heladera de tu casa.' },
+      aeropuerto: { name: 'Comer en el aeropuerto', cost: 260000, desc: 'Un tostado al precio de un vuelo. Pero no te olvidás nada.' },
+    },
+  },
+};
+export const SERVICES = 60000; // luz, gas, internet, celular
+export const MOVE_COST = 50000;
+export const DEFAULT_LIFE = { home: 'pieza', transport: 'colectivo', food: 'vianda' };
+export const SHOP = [
+  { k: 'moto', icon: 'motorbike', name: 'Moto usada', price: 900000, desc: 'Habilita la moto como transporte: casi nunca llegás tarde.' },
+  { k: 'auto', icon: 'car', name: 'Auto usado', price: 2400000, desc: 'Habilita el auto: no llegás tarde y llegás seco. Seguro y nafta aparte.' },
+  { k: 'idiomas', icon: 'translate', name: 'Curso de inglés y portugués', price: 350000, desc: '+$ 600 por cada pasajero extranjero bien atendido.' },
+  { k: 'zapatillas', icon: 'shoe-sneaker', name: 'Zapatillas cómodas', price: 80000, desc: 'En los días de desafío, la fila se impacienta un 20 % más lento (vos estás de mejor humor).' },
+  { k: 'cafetera', icon: 'coffee-maker', name: 'Cafetera propia', price: 120000, desc: 'Chau descuento del "café de la máquina" en el recibo.' },
+  { k: 'mate', icon: 'cup', name: 'Mate y termo en el mostrador', price: 40000, desc: 'Decoración: se ve en tu mostrador. Viviana te pide uno.' },
+  { k: 'planta', icon: 'sprout', name: 'Plantita para el mostrador', price: 25000, desc: 'Decoración: se ve en tu mostrador. Hay que regarla (no, mentira).' },
+  { k: 'foto', icon: 'image-frame', name: 'Foto en el mostrador', price: 15000, desc: 'Decoración: un portarretrato al lado del monitor.' },
+];
+export const COFFEE = 6000; // "café de la máquina", por mes
+
+export function lifeOf(c) { return { ...DEFAULT_LIFE, ...(c.life || {}) }; }
+// Gastos del mes según cómo vive
+export function monthExpenses(c) {
+  const L = lifeOf(c), owned = c.owned || {};
+  const lines = [
+    { label: `Alquiler · ${LIFE.home.options[L.home].name}`, amount: -LIFE.home.options[L.home].cost },
+    { label: `Transporte · ${LIFE.transport.options[L.transport].name}`, amount: -LIFE.transport.options[L.transport].cost },
+    { label: `Comida · ${LIFE.food.options[L.food].name}`, amount: -LIFE.food.options[L.food].cost },
+    { label: 'Servicios (luz, gas, internet, celular)', amount: -SERVICES },
+  ];
+  if (!owned.cafetera) lines.push({ label: 'Café de la máquina (Viviana no invita)', amount: -COFFEE });
+  return lines;
+}
+// Lo que pasa al llegar a trabajar (según dónde vive y cómo viaja)
+export function commuteRoll(c) {
+  const L = lifeOf(c);
+  const far = LIFE.home.options[L.home].far;
+  const T = LIFE.transport.options[L.transport];
+  const F = LIFE.food.options[L.food];
+  const out = { late: Math.random() < T.late[far], incident: T.incident && Math.random() < T.incident ? (L.transport === 'auto' ? pick([['Se te pinchó una goma: gomería', 25000], ['Service del auto (ruido raro en el tren delantero)', 85000], ['Multa por estacionar en la dársena de remises', 40000]]) : pick([['Se te pinchó la rueda de la moto', 15000], ['Te mojaste entero/a: tintorería del uniforme', 12000]])) : null, forgot: !!F.forget && Math.random() < F.forget };
+  return out;
+}

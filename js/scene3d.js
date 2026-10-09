@@ -625,6 +625,55 @@ export class AirportScene {
     c.agent = a;
   }
 
+  // Decoración comprada en la Carrera, sobre el mostrador propio: 'mate', 'planta', 'foto'
+  setDeskDecor(items) {
+    if (this.decor) this.scene.remove(this.decor);
+    this.decor = new THREE.Group();
+    const top = 1.095;
+    const m = (c, r = 0.6) => new THREE.MeshStandardMaterial({ color: c, roughness: r });
+    if (items.includes('mate')) {
+      const mate = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.028, 0.08, 16), m('#7a4b2a'));
+      mate.position.set(0.5, top + 0.04, -0.28);
+      const yerba = new THREE.Mesh(new THREE.CircleGeometry(0.032, 14), m('#6f8f3a', 0.9));
+      yerba.rotation.x = -Math.PI / 2; yerba.position.set(0.5, top + 0.081, -0.28);
+      const bombilla = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.13, 6), m('#c9ccd1', 0.2));
+      bombilla.position.set(0.51, top + 0.12, -0.28); bombilla.rotation.z = -0.25;
+      const termo = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.3, 16), m('#2f6b4f', 0.4));
+      termo.position.set(0.62, top + 0.15, -0.3);
+      const tapa = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.05, 16), m('#222'));
+      tapa.position.set(0.62, top + 0.32, -0.3);
+      this.decor.add(mate, yerba, bombilla, termo, tapa);
+    }
+    if (items.includes('planta')) {
+      const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.05, 0.1, 16), m('#c4663a'));
+      pot.position.set(-0.95, top + 0.05, -0.15);
+      this.decor.add(pot);
+      for (let i = 0; i < 7; i++) {
+        const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), m(['#3f8f4a', '#4fa35a', '#2e7a3c'][i % 3], 0.7));
+        const a = (i / 7) * Math.PI * 2;
+        leaf.scale.set(0.6, 1.6, 0.4);
+        leaf.position.set(-0.95 + Math.cos(a) * 0.04, top + 0.17 + (i % 2) * 0.05, -0.15 + Math.sin(a) * 0.04);
+        leaf.rotation.set(Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5);
+        this.decor.add(leaf);
+      }
+    }
+    if (items.includes('foto')) {
+      const t = canvasTex(96, 120, (g) => {
+        g.fillStyle = '#f4efe2'; g.fillRect(0, 0, 96, 120);
+        const sky = g.createLinearGradient(0, 8, 0, 80); sky.addColorStop(0, '#7fc4f0'); sky.addColorStop(1, '#ffe6a8');
+        g.fillStyle = sky; g.fillRect(8, 8, 80, 104);
+        g.fillStyle = '#3d8f4a'; g.fillRect(8, 82, 80, 30);
+        [[30, '#e8417a'], [52, '#1f6fe0'], [70, '#f2a541']].forEach(([x, c]) => { g.fillStyle = '#f1c7a5'; g.beginPath(); g.arc(x, 66, 7, 0, Math.PI * 2); g.fill(); g.fillStyle = c; g.fillRect(x - 7, 73, 14, 20); });
+      }).tex;
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.16, 0.015), m('#3b2a1f', 0.5));
+      frame.position.set(-0.4, top + 0.085, -0.32); frame.rotation.x = -0.2;
+      const pic = new THREE.Mesh(new THREE.PlaneGeometry(0.11, 0.14), new THREE.MeshStandardMaterial({ map: t, roughness: 0.8 }));
+      pic.position.set(-0.4, top + 0.086, -0.329); pic.rotation.set(-0.2, Math.PI, 0);
+      this.decor.add(frame, pic);
+    }
+    this.scene.add(this.decor);
+  }
+
   // Números de los mostradores: el propio al centro y los de los compañeros a los costados
   numberCounters(mine, left, right) {
     const P = this.counterPanels || {};

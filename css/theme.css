@@ -403,3 +403,25 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
 .profile .startHero .btn { margin-top: 8px; }
 @media (max-width: 700px) { .profileBar { flex-wrap: wrap; } }
 .toast { z-index: 100; }
+
+/* Carrera: mi vida y compras */
+.rankCard small b.inl, .rankCard .money small b.inl { display: inline; font-size: inherit; font-family: var(--mono); color: var(--navy2); }
+.rankCard b.neg { color: #c4321a; }
+.life h3 { display: flex; align-items: center; gap: 6px; margin: 14px 0 6px; }
+.life h3 .mdi { color: var(--blue); }
+.lifeOpts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; }
+.lifeOpt { display: flex; flex-direction: column; gap: 3px; text-align: left; background: #fff; border: 2px solid #c6d3e4; border-radius: 14px; box-shadow: 0 3px 0 #c6d3e4; padding: 9px 11px; cursor: pointer; font: inherit; color: var(--text); }
+.lifeOpt:hover:not(:disabled) { border-color: var(--edge); }
+.lifeOpt.on { background: #fff6d6; border-color: var(--edge); box-shadow: 0 3px 0 var(--edge), 0 0 0 3px var(--accent); }
+.lifeOpt:disabled { opacity: .55; cursor: not-allowed; }
+.lifeOpt b { font-family: var(--display); font-weight: 600; color: var(--navy2); }
+.lifeOpt .cost { font-family: var(--mono); font-weight: 700; color: #c4321a; font-size: 13px; }
+.lifeOpt small { color: var(--muted); font-size: 12px; line-height: 1.35; }
+.shop { display: flex; flex-direction: column; gap: 6px; }
+.shopIt { display: flex; align-items: center; gap: 10px; background: #fff; border: 2px solid #dbe3ee; border-radius: 12px; padding: 7px 10px; }
+.shopIt > .mdi { font-size: 26px; color: var(--blue); flex: none; }
+.shopIt > div { flex: 1; min-width: 0; }
+.shopIt b { display: block; font-family: var(--display); font-weight: 600; color: var(--navy2); }
+.shopIt small { color: var(--muted); font-size: 12px; }
+.shopIt.owned { background: #f1faf4; border-color: #9ad7b2; }
+.shopIt .btn { font-family: var(--mono); white-space: nowrap; }

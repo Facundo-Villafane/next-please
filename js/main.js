@@ -186,6 +186,10 @@ function startShift(opts = {}) {
   G.idx = -1; G.results = []; G.score = 0; G.running = true; G.paused = false;
   G.cancelled = [];
   resetQueue();
+  // Carrera: si llegaste tarde la fila ya está impaciente; las zapatillas cómodas la calman; decoración del mostrador
+  if (opts.patience) G.patience = opts.patience;
+  G.perkShoes = !!opts.perkShoes;
+  scene.setDeskDecor?.(opts.decor || []);
   if (opts.blocked) opts.blocked.forEach((seat) => G.flights.forEach((fl) => G.seatMaps[fl.no].add(seat)));
   G.ovbk = null;
   if (opts.ovbk) {
@@ -1183,7 +1187,7 @@ initEndless({
   startBoarding: (opts) => { startBoarding({ ...opts, oldScene: scene, ui: { openModal, closeModal, modalOpen } }); G.sceneDisposed = true; },
   // Una pantalla de diálogo con un botón para seguir
   storyLine: (html, next) => { openModal(`${html}<div class="row end"><button class="btn ok big" id="slGo">¡A trabajar! ▶</button></div>`, 'wide'); $('#slGo').onclick = () => { closeModal(); next(); }; },
-  hintCount, eventLog,
+  hintCount, eventLog, confirm: askConfirm,
 });
 // Repaso de los casos que fallaron en un día del Modo Historia
 function startReplay(r) {

@@ -94,7 +94,7 @@ export function queueTick(dt) {
   const active = G.cur && !G.paused && !ui.modalOpen() && !$('#dialog').classList.contains('hidden');
   if (G.mode !== 'challenge') { if (active) bubbles(dt, learnLevel()); return; }
   if (active) {
-    G.patience = Math.max(0, G.patience - (0.05 + 0.02 * Math.min(queueLen(), 12)) * dt);
+    G.patience = Math.max(0, G.patience - (0.05 + 0.02 * Math.min(queueLen(), 12)) * dt * (G.perkShoes ? 0.8 : 1));
     const lv = moodLevel();
     if (lv !== (scene.queueMood || 0)) scene.setQueueMood?.(lv);
     bubbles(dt, lv);
