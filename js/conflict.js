@@ -7,7 +7,8 @@ import { gtxt, playerFace } from './player.js';
 const $ = (s) => document.querySelector(s);
 
 // Supervisora (misma que en el Modo Historia)
-export const MARTA = { sex: 'F', age: 46, skin: 1, hairColor: '#4a2f1e', hairStyle: 'bun', glasses: true, beard: false, shape: 'oval', nose: 1, brows: 'thin', eye: 1, smile: true, shirt: '#123a63' };
+import { SUP } from './supervisor.js';
+export const MARTA = SUP.face;
 
 export const CONFLICT_SCENARIOS = { vip_angry: 1, angry_cat2: 2, bomb_joke: 3, gate_carryon: 1, gate_smoker: 2, gate_rage: 3 };
 
@@ -37,7 +38,7 @@ const SCRIPTS = {
           { t: 'Buenas noches, señor. Con gusto lo atiendo: le explico qué puedo hacer y qué no, así lo resolvemos rápido.', ok: true, pts: 10, note: 'Empatía y cortesía sin ceder: baja la tensión desde el primer momento.', react: 'Mmm... bueno. Al menos alguien educado en este aeropuerto.' },
           { t: 'No me importa quién sea: acá todos son iguales.', ok: false, pts: -5, note: 'La idea es correcta (mismas reglas para todos), pero el tono desafiante escala el conflicto.', react: '¿Me estás hablando así a mí? ¡Quiero tu nombre y apellido!' },
           { t: '¡Por supuesto, señor! Le hago el upgrade y no le cobro el exceso.', ok: false, pts: -15, gaveIn: true, note: 'Ceder a la presión rompe las reglas de la tarifa y es injusto con el resto de los pasajeros. Además, "premia" el maltrato.', react: '¡Así me gusta! ¿Ves que cuando querés, podés?' },
-          { t: 'Aguarde, que llamo a mi supervisora.', ok: false, pts: -5, sup: true, note: 'Todavía es un pasajero exigente que se puede manejar: llamar al supervisor tan rápido le quita autoridad al agente.', react: '¡Eso! ¡Que venga alguien que sepa!', marta: '¿Para esto me llamaste? Lo podés resolver vos: firmeza y cortesía. Te dejo.' },
+          { t: 'Aguarde, que llamo a mi supervisora.', ok: false, pts: -5, sup: true, note: 'Todavía es un pasajero exigente que se puede manejar: llamar al supervisor tan rápido le quita autoridad al agente.', react: '¡Eso! ¡Que venga alguien que sepa!', marta: '¿Para esto me sacaste de la oficina? Es un pasajero exigente, no un incendio: firmeza y cortesía, lo resolvés vos. Y la próxima, pensalo dos veces.' },
         ],
       },
       {
@@ -75,7 +76,7 @@ const SCRIPTS = {
       {
         pax: () => '(empuja el poste de la fila y sigue gritando. Los demás pasajeros se alejan; una nena se pone a llorar)',
         opts: [
-          { t: 'Pido apoyo al supervisor de aeropuerto y a Seguridad (PSA).', ok: true, pts: 15, sup: true, note: 'No acata instrucciones y es desafiante: ya no lo puede resolver el agente solo.', react: '¡Que vengan! ¡Que vengan todos!', marta: 'Señor, acompáñeme, por favor. En estas condiciones hoy no puede viajar. (a vos) Bien hecho: no se aceptó. Ahora rechazá el check-in en el sistema.' },
+          { t: 'Pido apoyo al supervisor de aeropuerto y a Seguridad (PSA).', ok: true, pts: 15, sup: true, note: 'No acata instrucciones y es desafiante: ya no lo puede resolver el agente solo.', react: '¡Que vengan! ¡Que vengan todos!', marta: 'Señor, acompáñeme, por favor. En estas condiciones hoy no puede viajar. (a vos) Bien, esta vez llamaste cuando correspondía: no acata, no se acepta. Ahora rechazá el check-in en el sistema. Ya.' },
           { t: 'Sigo intentando calmarlo yo.', ok: false, pts: -10, note: 'Ya se intentó: si no acata y sigue escalando, el agente no tiene que manejarlo solo.', react: '(patea la balanza) ¡NO ME CALMO NADA!' },
           { t: 'Lo chequeo rápido para que se vaya.', ok: false, pts: -20, note: 'Aceptar a un pasajero que no acata instrucciones traslada el problema al avión, donde es mucho más peligroso.', react: '¡Eso! ¡Viste que gritando se consigue todo!' },
         ],
@@ -155,7 +156,7 @@ SCRIPTS.gate_smoker = {
     {
       pax: () => '(camina hacia la manga con el cigarrillo encendido)',
       opts: [
-        { t: 'Lo detengo y pido apoyo al supervisor y a Seguridad.', ok: true, pts: 15, sup: true, note: 'Fumador que no desiste camino a la aeronave: requiere supervisor o seguridad.', react: '¡Esto es un abuso! ¡Por un pucho!', marta: 'Señor, así no viaja. (a vos) Bien: un fumador que no desiste en el embarque es CAT 2. Ahora "No embarcar" con aviso.' },
+        { t: 'Lo detengo y pido apoyo al supervisor y a Seguridad.', ok: true, pts: 15, sup: true, note: 'Fumador que no desiste camino a la aeronave: requiere supervisor o seguridad.', react: '¡Esto es un abuso! ¡Por un pucho!', marta: 'Señor, así no viaja. (a vos) Bien: un fumador que no desiste en el embarque es CAT 2. Ahora "No embarcar" con aviso. Y abrí una ventana, que ya me duele la cabeza.' },
         { t: 'Le aviso a la tripulación para que lo controlen a bordo.', ok: false, pts: -20, note: 'Si no acata en tierra, en el avión es peor: el problema no se traslada a bordo.', react: '(entra a la manga, todavía fumando)' },
       ],
     },
@@ -177,7 +178,7 @@ SCRIPTS.gate_rage = {
     {
       pax: () => '(agarra el poste separador y lo revolea contra el cartel de Aeroplata, que se viene abajo) ¡¡ESTO ES UNA ESTAFA!!',
       opts: [
-        { t: 'Me alejo, resguardo a los pasajeros y pido intervención inmediata de la PSA y del supervisor.', ok: true, pts: 20, sup: true, note: 'Acción violenta con daños: primero la seguridad de las personas, después la PSA.', react: '(lo rodean dos agentes de la PSA) ¡Suéltenme! ¡Yo pagué!', marta: 'Tranquila/o, ya está la PSA. Esto es CAT 3: no embarca. Registrá "No embarcar" con aviso.' },
+        { t: 'Me alejo, resguardo a los pasajeros y pido intervención inmediata de la PSA y del supervisor.', ok: true, pts: 20, sup: true, note: 'Acción violenta con daños: primero la seguridad de las personas, después la PSA.', react: '(lo rodean dos agentes de la PSA) ¡Suéltenme! ¡Yo pagué!', marta: 'Respirá, ya está la PSA. Esto es CAT 3: no embarca, y punto. Registrá "No embarcar" con aviso. Yo me encargo del informe... como siempre.' },
         { t: 'Le pido que se calme y sigo con el embarque.', ok: false, pts: -15, note: 'Después de arrojar objetos ya no alcanza con pedirle calma: interviene la PSA.', react: '(patea el cartel caído) ¡NO ME CALMO NADA!' },
         { t: 'Lo embarco rápido para que se calme arriba.', ok: false, pts: -25, note: 'Embarcar a un pasajero violento pone en riesgo a la tripulación y al resto del pasaje.', react: '¡Eso! ¡Viste que gritando se consigue todo!' },
       ],
@@ -225,7 +226,7 @@ export function runConflict(p, key, ui, onDone) {
         log.push(bubble('Vos', playerFace(), o.t, 'agent'));
         log.push(`<div class="cfNote ${o.ok ? 'ok' : 'bad'}">${o.ok ? '✔' : '✖'} ${esc(o.note)} <span class="pts">${o.pts > 0 ? '+' : ''}${o.pts}</span></div>`);
         log.push(bubble(p.first, p.face, o.react, 'pax'));
-        if (o.marta) log.push(bubble('Marta (supervisora)', MARTA, gtxt(o.marta), 'marta'));
+        if (o.marta) log.push(bubble('Viviana (supervisora)', MARTA, gtxt(o.marta), 'marta'));
         i++;
         if (i < s.steps.length) step(); else classify();
       };

@@ -11,7 +11,8 @@ const $ = (s) => document.querySelector(s);
 let api;
 
 // Supervisora de turno
-const MARTA = { name: 'Marta Gómez', role: 'Supervisora de turno', face: { sex: 'F', age: 46, skin: 1, hairColor: '#4a2f1e', hairStyle: 'bun', glasses: true, beard: false, shape: 'oval', nose: 1, brows: 'thin', eye: 1, smile: true, shirt: '#123a63' } };
+import { SUP } from './supervisor.js';
+const MARTA = SUP;
 
 // ------------------------------------------------------------------
 // Días de la historia (editable por el instructor)
@@ -21,9 +22,9 @@ export const DAYS = [
     id: 1, title: 'Bienvenida a Aeroplata', flight: 'AP1250', start: '17:10', mode: 'learn', level: 'basico', tutorial: true,
     blurb: 'Primer día. Un solo vuelo a São Paulo, con la supervisora al lado. Mercosur, DNI, valijas y tu primer embarque.',
     intro: [
-      '¡Bienvenido/a a Aeroplata, {name}! Soy Marta Gómez, supervisora de turno. Hoy es tu primer día en Ezeiza. Tranqui: al primer pasajero lo atendemos juntos.',
-      'Así funciona el día: arrancamos con el <b>briefing</b>, después vas al <b>counter</b> a chequear a los pasajeros de tu vuelo y, cuando cierra el check-in, vas a la <b>puerta</b> a embarcarlos. Los mismos pasajeros, ¿eh? Si algo se te pasa en el counter, lo vas a volver a ver en la puerta.',
-      'Regla de oro: ante la duda, Timatic o el manual (📘). Y nunca, nunca etiquetes una valija antes de saber si el pasajero viaja.',
+      '¿{name}? Viviana Ferreyra, supervisora de turno. Treinta y un años en Aeroplata, así que ahorrame el "encantado/a". Hoy es tu primer día y, por el mismo sueldo, también soy tu niñera. Al primer pasajero lo atendemos juntos. Al segundo, ya no.',
+      'Se lo explico a todos los nuevos y nadie escucha, así que prestá atención: primero el <b>briefing</b>, después el <b>counter</b> con los pasajeros de tu vuelo y, cuando cierra el check-in, la <b>puerta</b> para embarcarlos. Los mismos pasajeros. Lo que dejes pasar en el counter te va a estar esperando en la puerta. Y yo también.',
+      'Regla de oro, y es la única vez que la repito: ante la duda, Timatic o el manual (📘). Y nunca, NUNCA, etiquetes una valija antes de saber si el pasajero viaja. La última que lo hizo ahora vende seguros por teléfono.',
     ],
     briefing: {
       booked: 168, capacity: 174, ssr: 'WCHR 1 · INF 1 · PETC 1', blocked: ['12C', '12D'],
@@ -34,14 +35,14 @@ export const DAYS = [
       { scenario: 'expired', overlay: 'none' }, { scenario: 'ok', overlay: 'pet' }, { scenario: 'drunk', overlay: 'none' }, { scenario: 'pregnant_ok', overlay: 'dg' }, { scenario: 'family_ok', overlay: 'none' },
     ],
     gate: { level: 'basico', cases: ['wchr', 'inf_stroller', 'early', 'influencer', 'vaper', 'wrong_flight', 'dutyfree'] },
-    afterCheckin: 'Cerramos el check-in del AP1250. ¡Buen trabajo! Ahora a la puerta {gate}: a las {gateTime} arrancás con la apertura. Ojo que tus pasajeros te van a reconocer... para bien o para mal.',
+    afterCheckin: 'Check-in del AP1250 cerrado. No estuvo tan mal... no te acostumbres. Ahora a la puerta {gate}: a las {gateTime} arrancás con la apertura. Tus pasajeros te van a reconocer, para bien o para mal. Por experiencia te digo: casi siempre para mal.',
   },
   {
     id: 2, title: 'Rumbo a Miami', flight: 'AP1100', start: '18:30', mode: 'learn', level: 'intermedio',
     blurb: 'Vuelo a Estados Unidos: visas, ESTA, APIS con respuesta iAPI, una katana, un asado con hielo seco y tarjetas cruzadas.',
     intro: [
-      'Hoy subimos la vara, {name}: Miami. Argentina no integra el Programa de Exención de Visas, así que <b>visa sí o sí</b>. España y Chile, con ESTA.',
-      'Hay torneo de pádel en Miami: esperá raquetas, gente apurada y algún que otro souvenir raro. Si algo no puede ir en cabina, ya sabés: retenidos.',
+      'Hoy subimos la vara, {name}: Miami. Te lo digo una sola vez: Argentina NO integra el Programa de Exención de Visas. <b>Visa sí o sí</b>. España y Chile, con ESTA. Si me aparece un INAD en Miami, la multa no la pagás vos: la pago yo, con canas.',
+      'Hay torneo de pádel en Miami: raquetas, gente apurada y algún souvenir ridículo. Si algo no puede ir en cabina, retenidos. No me hagas bajar del entrepiso para explicártelo.',
     ],
     briefing: {
       booked: 257, capacity: 251, ssr: 'WCHR 2 · INF 1 · UMNR 0', blocked: ['20A'],
@@ -54,14 +55,14 @@ export const DAYS = [
     ],
     ovbk: { flight: 'AP1100', capacity: 251, short: 6 },
     gate: { level: 'intermedio', cases: ['wchr', 'senior_zone4', 'inf_stroller', 'influencer', 'vaper', 'name_mismatch', 'dup_bp', 'exit_minor', 'dead_phone', 'dutyfree', 'wrong_flight', 'inop_seat', 'gate_carryon'] },
-    afterCheckin: 'Check-in del AP1100 cerrado. Puerta {gate}, apertura a las {gateTime}. Hoy el vuelo va lleno: atento/a a las tarjetas, que con tanta gente siempre hay alguna mezclada.',
+    afterCheckin: 'Check-in del AP1100 cerrado. Puerta {gate}, apertura a las {gateTime}. El vuelo va lleno y con tanta gente siempre hay tarjetas mezcladas. Mirá bien, que yo ya no veo de lejos y los anteojos nuevos no me los paga nadie.',
   },
   {
     id: 3, title: 'Doble mostrador', flights: ['AP1180', 'AP1050'], flight: 'AP1050', start: '18:10', mode: 'challenge', level: 'intermedio', outage: { afterPax: 3, duration: 3 },
     blurb: 'Dos vuelos en el mismo counter (Santiago y Madrid), reloj en tiempo real. Menores, Schengen y gestantes. Después embarcás Madrid.',
     intro: [
-      'Faltó un compañero, {name}, así que hoy atendés <b>dos vuelos en el mismo mostrador</b>: Santiago y Madrid. Y el reloj corre de verdad.',
-      'Madrid es Schengen: pasaporte con <b>3 meses de validez después del regreso</b>. Y vienen familias: autorizaciones de viaje y menores no acompañados.',
+      'Faltó un compañero, {name}. Otra vez. A mí nadie me cubre, así que hoy atendés <b>dos vuelos en el mismo mostrador</b>: Santiago y Madrid. Con reloj de verdad. Bienvenido/a a la vida real.',
+      'Madrid es Schengen: pasaporte con <b>3 meses de validez después del regreso</b>. No dos y medio: tres. Y vienen familias: autorizaciones de viaje y menores no acompañados. Leé los papeles enteros, no la primera línea.',
     ],
     briefing: {
       booked: 233, capacity: 242, ssr: 'WCHR 1 · INF 1 · UMNR 1 · PETC 1', blocked: [],
@@ -74,14 +75,14 @@ export const DAYS = [
       { scenario: 'one_parent_noauth', overlay: 'none' }, { scenario: 'relative_ok', overlay: 'none' }, { scenario: 'infant_nodoc', overlay: 'none' }, { scenario: 'angry_cat2', overlay: 'none' }, { scenario: 'depa_ok', overlay: 'none' }, { scenario: 'ok', overlay: 'avih', variant: 'brachy' },
     ],
     gate: { level: 'intermedio', cases: ['wchr', 'inf_stroller', 'senior_zone4', 'early', 'influencer', 'vaper', 'exit_minor', 'name_mismatch', 'pet_exit', 'dead_phone', 'dutyfree', 'dup_bp', 'impostor', 'wrong_flight', 'web_yesterday', 'gate_smoker'] },
-    afterCheckin: 'Listo el doble mostrador. Ahora embarcás Madrid por la puerta {gate} a las {gateTime}. Y sí, el reloj sigue corriendo.',
+    afterCheckin: 'Doble mostrador cerrado. Sobreviviste, que ya es más de lo que hizo el de la semana pasada. Ahora Madrid por la puerta {gate} a las {gateTime}. El reloj sigue corriendo. Mi jubilación, en cambio, no se mueve.',
   },
   {
     id: 4, title: 'Hora pico', flights: ['AP1254', 'AP1184', 'AP1104'], flight: 'AP1104', start: '20:00', mode: 'challenge', level: 'avanzado', outage: { afterPax: 6, duration: 3 },
     blurb: 'Tres vuelos, hora pico, todo junto. El examen final de tu primer mes. Después embarcás Miami.',
     intro: [
-      '{name}, último día del mes y te toca la hora pico: <b>tres vuelos</b> en tu mostrador. Si sobrevivís a esto, te ganaste el pin de Aeroplata.',
-      'No hay atajos: documentos, Timatic, equipajes, asientos. Y en la puerta, Miami completo. ¡Vos podés!',
+      '{name}, último día del mes y te toca la hora pico: <b>tres vuelos</b> en tu mostrador. Si sobrevivís, te ganás el pin de Aeroplata. Yo tengo seis. No sirven para nada, pero brillan.',
+      'No hay atajos: documentos, Timatic, equipajes, asientos. Y en la puerta, Miami completo. Confío en vos. Bueno, "confío" es mucho. Te estoy mirando.',
     ],
     briefing: {
       booked: 512, capacity: 530, ssr: 'WCHR 3 · INF 2 · UMNR 1 · PETC 2', blocked: ['14F'],
@@ -96,16 +97,16 @@ export const DAYS = [
     ],
     gateOvbk: { noSeat: 2 },
     gate: { level: 'avanzado', cases: ['wchr', 'inf_stroller', 'senior_zone4', 'early', 'influencer', 'vaper', 'exit_minor', 'name_mismatch', 'no_return', 'pet_exit', 'dead_phone', 'drunk', 'impostor', 'dutyfree', 'dup_bp', 'wrong_flight', 'web_yesterday', 'gate_rage', 'depa'] },
-    afterCheckin: 'Cerrado el counter de la hora pico. Te espera Miami en la puerta {gate} a las {gateTime}. Último esfuerzo.',
+    afterCheckin: 'Counter de la hora pico cerrado. Te espera Miami en la puerta {gate} a las {gateTime}. Último esfuerzo. Después llorás en el vestuario, como hacemos todos.',
   },
   {
     id: 5, title: 'Vacaciones de invierno', flights: ['AP2730', 'AP1050'], flight: 'AP1050', start: '18:10', mode: 'challenge', level: 'avanzado', extra: true,
     blurb: 'Extra: arrancan las vacaciones. Bariloche (cabotaje) y Madrid en el mismo counter: familias con papeles complicados, DNI perdidos y cazadores. Después embarcás Madrid.',
     intro: [
-      'Ya tenés el pin, {name}, pero hoy arrancan las <b>vacaciones de invierno</b> y el counter se llena de chicos. Y donde hay chicos, hay papeles.',
-      'Repasemos la tabla de menores: si un padre <b>falleció</b>, certificado de defunción. Si está <b>ausente</b>, autorización del tribunal de familia. Si está <b>en el exterior</b>, autorización por el consulado. Y si viaja un familiar con la <b>tutela</b>, certificado del tribunal.',
-      'Leé cada papel completo: a quién autoriza, con quién y a qué destino. Un "me lo mandó por WhatsApp" no es una autorización.',
-      'Y hoy compartís counter con <b>Bariloche</b>, un vuelo de <b>cabotaje</b>: abre 120 minutos antes y cierra 50 antes. Si alguien perdió el DNI, acordate de las excepciones: licencia de conducir vigente, denuncia policial o constancia de trámite.',
+      'Ya tenés el pin, {name}. Felicitaciones: ahora sos oficialmente mi problema. Hoy arrancan las <b>vacaciones de invierno</b> y el counter se llena de chicos. Y donde hay chicos, hay papeles. Y gritos.',
+      'La tabla de menores, y la quiero de memoria: si un padre <b>falleció</b>, certificado de defunción. Si está <b>ausente</b>, autorización del tribunal de familia. Si está <b>en el exterior</b>, autorización por el consulado. Y si viaja un familiar con la <b>tutela</b>, certificado del tribunal.',
+      'Leé cada papel completo: a quién autoriza, con quién y a qué destino. Un "me lo mandó por WhatsApp" no es una autorización: es una excusa. Y de excusas yo ya tengo la colección completa.',
+      'Y hoy compartís counter con <b>Bariloche</b>, un vuelo de <b>cabotaje</b>: abre 120 minutos antes y cierra 50 antes. Si alguien perdió el DNI, acordate de las excepciones: licencia de conducir vigente, denuncia policial o constancia de trámite. Nada de "pero soy yo, míreme la cara".',
     ],
     briefing: {
       booked: 238, capacity: 242, ssr: 'WCHR 1 · INF 3 · UMNR 2 · PETC 1', blocked: [],
@@ -119,7 +120,7 @@ export const DAYS = [
       { scenario: 'deceased_nocert', overlay: 'none' }, { scenario: 'ok', overlay: 'exit_restricted' }, { scenario: 'vip_angry', overlay: 'heavy' }, { scenario: 'depa_female', overlay: 'none' }, { scenario: 'ok', overlay: 'avih', variant: 'pups' },
     ],
     gate: { level: 'avanzado', cases: ['wchr', 'inf_stroller', 'senior_zone4', 'early', 'influencer', 'exit_minor', 'name_mismatch', 'dead_phone', 'dutyfree', 'dup_bp', 'wrong_flight', 'web_yesterday', 'no_return', 'gate_carryon', 'gate_smoker'] },
-    afterCheckin: 'Sobreviviste a las vacaciones de invierno en el counter. Ahora Madrid por la puerta {gate} a las {gateTime}: cochecitos, mochilas y chicos con hambre.',
+    afterCheckin: 'Sobreviviste a las vacaciones de invierno en el counter. Yo hace treinta años que no. Ahora Madrid por la puerta {gate} a las {gateTime}: cochecitos, mochilas y chicos con hambre. Suerte. La vas a necesitar.',
   },
 ];
 
@@ -191,7 +192,7 @@ function showProfile({ first }) {
   const preview = () => {
     const n = $('#hName').value.trim();
     $('#pfPrev').innerHTML = n && gender
-      ? `${api.faceSVG(MARTA.face, { w: 40, h: 50, bg: '#dce7f0' })}<p><b>${MARTA.name}:</b> ${esc(gtxt(`¡Bienvenido/a a ${AIRLINE.name}, ${n}! Vas a estar en el mostrador 22, conmigo cerca.`, gender))}</p>`
+      ? `${api.faceSVG(MARTA.face, { w: 40, h: 50, bg: '#dce7f0' })}<p><b>${MARTA.name}:</b> ${esc(gtxt(`Así que vos sos ${n}. Mostrador 22, al lado de mi escritorio. No me hagas arrepentir.`, gender))}</p>`
       : '';
     $('#pfPrev').classList.toggle('hidden', !(n && gender));
   };
@@ -283,7 +284,7 @@ let coachTimer = null, coachSteps = null, coachIdx = 0, coachDone = null;
 function coachSay(html, autoHide = 0) {
   let el = $('#coach');
   if (!el) { $('#view3d').insertAdjacentHTML('beforeend', '<div id="coach" class="coach"></div>'); el = $('#coach'); }
-  el.innerHTML = `${api.faceSVG(MARTA.face, { w: 44, h: 55, bg: '#dce7f0' })}<div><b>Marta:</b> ${gtxt(html)}</div><button class="x" title="Ocultar">✕</button>`;
+  el.innerHTML = `${api.faceSVG(MARTA.face, { w: 44, h: 55, bg: '#dce7f0' })}<div><b>${MARTA.short}:</b> ${gtxt(html)}</div><button class="x" title="Ocultar">✕</button>`;
   el.classList.remove('hidden');
   el.querySelector('.x').onclick = () => el.classList.add('hidden');
   clearTimeout(coachSay.t);
@@ -310,24 +311,24 @@ function runCoach(steps, onFinish) {
 }
 
 const CHECKIN_TUTORIAL = [
-  { text: 'Saludá al pasajero y pedile la <b>documentación y la reserva</b> (botón <i class="mdi mdi-passport"></i> abajo).', until: (G) => G.act.docsRequested, target: () => '[data-q="docs"]' },
-  { text: 'Los documentos quedaron sobre el mostrador. <b>Hacé clic en uno</b> para ampliarlo y comparar la foto con la persona.', until: (G) => G.act.docViewed, target: () => '.docThumb' },
-  { text: 'Ahora el sistema: pestaña <b>1 · Identificar</b>. Escribí el <b>código de reserva</b> (está en el e-ticket) y tocá Buscar. Después, Abrir.', until: (G) => G.act.bookingLoaded, target: () => '#tabs [data-tab="ident"], #q, #qGo, [data-pick]' },
-  { text: 'Pestaña <b>2 · APIS</b>: tocá <b>Leer MRZ</b> con el documento con el que viaja y después <b>Enviar APIS</b>.', until: (G) => !!G.act.apis, target: () => '#tabs [data-tab="pax"], #apScan, #apSend' },
-  { text: 'Equipaje: preguntá si <b>despacha</b> <i class="mdi mdi-bag-suitcase"></i> y hacé la <b>cartilla de mercancías peligrosas</b> <i class="mdi mdi-alert-octagon"></i>. También conviene preguntar por <b>artículos de valor</b> <i class="mdi mdi-diamond-stone"></i>.', until: (G) => G.act.asked.bags && G.act.asked.security, target: () => '[data-q="bags"], [data-q="security"]' },
-  { text: 'Pestaña <b>3 · Equipaje</b>: <b>Inspección 360°</b> y <b>Etiquetar</b> cada valija. Si se pasa de peso, cobrá el exceso al final.', until: (G) => G.act.bagsShown && G.act.bags.every((b) => b.tagged), target: () => '#tabs [data-tab="bags"], [data-insp], [data-tag]' },
-  { text: 'Pestaña <b>4 · Asientos</b>: preguntale su preferencia <i class="mdi mdi-seat-passenger"></i> y elegí un asiento libre.', until: (G) => !!G.act.seat, target: () => '#tabs [data-tab="seat"], [data-q="seat"]' },
-  { text: 'Todo en regla: <b><i class="mdi mdi-check-bold"></i> Aceptar y emitir la tarjeta de embarque</b>. ¡Tu primer pasajero!', until: (G) => G.idx > 0, target: () => '#btnAccept' },
+  { text: 'Saludá al pasajero, que no muerde (casi nunca), y pedile la <b>documentación y la reserva</b> (botón <i class="mdi mdi-passport"></i> abajo).', until: (G) => G.act.docsRequested, target: () => '[data-q="docs"]' },
+  { text: 'Los documentos quedaron sobre el mostrador. <b>Hacé clic en uno</b> y compará la foto con la persona. Parece obvio. No lo es: acá ya pasaron impostores con bigote pintado.', until: (G) => G.act.docViewed, target: () => '.docThumb' },
+  { text: 'Ahora el sistema: pestaña <b>1 · Identificar</b>. Escribí el <b>código de reserva</b> (está en el e-ticket), Buscar y Abrir. Sí, siempre. Sí, aunque tengas apuro.', until: (G) => G.act.bookingLoaded, target: () => '#tabs [data-tab="ident"], #q, #qGo, [data-pick]' },
+  { text: 'Pestaña <b>2 · APIS</b>: <b>Leer MRZ</b> con el documento con el que viaja y <b>Enviar APIS</b>. Si te lo olvidás, Migraciones de destino me llama a mí. A las tres de la mañana.', until: (G) => !!G.act.apis, target: () => '#tabs [data-tab="pax"], #apScan, #apSend' },
+  { text: 'Equipaje: preguntá si <b>despacha</b> <i class="mdi mdi-bag-suitcase"></i> y hacé la <b>cartilla de mercancías peligrosas</b> <i class="mdi mdi-alert-octagon"></i>. Siempre. Y preguntá por <b>artículos de valor</b> <i class="mdi mdi-diamond-stone"></i>, así después no me reclaman la notebook.', until: (G) => G.act.asked.bags && G.act.asked.security, target: () => '[data-q="bags"], [data-q="security"]' },
+  { text: 'Pestaña <b>3 · Equipaje</b>: <b>Inspección 360°</b> y <b>Etiquetar</b> cada valija. Si se pasa de peso, se cobra. No somos una ONG.', until: (G) => G.act.bagsShown && G.act.bags.every((b) => b.tagged), target: () => '#tabs [data-tab="bags"], [data-insp], [data-tag]' },
+  { text: 'Pestaña <b>4 · Asientos</b>: preguntale su preferencia <i class="mdi mdi-seat-passenger"></i> y elegí un asiento libre. Libre. No el de otro pasajero, como hizo tu antecesor.', until: (G) => !!G.act.seat, target: () => '#tabs [data-tab="seat"], [data-q="seat"]' },
+  { text: 'Todo en regla: <b><i class="mdi mdi-check-bold"></i> Aceptar y emitir la tarjeta de embarque</b>. Tu primer pasajero. Disfrutalo: nadie te lo va a agradecer.', until: (G) => G.idx > 0, target: () => '#btnAccept' },
 ];
 
 const GATE_TIPS = {
-  web: 'Este pasajero hizo <b>web check-in</b> y no despacha valija: <b>no pasó por ningún counter</b>. Nadie vio sus papeles: tocá <b>🛂 Verificar documentos</b> antes de embarcarlo (fecha y vuelo de la tarjeta, documento y, si el destino lo pide, pasaje de regreso).',
-  ovbk: 'Hay pasajeros <b>sin asiento</b>: antes de embarcar, <b>buscá voluntarios</b> (pestaña 2). Si nadie se ofrece, pedí al gerente un aumento. Si no alcanza: DNBD.',
-  start: 'Llegaste a la puerta. Primero la <b>apertura</b> (pestaña 1): las cuatro tareas. Después esperá que la tripulación autorice por radio.',
-  crew: '¡La tripulación autorizó! Pestaña 2: usá el <b>micrófono en orden</b>: preembarque, embarque y Zona 1. El botón que brilla es el que sigue.',
-  pax: 'En el podio: pedí <b>tarjeta y documento</b>, <b>escaneá</b> y fijate que todo coincida (nombre, foto, zona, asiento).',
-  final: 'Llamado final hecho. Pestaña 3: <b>llamá por nombre</b> a los que faltan y tienen valija. ¿No aparece nadie? <b>Recorré la sala</b>.',
-  m15: 'Minuto <b>−15</b>: buscá el equipaje de los que no embarcan, <b>des-chequealos</b> y cerrá el vuelo. Si tenés voluntarios en <b>stand-by</b>, cada des-chequeado libera un asiento para ellos.',
+  web: 'Este pasajero hizo <b>web check-in</b> y no despacha valija: <b>no pasó por ningún counter</b>. Nadie vio sus papeles: tocá <b>🛂 Verificar documentos</b> antes de embarcarlo (fecha y vuelo de la tarjeta, documento y, si el destino lo pide, pasaje de regreso). El web check-in es muy moderno. Los INAD también.',
+  ovbk: 'Hay pasajeros <b>sin asiento</b>. Sí, otra vez. Antes de embarcar, <b>buscá voluntarios</b> (pestaña 2). Si nadie se ofrece, pedí al gerente un aumento (suerte con eso). Si no alcanza: DNBD.',
+  start: 'Llegaste a la puerta. Primero la <b>apertura</b> (pestaña 1): las cuatro tareas, y digo las cuatro. Después esperá que la tripulación autorice por radio. No antes.',
+  crew: 'La tripulación autorizó. Pestaña 2: <b>micrófono en orden</b>: preembarque, embarque y Zona 1. El botón que brilla es el que sigue. Te lo dejé fácil, no me hagas quedar mal.',
+  pax: 'En el podio: pedí <b>tarjeta y documento</b>, <b>escaneá</b> y fijate que todo coincida (nombre, foto, zona, asiento). Escanear no es opcional, por más que el pasajero te sonría.',
+  final: 'Llamado final hecho. Pestaña 3: <b>llamá por nombre</b> a los que faltan y tienen valija. ¿No aparece nadie? <b>Recorré la sala</b>. Siempre hay uno dormido o en el free shop.',
+  m15: 'Minuto <b>−15</b>: buscá el equipaje de los que no embarcan, <b>des-chequealos</b> y cerrá el vuelo. Si tenés voluntarios en <b>stand-by</b>, cada des-chequeado les libera un asiento. Y no me demores el vuelo, que el comandante me llama a mí.',
 };
 
 // ------------------------------------------------------------------
@@ -346,7 +347,7 @@ function briefing(day) {
   const fo = Math.round((b.booked / b.capacity) * 100);
   api.openModal(`<div class="home">
     <h1>📋 Briefing · Día ${day.id}</h1>
-    <p class="hint">${MARTA.name}, supervisora de turno, repasa la información operativa antes de abrir el counter.</p>
+    <p class="hint">${MARTA.name} repasa la información operativa antes de abrir el counter, con el tercer café del turno en la mano.</p>
     ${flights.map((f) => `<div class="brief">
       <div><span>Vuelo</span><b>${f.no} ${STATION.code}-${f.dest}</b></div><div><span>Destino</span><b>${f.city}</b></div><div><span>Aeronave</span><b>${f.aircraft}</b></div>
       <div><span>STD</span><b>${f.dep}</b></div><div><span>Counter abre / cierra</span><b>${fmtTime(new Date(timeToday(dayOnly(new Date()), f.dep) - f.open * 60000))} / ${fmtTime(new Date(timeToday(dayOnly(new Date()), f.dep) - f.close * 60000))}</b></div><div><span>Puerta</span><b>${f.gate}</b></div>
@@ -365,11 +366,11 @@ function briefing(day) {
 function goCounter(day, flights) {
   const label = flights.length === 1 ? `${flights[0].no} ${flights[0].city}` : `${flights.length} vuelos`;
   api.startCheckin({ ...counterOpts(day, flights), saveTag: { name: studentName() || 'Agente', day: day.id } });
-  if (day.ovbk) coachSay('Hoy hay <b>sobreventa</b>: preguntá 🙋 <b>¿Voluntario?</b> a cada pasajero desde el principio. Todo lo de la sobreventa está en la pestaña <b>6</b>.', 12000);
+  if (day.ovbk) coachSay('Hoy hay <b>sobreventa</b>, cortesía de Ventas, que vende asientos que no existen. Preguntá 🙋 <b>¿Voluntario?</b> a cada pasajero desde el principio. Todo está en la pestaña <b>6</b>.', 12000);
   else if (day.tutorial) {
-    runCoach(CHECKIN_TUTORIAL, () => coachSay(`¡Excelente! Desde ahora seguís sin mí. ${crewIntro()} Yo ando cerca: si te trabás, tocá <b>📘 Manual</b>.`, 11000));
+    runCoach(CHECKIN_TUTORIAL, () => coachSay(`Bueno, ya sabés lo básico. Desde ahora seguís sin mí, que tengo otras catorce cosas que hacer. ${crewIntro()} Si te trabás, <b>📘 Manual</b>: para eso lo escribimos.`, 11000));
   } else {
-    coachSay(`Hoy: ${esc(label)}. ${crewIntro()} ${day.mode === 'challenge' ? 'El reloj corre en tiempo real y la <b>fila se impacienta</b> (arriba a la izquierda). Si se pone brava, 📢 hablale. Y si alguien se quiere colar, mirá a qué hora cierra su vuelo.' : 'Sin apuro, hacelo bien.'}`, day.mode === 'challenge' ? 14000 : 10000);
+    coachSay(`Hoy: ${esc(label)}. ${crewIntro()} ${day.mode === 'challenge' ? 'El reloj corre en tiempo real y la <b>fila se impacienta</b> (arriba a la izquierda). Si se pone brava, 📢 hablale. Y si alguien se quiere colar, fijate a qué hora cierra su vuelo antes de hacerte el/la bueno/a.' : 'Sin apuro, pero sin dormirte.'}`, day.mode === 'challenge' ? 14000 : 10000);
   }
 }
 
@@ -437,7 +438,7 @@ const clearCheckpoint = () => { try { [CP_KEY, 'ckShift', 'ckGate'].forEach((k) 
 function resumeDay(saved) {
   const day = DAYS.find((d) => d.id === saved.day);
   api.setStudent(studentName() || 'Agente');
-  story([`¡Volviste! Te estaba esperando. El counter del día ${day.id} ya está cerrado: tus pasajeros van camino a la puerta ${FLIGHTS.find((f) => f.no === day.flight).gate}. Seguimos desde el embarque.`], () => goGate(day, saved.cp), 'Ir a la puerta ▶');
+  story([`Ah, volviste. Pensé que habías renunciado, como el de la semana pasada. El counter del día ${day.id} ya está cerrado: tus pasajeros van camino a la puerta ${FLIGHTS.find((f) => f.no === day.flight).gate}. Seguimos desde el embarque.`], () => goGate(day, saved.cp), 'Ir a la puerta ▶');
 }
 
 function gateCoach(day, ev, B) {
@@ -463,9 +464,9 @@ function endDay(day, ck, gate) {
   saveStars(studentName() || 'Agente', day.id, stars);
   clearCheckpoint();
   const comments = {
-    3: ['¡Impecable! Si seguís así, el mes que viene me reemplazás... no, mentira, pero casi.', 'Tres estrellas. Me hiciste quedar bien con la gerencia. Te ganaste un café de la máquina (el bueno).'],
-    2: ['Muy bien. Algunos detalles para pulir, pero los pasajeros llegaron a destino y eso es lo importante.', 'Buen día. Repasá las observaciones del informe y mañana sale perfecto.'],
-    1: ['Bueno... sobrevivimos. Revisemos juntos los errores, que para eso estamos.', 'Hoy fue un día difícil. Todos tuvimos uno así. Repasá el manual y volvé a intentarlo.'],
+    3: ['Impecable. No te voy a felicitar porque después se te sube a la cabeza, pero... impecable.', 'Tres estrellas. Me hiciste quedar bien con la gerencia, que igual no me va a aumentar el sueldo. Gracias igual.'],
+    2: ['Bien. Hay cosas para pulir, pero los pasajeros llegaron a destino y nadie me llamó a casa. Para mí eso es un éxito.', 'Aceptable. Repasá las observaciones del informe: mañana las quiero sin errores, que yo no estoy para repetir.'],
+    1: ['Bueno... sobrevivimos. Más o menos. Sentate que repasamos los errores. Todos. Tenemos tiempo, total yo no tengo vida.', 'Fue un día malo. Yo tuve uno así en 1995 y todavía me acuerdo. Repasá el manual y volvé a intentarlo. Mañana te quiero mejor.'],
   }[stars];
   const isLast = day.id === 4;
   day.flightObj = FLIGHTS.find((f) => f.no === day.flight);
@@ -490,9 +491,9 @@ function endDay(day, ck, gate) {
         <div><span>Puntaje puerta</span><b>${gate.score}</b></div>
         <div><span>Embarcados</span><b>${gate.boarded}/${gate.checked}</b></div>
       </div>
-      <div class="story"><div class="who">${api.faceSVG(MARTA.face, { w: 70, h: 88, bg: '#dce7f0' })}<b>Marta</b></div>
-      <div class="says"><p>${esc(comments[Math.floor(Math.random() * comments.length)])}</p>${isLast && stars ? '<p>🎖 ¡Completaste tu primer mes en Aeroplata! Te ganaste el pin de la compañía.</p>' : ''}
-      <p>Antes de irte, mirá <b>qué pasó después</b> con tus pasajeros${nRev ? ' y repasá los errores, que para eso estamos' : ''}.</p></div></div>
+      <div class="story"><div class="who">${api.faceSVG(MARTA.face, { w: 70, h: 88, bg: '#dce7f0' })}<b>${MARTA.short}</b></div>
+      <div class="says"><p>${esc(comments[Math.floor(Math.random() * comments.length)])}</p>${isLast && stars ? '<p>🎖 Completaste tu primer mes en Aeroplata. Te ganaste el pin de la compañía. Guardalo bien: es lo único que te van a dar.</p>' : ''}
+      <p>Antes de irte, mirá <b>qué pasó después</b> con tus pasajeros${nRev ? '. Y repasá los errores: no pienso explicarte lo mismo dos veces' : ''}.</p></div></div>
     </div>
     <div class="etPane hidden" data-pane="news">
       <p class="hint">Al día siguiente, en tu bandeja de entrada... Así terminaron las decisiones que tomaste.</p>
@@ -560,7 +561,7 @@ function resumeCounter(saved) {
   const day = DAYS.find((d) => d.id === saved.day);
   const flights = (day.flights || [day.flight]).map((no) => FLIGHTS.find((f) => f.no === no));
   api.setStudent(studentName() || 'Agente');
-  story([`¡Volviste! Tu mostrador quedó tal cual: ya atendiste a ${saved.snap.idx + 1} de ${saved.snap.pax.length} pasajeros. Seguimos con el próximo.`], () => {
+  story([`Volviste. Tu mostrador quedó tal cual: nadie lo tocó, nadie quiere tu laburo. Ya atendiste a ${saved.snap.idx + 1} de ${saved.snap.pax.length} pasajeros. Seguimos con el próximo.`], () => {
     api.resumeCheckin(saved, { ...counterOpts(day, flights), saveTag: { name: saved.name, day: day.id } });
   }, 'Volver al counter ▶');
 }
@@ -575,7 +576,7 @@ function loadGate() {
 function resumeGate(saved, cp) {
   const day = DAYS.find((d) => d.id === saved.day);
   api.setStudent(studentName() || 'Agente');
-  story([`¡Volviste! La puerta ${FLIGHTS.find((f) => f.no === day.flight).gate} quedó como la dejaste: ${saved.closed ? 'el vuelo ya está cerrado, falta ver el informe.' : `${saved.boarded} de ${saved.checked} pasajeros a bordo. Seguimos embarcando.`}`], () => {
+  story([`Volviste. La puerta ${FLIGHTS.find((f) => f.no === day.flight).gate} quedó como la dejaste: ${saved.closed ? 'el vuelo ya está cerrado, falta ver el informe.' : `${saved.boarded} de ${saved.checked} pasajeros a bordo. Seguimos embarcando.`}`], () => {
     api.resumeBoarding(saved, {
       onEvent: (ev, B) => gateCoach(day, ev, B),
       onDone: (gate) => endDay(day, cp.ck, gate),

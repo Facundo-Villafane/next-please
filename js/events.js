@@ -465,7 +465,7 @@ function endProtest(silent) {
   const k = sc.animators.indexOf(p.anim);
   if (k >= 0) sc.animators.splice(k, 1);
   if (silent) { p.figs.forEach((c) => sc.scene.remove(c)); return; }
-  talk(`Marta llegó con los vouchers y la protección para el próximo vuelo a ${p.f.city}. El piquete se levanta... por ahora.`, 5500);
+  talk(`Viviana llegó con los vouchers, la protección para el próximo vuelo y cara de pocos amigos a ${p.f.city}. El piquete se levanta... por ahora.`, 5500);
   p.figs.forEach((c, i) => {
     c.position.y = 0; c.userData.arms?.forEach((a) => { a.rotation.x = 0; });
     setTimeout(() => sc.walkTo(c, [[-3 - Math.random() * 3, 8.5], [-16, 9.5]], 1.2).then(() => sc.scene.remove(c)), i * 200);

@@ -63,9 +63,9 @@ function setLook() {
 
 function goDown(onReady) {
   api.sys('*** SITA FUERA DE SERVICIO · SIN CONEXIÓN ***', 'err');
-  api.openModal(`<div class="story"><div class="who">${api.marta(70)}<b>Marta</b></div>
-    <div class="says"><p>📵 <b>¡Se cayó SITA en todo el aeropuerto!</b> No hay sistema, ni impresoras, ni APIS. La operación no se frena: seguimos en <b>manual</b>.</p>
-    <p>Primero armá el <b>kit de contingencia</b>: elegí lo que necesitás para atender sin sistema.</p></div></div>
+  api.openModal(`<div class="story"><div class="who">${api.marta(70)}<b>Viviana</b></div>
+    <div class="says"><p>📵 <b>Se cayó SITA en todo el aeropuerto.</b> Otra vez. No hay sistema, ni impresoras, ni APIS. Y no, no nos vamos a casa: seguimos en <b>manual</b>, como en los noventa.</p>
+    <p>Armá el <b>kit de contingencia</b>: elegí lo que necesitás para atender sin sistema. Y no me traigas la abrochadora sola.</p></div></div>
     <div class="kit">${shuffle(KIT).map((x) => `<label><input type="checkbox" value="${x.k}"> ${esc(x.label)}</label>`).join('')}</div>
     <div class="row end"><button class="btn ok" id="kitGo">Listo, a atender ▶</button></div>`, 'wide');
   $('#kitGo').onclick = () => {
@@ -83,7 +83,7 @@ function goDown(onReady) {
       <p class="hint">Elementos para la atención manual (Guía U4): boarding pass manual, bag tag manual, lista de pasajeros / manifiesto, planilla de control de pasajeros y equipajes, planilla API manual y planilla de estiba / peso y balance.</p>
       ${lines.length ? `<ul class="list">${lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>` : ''}
       <p class="big">Puntaje: <b>${pts > 0 ? '+' : ''}${pts}</b></p>
-      <p class="hint">Cómo se atiende en manual: <b>1)</b> buscar y tildar al pasajero en la lista impresa · <b>2)</b> copiar los datos del documento en la planilla API · <b>3)</b> escribir a mano el bag tag (¡ojo con el destino!) · <b>4)</b> asiento del plano en papel y boarding pass manual al aceptar. Timatic se consulta desde el celular de Marta.</p>
+      <p class="hint">Cómo se atiende en manual: <b>1)</b> buscar y tildar al pasajero en la lista impresa · <b>2)</b> copiar los datos del documento en la planilla API · <b>3)</b> escribir a mano el bag tag (¡ojo con el destino!) · <b>4)</b> asiento del plano en papel y boarding pass manual al aceptar. Timatic se consulta desde el celular de Viviana, que no le presta a nadie.</p>
       <div class="row end"><button class="btn ok" id="kitOk">Continuar ▶</button></div>`, 'wide');
     $('#kitOk').onclick = () => { api.closeModal(); setLook(); G.tab = 'ident'; api.renderTabs(); onReady(); };
   };
@@ -93,8 +93,8 @@ function goUp(onReady) {
   setLook();
   api.sys('SITA RESTABLECIDO · CARGAR LOS PASAJEROS ATENDIDOS EN MANUAL', 'ok');
   const n = G.outage.manual.length;
-  api.openModal(`<div class="story"><div class="who">${api.marta(70)}<b>Marta</b></div>
-    <div class="says"><p>✅ <b>¡Volvió el sistema!</b> Buen trabajo en manual.</p>
+  api.openModal(`<div class="story"><div class="who">${api.marta(70)}<b>Viviana</b></div>
+    <div class="says"><p>✅ <b>Volvió el sistema.</b> Sobreviviste al manual. No llores, que hay trabajo.</p>
     <p>${n ? `Ahora falta lo más importante: cargar en el sistema a los <b>${n} pasajero(s)</b> que aceptaste en manual (check-in y API) <b>antes del cierre de sus vuelos</b>. La API es obligación legal: si no se transmite, el pasajero llega a destino sin información para Migraciones.` : 'No aceptaste pasajeros en manual, así que no hay nada para cargar.'}</p>
     ${n ? '<p>Lo hacés desde la pestaña <b>1 · Identificar</b>, entre pasajero y pasajero.</p>' : ''}</div></div>
     <div class="row end"><button class="btn ok" id="upOk">Seguir atendiendo ▶</button></div>`, 'wide');

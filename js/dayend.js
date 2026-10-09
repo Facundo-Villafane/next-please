@@ -123,7 +123,7 @@ export function dayNews(day, ck, gate) {
   // Fila del counter (modo desafío)
   (ck.queue || []).forEach((q) => {
     if (q.type === 'outage') q.log.forEach((x) => {
-      if (x.type === 'kit' && x.perfect) add('good', '🧰', 'Marta', 'Cuando se cayó SITA armaste el kit de contingencia sin dudar. La gerencia quiere que des la capacitación de manual al resto del equipo.');
+      if (x.type === 'kit' && x.perfect) add('good', '🧰', 'Viviana', 'Cuando se cayó SITA armaste el kit de contingencia sin dudar. La gerencia quiere que des la capacitación de manual al resto del equipo. Gratis, obviamente. Así funciona esto.');
       if (x.type === 'upload') x.res.forEach((u) => {
         if (u.why === 'never') { bal.fines += 2000; add('bad', '📤', `Migraciones de ${u.city}`, `${u.name} llegó sin API: lo atendiste en manual y nunca se cargó en el sistema. Multa a la compañía por incumplir la transmisión de API.`); }
         if (u.why === 'late') add('warn', '📤', 'Control de calidad', `La API de ${u.name} (${u.flight}) se transmitió después del cierre del vuelo. Llegó, pero por poco.`);
@@ -138,14 +138,14 @@ export function dayNews(day, ck, gate) {
         } else if (x.by === 'you') add('good', '🤝', x.bot, `"Gracias por la mano con ${x.name}. ${pick(['Te debo un café.', 'Mañana las medialunas las traigo yo.', 'Ya lo anoté en mi cuadernito.'])}"`);
       });
       const tot = q.desks.reduce((s, d) => s + d.count, 0);
-      if (tot) add('fun', '👥', 'Marta', `Entre los tres mostradores atendieron ${tot + ck.results.length} pasajeros: ${q.desks.map((d) => `${d.name} ${d.count}`).join(', ')} y vos ${ck.results.length}. ${tot > ck.results.length * 2 ? '¡El equipo funcionó como un reloj!' : 'Buen ritmo de equipo.'}`);
+      if (tot) add('fun', '👥', 'Viviana', `Entre los tres mostradores atendieron ${tot + ck.results.length} pasajeros: ${q.desks.map((d) => `${d.name} ${d.count}`).join(', ')} y vos ${ck.results.length}. ${tot > ck.results.length * 2 ? 'El equipo funcionó como un reloj. No se lo digan a gerencia, que nos recortan uno.' : 'Ritmo aceptable. Se puede más.'}`);
     }
     if (q.type === 'viral') { bal.complaints++; add('bad', '📱', 'Redes sociales', `Un pasajero subió un video de la fila del mostrador 22: "Dos horas en Aeroplata para despachar una valija 🐢". ${(150 + Math.floor(Math.random() * 400))} mil reproducciones. Marketing no está contento.`); }
     if (q.type === 'cut' && q.urgent && q.ok) add('good', '🏃', `Puerta del ${q.flight}`, `${q.name} llegó justo gracias a que lo adelantaste en la fila. Dejó un "¡gracias, me salvaste las vacaciones!" en la página de la compañía.`);
     if (q.type === 'cut' && q.urgent && !q.ok) { bal.complaints++; add('bad', '⏰', 'Ventas', `${q.name} perdió el cierre del ${q.flight} a ${q.city} esperando en la fila. Hubo que reprogramarlo y dejó un reclamo: "¡Le avisé que cerraba!"`); }
     if (q.type === 'cut' && !q.urgent && !q.ok) { bal.complaints++; add('warn', '😤', 'Atención al Cliente', `Tres reclamos de pasajeros que vieron cómo ${q.name} se coló en la fila "porque odiaba las filas". Su vuelo salía dos horas después.`); }
   });
-  if (day.mode === 'challenge' && (ck.queue || []).length && !(ck.queue || []).some((q) => q.type === 'viral')) add('good', '🧘', 'Marta', 'La fila del mostrador 22 fue la más tranquila de la noche. ¿Cuál es tu secreto?');
+  if (day.mode === 'challenge' && (ck.queue || []).length && !(ck.queue || []).some((q) => q.type === 'viral')) add('good', '🧘', 'Viviana', 'La fila del mostrador 22 fue la más tranquila de la noche. No sé qué hiciste, pero seguí haciéndolo.');
 
   // Puerta
   const F = day.flightObj;
@@ -182,7 +182,7 @@ export function dayNews(day, ck, gate) {
   });
 
   const bad = news.filter((n) => n.tone === 'bad').length;
-  if (!bad) add('good', '🥐', 'Marta', pick(['Te dejé una medialuna en el locker. No le digas a nadie.', 'Gerencia preguntó quién estaba en el counter ayer. Esta vez para bien.', 'Ni un reclamo. En este aeropuerto eso es casi un milagro.']));
+  if (!bad) add('good', '🥐', 'Viviana', pick(['Te dejé una medialuna en el locker. Si le contás a alguien, lo niego.', 'Gerencia preguntó quién estaba en el counter ayer. Esta vez para bien, para variar.', 'Ni un reclamo. En treinta y un años lo vi pocas veces. No te la creas.']));
   const order = { bad: 0, warn: 1, fun: 2, good: 3 };
   news.sort((a, b) => order[a.tone] - order[b.tone]);
   return { news: news.slice(0, 9), more: Math.max(0, news.length - 9), bal };

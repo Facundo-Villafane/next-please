@@ -33,7 +33,7 @@ const CREW = {
   rocio: {
     name: 'Rocío', g: 'F', role: 'charlatana', desc: 'Atiende bien, pero charla con todos. Todos.', speed: [62, 85], acc: 0.8, consult: 0.35,
     face: { sex: 'F', age: 30, skin: 3, hairColor: '#1d1714', hairStyle: 'curly', glasses: false, beard: false, shape: 'round', nose: 1, brows: 'thick', eye: 2, smile: true, shirt: '#123a63', pants: '#1c1f26' },
-    idle: ['💬 Le cuenta su fin de semana a Marta', '📱 Mira el pronóstico de Bariloche', '🎶 Tararea algo'],
+    idle: ['💬 Le cuenta su fin de semana a Viviana (que no le presta atención)', '📱 Mira el pronóstico de Bariloche', '🎶 Tararea algo'],
     flavor: ['🗣️ Le recomienda una parrilla en el destino', '😂 Se ríe con el pasajero', '🗣️ Charla sobre el clima en {city}'],
   },
 };
