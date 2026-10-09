@@ -108,6 +108,7 @@ Abrir http://localhost:5173. También funciona en cualquier hosting estático
 | `js/overbooking.js` | Sobreventa: matriz de compensación (USD 160/200), protección, servicios, formulario VDBC/DNBD y su corrección. |
 | `js/career.js` | Modo Historia: días, supervisora, briefing, tutorial guiado y progreso. |
 | `js/events.js` | Imprevistos de Práctica libre: equipaje desatendido (protocolo PSA con cinemática: evacuación, vallado, brigada de explosivos) y vuelo cancelado (Res. ANAC 1532/98, piquete si se maneja mal). |
+| `js/cloud.js` | Nube (Firebase): cuenta con Google o correo, sube lo del navegador la primera vez, pregunta qué conservar si hay dos progresos, sincroniza cada cambio y borra la copia local al salir. |
 | `js/hints.js` | "Preguntale a Viviana": pista del próximo paso (counter y puerta) con su tono; gratis en Aprendizaje, −5 en Desafío. |
 | `js/supervisor.js` | La supervisora, Viviana Ferreyra: nombre, rol y cara (un solo lugar para todo el juego). |
 | `js/confirm.js` | Ventana de confirmación con el estilo del juego (reemplaza al cartel nativo del navegador). |

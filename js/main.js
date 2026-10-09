@@ -17,6 +17,7 @@ import { FLIGHTS, SHIFT_START, REAL_SECONDS_PER_GAME_MINUTE, FARES, BAG_FEES, SE
 import { buildDeck, buildSmartDeck, createPassenger, SCENARIOS } from './generator.js';
 import { recordCounter, weightFn, randomShift } from './progress.js';
 import { initEndless, showCareerHub } from './endless.js';
+import { initCloud } from './cloud.js';
 import { evaluate, computeExcess, REASONS, isIdDoc, isExitRow, partyMembers } from './rules.js';
 import { faceSVG, renderDoc, docTitle } from './docs.js';
 import { AGENT_EN } from './dialogues.js';
@@ -1168,6 +1169,12 @@ function toast(html) {
 }
 initOnline({ openModal, closeModal, showHome, startOnline, toast });
 
+// Nube (Firebase): cuenta con Google o correo; si no carga, se sigue jugando en el navegador
+initCloud({
+  openModal, closeModal, showHome, toast, confirm: askConfirm,
+  // Si cambió lo guardado (vino de la nube) y estás en el inicio, se redibuja
+  refresh: () => { if (!G.running && !boardingActive() && document.querySelector('#modalBox .profileBar, #modalBox .profile')) showHome(); },
+});
 // Carrera (modo sin fin)
 initEndless({
   openModal, closeModal, showHome,
