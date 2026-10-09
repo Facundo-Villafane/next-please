@@ -6,6 +6,8 @@ import { getPlayer, setPlayer, gtxt, playerFace } from './player.js';
 import { dayNews, newsHTML, reviewData, reviewHTML, replayDecks } from './dayend.js';
 import { teamCrew } from './team.js';
 import { askConfirm } from './confirm.js';
+import { careerUnlocked, showCareerHub, showProfileStats } from './endless.js';
+import { renameProgress as renameStats } from './progress.js';
 
 const $ = (s) => document.querySelector(s);
 let api;
@@ -152,12 +154,14 @@ export function showHome() {
       <div class="profileBar">
         ${api.faceSVG(playerFace(), { w: 52, h: 65, bg: '#dce7f0' })}
         <div><small>${esc(gtxt('¡Bienvenido/a de nuevo!'))}</small><b>${esc(pl.name)}</b></div>
+        <button class="btn sm ghost" id="hStats"><i class="mdi mdi-chart-bar"></i> Mi perfil</button>
         <button class="btn sm ghost" id="hEdit"><i class="mdi mdi-pencil"></i> Editar perfil</button>
       </div>
       <div class="homeGrid">
         <button class="homeCard" id="hStory"><span class="icoTile y"><i class="mdi mdi-airplane-takeoff"></i></span><h2>Modo Historia</h2><p>${gtxt('Sos agente recién ingresado/a. Briefing, counter y puerta de embarque, día a día, con tu supervisora.')}</p></button>
         <button class="homeCard" id="hPractice"><span class="icoTile b"><i class="mdi mdi-bullseye-arrow"></i></span><h2>Práctica libre</h2><p>Elegí puesto (counter o puerta), nivel y modo (aprendizaje o desafío contra reloj).</p></button>
         <button class="homeCard" id="hOnline"><span class="icoTile o"><i class="mdi mdi-account-group"></i></span><h2>Jugar en sala</h2><p>Con hasta dos compañeros en línea: cada uno en su mostrador, misma fila y mismos vuelos.</p></button>
+        <button class="homeCard ${careerUnlocked() ? '' : 'locked'}" id="hCareer"><span class="icoTile g"><i class="mdi mdi-${careerUnlocked() ? 'briefcase' : 'lock'}"></i></span><h2>Carrera</h2><p>${careerUnlocked() ? 'Días de trabajo sin fin: sueldo, bonos, multas, ascensos e hitos. Cada turno, distinto.' : 'Se habilita al terminar el Día 4 del Modo Historia. Viviana no le da carrera a cualquiera.'}</p></button>
       </div>
       <p class="disclaimer">Las reglas documentarias están simplificadas con fines didácticos. En la operación real siempre se consulta Timatic y los procedimientos vigentes de la compañía.</p>
     </div>`, 'wide');
@@ -165,6 +169,8 @@ export function showHome() {
   $('#hStory').onclick = showDays;
   $('#hPractice').onclick = () => { api.closeModal(); api.showPractice(); };
   $('#hOnline').onclick = () => api.showOnline();
+  $('#hCareer').onclick = () => { if (careerUnlocked()) showCareerHub(); };
+  $('#hStats').onclick = () => showProfileStats();
 }
 
 // Perfil del agente: nombre y trato. La primera vez es una bienvenida; después, "Editar perfil".
@@ -211,7 +217,7 @@ function showProfile({ first }) {
   $('#pfSave').onclick = () => {
     const n = $('#hName').value.trim();
     if (!n || !gender) { $('#hWarn').classList.remove('hidden'); if (!n) $('#hName').focus(); return; }
-    if (pl.name && pl.name !== n) renameProgress(pl.name, n);
+    if (pl.name && pl.name !== n) { renameProgress(pl.name, n); renameStats(pl.name, n); }
     setPlayer(n, gender);
     api.setStudent(n);
     showHome();
@@ -492,7 +498,7 @@ function endDay(day, ck, gate) {
         <div><span>Embarcados</span><b>${gate.boarded}/${gate.checked}</b></div>
       </div>
       <div class="story"><div class="who">${api.faceSVG(MARTA.face, { w: 70, h: 88, bg: '#dce7f0' })}<b>${MARTA.short}</b></div>
-      <div class="says"><p>${esc(comments[Math.floor(Math.random() * comments.length)])}</p>${isLast && stars ? '<p>🎖 Completaste tu primer mes en Aeroplata. Te ganaste el pin de la compañía. Guardalo bien: es lo único que te van a dar.</p>' : ''}
+      <div class="says"><p>${esc(comments[Math.floor(Math.random() * comments.length)])}</p>${isLast && stars ? '<p>🎖 Completaste tu primer mes en Aeroplata. Te ganaste el pin de la compañía. Guardalo bien: es lo único que te van a dar.</p><p>🔓 <b>Se habilitó la Carrera</b> en el menú: días de trabajo con sueldo, bonos, multas y ascensos. Ahí no hay tutorial.</p>' : ''}
       <p>Antes de irte, mirá <b>qué pasó después</b> con tus pasajeros${nRev ? '. Y repasá los errores: no pienso explicarte lo mismo dos veces' : ''}.</p></div></div>
     </div>
     <div class="etPane hidden" data-pane="news">

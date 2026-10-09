@@ -17,6 +17,7 @@ const OPENERS = [
 
 let count = 0;
 export const resetHints = () => { count = 0; };
+export const hintCount = () => count;
 
 // Muestra a Viviana con la pista. cost: puntos descontados (0 si es gratis)
 export function vivSay(text, cost = 0) {

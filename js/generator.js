@@ -102,6 +102,44 @@ const OVERLAY_POOL = {
   avanzado: ['overweight', 'heavy', 'extra_bag', 'light_bag', 'dg', 'limited_release', 'valuables', 'exit_restricted', 'face_change', 'firearm', 'avih'],
 };
 
+// ------------------------------------------------------------------
+// Mazos variados (Práctica y Carrera): se sortean casos de todo el catálogo del nivel,
+// con una mezcla equilibrada (≈ un tercio en regla) y un peso por caso que decide quien llama
+// (p. ej. más peso a lo que el alumno falla, menos a lo que vio en los últimos turnos).
+// ------------------------------------------------------------------
+const uniq = (a) => [...new Set(a)];
+const POOLS = (() => {
+  const basico = uniq([...DECKS.basico, 'dni_wrong', 'name_typo', 'minor_ok', 'wrong_date', 'dom_license', 'validity_stay', 'no_esta']);
+  const intermedio = uniq([...basico, ...DECKS.intermedio, 'visa_oldpp', 'pregnant_nocert', 'um_missing', 'return_resident', 'dom_police', 'one_parent_ok', 'relative_ok']);
+  const avanzado = uniq([...intermedio, ...DECKS.avanzado, 'deceased_ok', 'consul_ok', 'court_wrong', 'tutor_nocert', 'dom_tramite']);
+  return { basico, intermedio, avanzado };
+})();
+export const scenarioPool = (level) => (POOLS[level] || POOLS.basico).filter((k) => SCENARIOS[k]);
+
+export function buildSmartDeck(level, n, weightOf = () => 1) {
+  const pool = scenarioPool(level);
+  const okPool = pool.filter((k) => ACCEPT_SCENARIOS.includes(k));
+  const badPool = pool.filter((k) => !ACCEPT_SCENARIOS.includes(k));
+  const nOk = Math.max(2, Math.round(n * 0.35));
+  const draw = (list, count) => {
+    const out = [];
+    const avail = list.map((k) => ({ k, w: Math.max(0.05, weightOf(k)) }));
+    while (out.length < count && avail.length) {
+      const tot = avail.reduce((s, x) => s + x.w, 0);
+      let r = Math.random() * tot, i = 0;
+      while ((r -= avail[i].w) > 0 && i < avail.length - 1) i++;
+      out.push(avail[i].k);
+      // 'ok' puede repetirse (es lo más común en la vida real); el resto, una vez por turno
+      if (avail[i].k !== 'ok') avail.splice(i, 1); else avail[i].w *= 0.5;
+    }
+    return out;
+  };
+  const picks = shuffle([...draw(okPool, nOk), ...draw(badPool, n - nOk)]);
+  const overlays = shuffle(OVERLAY_POOL[level].concat(OVERLAY_POOL[level]));
+  let oi = 0;
+  return picks.map((s) => ({ scenario: s, overlay: ACCEPT_SCENARIOS.includes(s) ? overlays[oi++ % overlays.length] : 'none' }));
+}
+
 export function buildDeck(level) {
   const base = DECKS[level];
   const [first, ...rest] = base;

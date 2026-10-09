@@ -335,3 +335,56 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
 .vivCost { margin-left: 8px; font-family: var(--mono); font-size: 12px; font-weight: 700; color: #c4321a; background: #fde6dd; border-radius: 6px; padding: 1px 6px; }
 .viv .x { position: absolute; top: 6px; right: 8px; background: none; border: 0; cursor: pointer; color: var(--muted); font-size: 15px; }
 @media (max-width: 1100px) { #btnViv span { display: none; } }
+
+/* ---------- Carrera ---------- */
+.homeCard.locked { opacity: .65; cursor: not-allowed; }
+.homeCard.locked:hover { transform: none; border-color: #b9c8de; box-shadow: 0 4px 0 #b9c8de; }
+.icoTile.big { width: 64px; height: 64px; font-size: 38px; border-radius: 18px; }
+.rankCard { display: flex; align-items: center; gap: 14px; background: #fff; border: 2px solid #c6d3e4; border-radius: 18px; box-shadow: 0 3px 0 #c6d3e4; padding: 12px 14px; margin: 4px 0 12px; }
+.rankCard > div { flex: 1; min-width: 0; }
+.rankCard small { display: block; color: var(--muted); font-weight: 700; }
+.rankCard b { display: block; font-family: var(--display); font-weight: 600; font-size: 22px; color: var(--navy2); }
+.rankCard svg { border-radius: 50%; border: 3px solid var(--accent); flex: none; }
+.rankCard .money { flex: none; text-align: right; }
+.rankCard .money b { font-family: var(--mono); color: #1e8a48; }
+.rankCard .money b.neg { color: #c4321a; }
+.xpBar { height: 10px; background: #e4ebf4; border: 2px solid var(--edge); border-radius: 8px; overflow: hidden; margin: 6px 0 4px; }
+.xpBar i { display: block; height: 100%; background: linear-gradient(90deg, #ffd34d, #f5a300); }
+.weekRow { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 10px; }
+.wd { display: flex; flex-direction: column; align-items: center; gap: 2px; background: #fff; border: 2px dashed #c6d3e4; border-radius: 14px; padding: 8px 4px; }
+.wd small { font-family: var(--display); font-weight: 600; color: var(--navy); }
+.wd .mdi { font-size: 22px; color: var(--muted); }
+.wd b { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.wd.done { border-style: solid; }
+.wd.done b { color: var(--text); }
+.wd.today { border: 2px solid var(--edge); background: #fff6d6; box-shadow: 0 3px 0 var(--edge); }
+.wd.today .mdi { color: var(--navy2); }
+.grid.pay td { padding: 6px 8px; font-size: 14px; }
+.grid.pay td small { color: var(--muted); }
+.grid.pay .num { font-family: var(--mono); font-weight: 700; text-align: right; white-space: nowrap; }
+.grid.pay .pos { color: #1e8a48; } .grid.pay .neg { color: #c4321a; }
+.grid.pay tr.tot td { border-top: 3px double var(--edge); font-family: var(--display); font-size: 17px; font-weight: 600; }
+.promo { display: flex; align-items: center; gap: 12px; background: linear-gradient(#fff6d6, #ffe9a8); border: 3px solid var(--edge); border-radius: 18px; box-shadow: 0 4px 0 var(--edge); padding: 10px 14px; margin-bottom: 12px; animation: pop .3s ease-out; }
+.promo small { color: #8a5a00; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.promo b { display: block; font-family: var(--display); font-size: 22px; color: var(--navy2); }
+.promo p { margin: 2px 0 0; }
+.newMs { background: #fff; border: 2px solid var(--accent); border-radius: 14px; padding: 8px 10px; margin: 8px 0; display: flex; flex-direction: column; gap: 6px; }
+.ms { display: flex; gap: 10px; align-items: center; background: #f1f4f8; border: 2px solid #dbe3ee; border-radius: 12px; padding: 7px 10px; color: var(--muted); }
+.ms .mdi { font-size: 26px; flex: none; }
+.ms b { display: block; font-family: var(--display); font-weight: 600; }
+.ms small { display: block; font-size: 12px; }
+.ms.on { background: #fff6d6; border-color: var(--accent); color: var(--text); }
+.ms.on .mdi { color: #e09a00; }
+.ms.on b { color: var(--navy2); }
+.msGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.topics { display: flex; flex-direction: column; gap: 6px; }
+.tp { display: grid; grid-template-columns: 190px 1fr 50px 36px; align-items: center; gap: 8px; }
+.tp span { font-weight: 700; }
+.tp .bar { height: 10px; background: #e4ebf4; border-radius: 6px; overflow: hidden; }
+.tp .bar i { display: block; height: 100%; }
+.tp .bar i.ok { background: var(--ok); } .tp .bar i.warn { background: var(--warn); } .tp .bar i.bad { background: var(--bad); }
+.tp b { font-family: var(--mono); text-align: right; } .tp small { color: var(--muted); text-align: right; }
+.slip { background: #fffef8; border: 2px dashed #b9a77a; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; font-family: var(--mono); }
+.slipHead { display: flex; justify-content: space-between; border-bottom: 2px solid #d8c9a0; padding-bottom: 6px; margin-bottom: 6px; color: #5a4a20; }
+.modalBox .kpis div { background: #fff; }
+@media (max-width: 700px) { .weekRow { grid-template-columns: repeat(5, minmax(0, 1fr)); } .wd b { font-size: 10px; } .tp { grid-template-columns: 120px 1fr 44px; } .tp small { display: none; } .rankCard { flex-wrap: wrap; } }

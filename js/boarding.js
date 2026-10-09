@@ -93,7 +93,9 @@ export function startBoarding(opts) {
   // Pasajeros individuales por zona
   B.byZone = { 1: [], 2: [], 3: [], 4: [] };
   B.depa = [];
-  const kinds = (opts.cases || PRACTICE_CASES.filter((k) => (KINDS[k].lv || 1) <= lvl))
+  // Práctica: una selección al azar de los casos del nivel (no todos, para que cada embarque sea distinto)
+  const pool = shuffle(PRACTICE_CASES.filter((k) => (KINDS[k].lv || 1) <= lvl && (!KINDS[k].ret || retRule)));
+  const kinds = (opts.cases || pool.slice(0, Math.min(pool.length, [0, 8, 12, 16][lvl] || 12)))
     .filter((k) => !KINDS[k].ret || retRule);
   kinds.forEach((k) => {
     if (k === 'depa') { B.depa.push(makeGatePax('depa', { zone: 1 })); return; }

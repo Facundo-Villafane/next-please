@@ -1,10 +1,10 @@
 // Lógica principal del juego: turno, interfaz del DCS, diálogo y evaluación.
 import { AirportScene } from './scene3d.js';
 import { startBoarding, boardingActive, resumeBoarding, gateHint } from './boarding.js';
-import { vivSay, HINT_COST, resetHints } from './hints.js';
+import { vivSay, HINT_COST, resetHints, hintCount } from './hints.js';
 import { initCareer, showHome } from './career.js';
 import { initQueue, resetQueue, queueTick, queuePaxDone } from './queue.js';
-import { initEvents, planEvents, maybeEvent, eventsOnPax, eventsSummaryHTML } from './events.js';
+import { initEvents, planEvents, maybeEvent, eventsOnPax, eventsSummaryHTML, eventLog } from './events.js';
 import { initTeam, teamStart, teamStop, teamTick, teamSyncQueue, teamOn, teamWaiting, teamSummaryHTML, teamLocal } from './team.js';
 import { initOnline, showOnline } from './online.js';
 import { openBook } from './book.js';
@@ -14,7 +14,9 @@ import { firearmModal, avihModal } from './restricted.js';
 import { playerFace, getPlayer } from './player.js';
 import { initOutage, planOutage, outageOnPax, isManual, paneList, paneApi, manualTag, manualBp, manualItems, registerManual, identUploadBox, outageEndCheck, resetOutageLook } from './outage.js';
 import { FLIGHTS, SHIFT_START, REAL_SECONDS_PER_GAME_MINUTE, FARES, BAG_FEES, SEATMAP, ENTRY_RULES, COUNTRIES, EXIT_RULES_AR, STATION, AIRLINE, UM_POLICY } from './data.js';
-import { buildDeck, createPassenger, SCENARIOS } from './generator.js';
+import { buildDeck, buildSmartDeck, createPassenger, SCENARIOS } from './generator.js';
+import { recordCounter, weightFn, randomShift } from './progress.js';
+import { initEndless, showCareerHub } from './endless.js';
 import { evaluate, computeExcess, REASONS, isIdDoc, isExitRow, partyMembers } from './rules.js';
 import { faceSVG, renderDoc, docTitle } from './docs.js';
 import { AGENT_EN } from './dialogues.js';
@@ -96,7 +98,7 @@ function showPractice() {
       <label>Puesto de trabajo
         <select id="stMode">
           <option value="checkin">Counter de check-in</option>
-          <option value="gate">Puerta de embarque (vuelo ${FLIGHTS.find((f) => f.no === 'AP1100').no} a Miami)</option>
+          <option value="gate">Puerta de embarque (un vuelo internacional distinto cada vez)</option>
         </select>
       </label>
       <label>Modo de juego
@@ -143,17 +145,19 @@ function showPractice() {
     try { localStorage.setItem('ckTeam', $('#stTeam').value); } catch {}
     closeModal();
     if ($('#stMode').value === 'gate') {
-      startBoarding({ student: G.student, level: G.level, mode: G.mode, oldScene: scene, ui: { openModal, closeModal, modalOpen } });
+      startBoarding({ student: G.student, level: G.level, mode: G.mode, flightNo: pick(FLIGHTS.filter((f) => f.country !== 'AR')).no, oldScene: scene, ui: { openModal, closeModal, modalOpen } });
       G.sceneDisposed = true;
       return;
     }
-    startShift({});
+    startShift({ practice: true });
   };
   $('#stManual').onclick = () => showManual(showPractice);
   $('#stBack').onclick = () => { closeModal(); showHome(); };
 }
 
 function startShift(opts = {}) {
+  // Práctica libre: vuelos y hora de inicio al azar (que no sea siempre el mismo día)
+  if (opts.practice) { const rs = randomShift({ basico: 2, intermedio: 3, avanzado: 4 }[G.level] || 3); opts = { ...opts, start: rs.start, flights: rs.flights }; }
   G.onEnd = opts.onEnd || null;
   G.career = opts.career || null;
   G.saveTag = opts.saveTag || null;
@@ -169,7 +173,8 @@ function startShift(opts = {}) {
   G.checkedCount = {};
   G.flights.forEach((f) => { G.seatMaps[f.no] = makeOccupancy(); G.checkedCount[f.no] = rnd(40, 110); });
   // Pasajeros generados según la hora estimada de llegada al mostrador
-  const deck = opts.deck || buildDeck(G.level);
+  // Sin mazo fijo: casos sorteados de todo el catálogo del nivel, más seguido lo que se falla y sin repetir lo reciente
+  const deck = opts.deck || buildSmartDeck(G.level, { basico: 10, intermedio: 15, avanzado: 19 }[G.level] || 12, weightFn());
   G.deck = deck;
   // Caída del sistema: configurada por el día (Modo Historia) o al azar en práctica libre
   const outCfg = opts.outage !== undefined ? opts.outage
@@ -195,7 +200,7 @@ function startShift(opts = {}) {
   teamStart({ on: opts.team !== undefined ? opts.team : G.teamPref !== false, consults: opts.consults !== false, online: opts.online || null });
   if (teamOn()) { scene.setQueue([]); teamSyncQueue(); } else scene.setQueue(G.pax);
   // Imprevistos (sólo Práctica libre): valija desatendida, vuelo cancelado...
-  planEvents({ on: !opts.deck && !opts.online && opts.events !== false && G.eventsPref !== false });
+  planEvents({ on: (opts.events === 'force' || (!opts.deck && opts.events !== false && G.eventsPref !== false)) && !opts.online });
   scene.updateBoard(boardFlights(), G.now);
   updateTop();
   nextPassenger();
@@ -904,6 +909,8 @@ function endShift() {
   teamLocal('end', { score: G.score, ok: G.results.filter((r) => r.ev.correct).length, total: G.results.length });
   const teamSum = teamStop();
   if (teamSum) (G.queueLog = G.queueLog || []).push(teamSum);
+  // Lo que se hizo en el turno alimenta las estadísticas y el repaso inteligente
+  if (G.results.length) recordCounter(G.results);
   if (G.saveTag) { clearShift(); G.saveTag = null; }
   if (G.onEnd) { const cb = G.onEnd; G.onEnd = null; cb(G.results, G.score, G.queueLog || []); return; }
   G.cur = null;
@@ -1161,6 +1168,16 @@ function toast(html) {
 }
 initOnline({ openModal, closeModal, showHome, startOnline, toast });
 
+// Carrera (modo sin fin)
+initEndless({
+  openModal, closeModal, showHome,
+  setStudent: (name) => { G.student = name; $('#tAvatar').innerHTML = faceSVG(playerFace(), { w: 30, h: 37, bg: '#dce7f0' }); },
+  startCheckin: (opts) => { G.level = opts.level || 'basico'; G.mode = opts.mode || 'challenge'; startShift(opts); },
+  startBoarding: (opts) => { startBoarding({ ...opts, oldScene: scene, ui: { openModal, closeModal, modalOpen } }); G.sceneDisposed = true; },
+  // Una pantalla de diálogo con un botón para seguir
+  storyLine: (html, next) => { openModal(`${html}<div class="row end"><button class="btn ok big" id="slGo">¡A trabajar! ▶</button></div>`, 'wide'); $('#slGo').onclick = () => { closeModal(); next(); }; },
+  hintCount, eventLog,
+});
 // Repaso de los casos que fallaron en un día del Modo Historia
 function startReplay(r) {
   G.student = (() => { try { return localStorage.getItem('ckName') || 'Agente'; } catch { return 'Agente'; } })();
@@ -1184,4 +1201,8 @@ function startReplay(r) {
   };
 }
 const replay = (() => { try { const r = JSON.parse(sessionStorage.getItem('ckReplay') || 'null'); sessionStorage.removeItem('ckReplay'); return r; } catch { return null; } })();
-if (replay) startReplay(replay); else showHome();
+// Después de cada día de la Carrera la página se recarga y vuelve al centro de la carrera
+const reopen = (() => { try { const v = sessionStorage.getItem('ckOpen'); sessionStorage.removeItem('ckOpen'); return v; } catch { return null; } })();
+if (replay) startReplay(replay);
+else if (reopen === 'career' && getPlayer().name) { G.student = getPlayer().name; $('#tAvatar').innerHTML = faceSVG(playerFace(), { w: 30, h: 37, bg: '#dce7f0' }); showCareerHub(); }
+else showHome();
