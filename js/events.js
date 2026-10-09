@@ -8,6 +8,7 @@ import { randomFace } from './generator.js';
 import { teamPause, teamFigs, teamAfterEvac } from './team.js';
 import { gtxt, getPlayer } from './player.js';
 import { esc, fmtTime, pick, rnd, shuffle } from './util.js';
+import { sfx } from './sound.js';
 
 const $ = (s) => document.querySelector(s);
 let G, sc, api;
@@ -80,6 +81,7 @@ export function eventsOnPax() {
 // Tarjeta del evento (no es modal: el reloj sigue corriendo en modo desafío)
 // ------------------------------------------------------------------
 function card(ico, title, sub, text) {
+  sfx('alarm');
   $('#evt').classList.remove('hidden');
   $('#team')?.classList.add('dimmed');
   $('#evtIco').textContent = ico;

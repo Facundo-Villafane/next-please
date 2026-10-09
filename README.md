@@ -5,6 +5,18 @@ verificando documentación, requisitos de ingreso, reserva, APIS, equipaje, merc
 peligrosas y asiento, y decide **Aceptar / No aceptar / Derivar**. Cada atención se
 evalúa con una explicación, y al final del turno se genera un informe imprimible.
 
+## Menús
+
+- **Inicio**: *Continuar* (si hay algo a medias, lleva a la pantalla de ese modo: los días de la historia o el centro
+  de la carrera), *Jugar* (elegir modo), *Perfil*, *Configuración* y *Manual*.
+- **Pausa**: reanudar, guardar, configuración o volver al menú principal (lo guardado se retoma con *Continuar*).
+- **Guardado por modo**: la historia (`ckShift`, `ckGate`, `ckCheckpoint`) y la carrera (`ckCShift`, `ckCGate`) se
+  guardan por separado; la práctica libre y las salas no guardan, así que no pisan nada.
+- **Configuración**: sonido (general, efectos, ambiente, silenciar), globitos de la fila, calidad gráfica, cuenta en
+  la nube, perfil y borrar el progreso. Se guarda en este navegador (`ckSettings`).
+- **Sonido** (`js/sound.js`): sintetizado con Web Audio, sin archivos: llamado de la fila, impresora, cinta,
+  escáner, errores del sistema, anuncios, radio, alarma de imprevistos, caja registradora y murmullo de la terminal.
+
 ## Modo Historia
 
 "Tu primer mes en Aeroplata": sos agente recién ingresado/a. Cada día: diálogo con la supervisora

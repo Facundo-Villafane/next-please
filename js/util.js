@@ -130,3 +130,14 @@ export function unpackGraph(str) {
   };
   return dec(root);
 }
+
+
+// "hace 5 minutos", "hace 2 horas", "el 08/10"
+export function fmtAgo(t) {
+  const m = Math.round((Date.now() - t) / 60000);
+  if (m < 1) return 'recién';
+  if (m < 60) return `hace ${m} min`;
+  if (m < 24 * 60) return `hace ${Math.round(m / 60)} h`;
+  const d = new Date(t);
+  return `el ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+}

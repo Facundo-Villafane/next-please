@@ -3,6 +3,7 @@
 import { createPassenger } from './generator.js';
 import { faceSVG } from './docs.js';
 import { esc, fmtTime, pick, chance } from './util.js';
+import { settings } from './sound.js';
 
 const $ = (s) => document.querySelector(s);
 let G, scene, ui;
@@ -81,7 +82,7 @@ function bubbles(dt, level) {
   bubbleIn -= dt;
   if (bubbleIn > 0) return;
   bubbleIn = level >= 2 ? 2 + Math.random() * 2 : level === 1 ? 3.5 + Math.random() * 3 : 6 + Math.random() * 6;
-  scene.queueBubble?.(...bubbleFor(level));
+  if (settings().bubbles) scene.queueBubble?.(...bubbleFor(level));
 }
 // En modo aprendizaje no hay paciencia que se agote, pero la fila igual nota si una atención se hace muy larga
 function learnLevel() {

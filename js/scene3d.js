@@ -5,6 +5,7 @@ import { buildPerson } from './people3d.js';
 import { buildCityside } from './outside3d.js';
 import { AIRLINE, STATION } from './data.js';
 import { fmtTime } from './util.js';
+import { settings } from './sound.js';
 
 const COUNTER_SPOT = new THREE.Vector3(0.15, 0, 0.85);
 const FRONT = [0.6, 2.7];
@@ -44,9 +45,10 @@ function mdiChar(name) {
 export class AirportScene {
   constructor(container) {
     this.container = container;
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
+    const low = settings().quality === 'low'; // Configuración → calidad gráfica
+    this.renderer = new THREE.WebGLRenderer({ antialias: !low });
+    this.renderer.setPixelRatio(low ? 1 : Math.min(window.devicePixelRatio, 2));
+    this.renderer.shadowMap.enabled = !low;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 0.95;

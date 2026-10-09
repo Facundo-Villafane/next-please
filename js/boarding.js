@@ -13,6 +13,8 @@ import { esc, fmtTime, fmtDate, timeToday, dayOnly, norm, pick, rnd, chance, shu
 import { gateLines as gateDialog, gateGreeting, AGENT_EN, paxLang } from './dialogues.js';
 import { OVBK_POLICY, compForm, gradeComp, compSummary, protectionsFor } from './overbooking.js';
 import { conflictTrigger, runConflict } from './conflict.js';
+import { pauseMenu } from './menu.js';
+import { sfx, ambience, settings } from './sound.js';
 
 const $ = (s) => document.querySelector(s);
 // Ritmo del reloj según el modo:
@@ -185,7 +187,7 @@ function saveGate() {
   const snapB = { ...B, timer: undefined, at: undefined, onDone: undefined, lastReal: undefined };
   if (B.cur) { snapB.queue = [B.cur, ...B.queue]; snapB.cur = null; snapB.act = null; }
   try {
-    localStorage.setItem(GATE_KEY, JSON.stringify({
+    localStorage.setItem(B.saveTag.key || GATE_KEY, JSON.stringify({
       ...B.saveTag, at: Date.now(), boarded: B.boarded, checked: B.checked, closed: B.closed,
       data: packGraph({ B: snapB, usedSeats: [...usedSeats] }),
     }));
@@ -431,10 +433,10 @@ function buildUI() {
   $('#btnPause').onclick = () => {
     if (ui.modalOpen()) return;
     B.paused = true;
-    ui.openModal('<div class="pause"><h1>⏸ Pausa</h1><p>El reloj está detenido.</p><button class="btn ok big" id="resume">Continuar</button></div>');
-    $('#resume').onclick = () => { ui.closeModal(); B.paused = false; };
+    pauseMenu({ where: 'gate', saved: !!B.saveTag, save: () => { if (!B.saveTag) return false; clearTimeout(saveGateSoon.t); saveGateSoon.t = null; saveGate(); return true; }, resume: () => { B.paused = false; } });
   };
   $('#btnManual').onclick = showGateManual;
+  ambience(true);
   renderTabs(); renderPane(); updateTop();
 }
 
@@ -448,18 +450,21 @@ function sys(msg, kind = '') { const el = $('#gSys'); el.className = `sysmsg ${k
 function toast(ok, text) {
   const t = $('#toast');
   t.className = `toast ${ok ? 'ok' : 'bad'}`;
+  sfx(ok ? 'good' : 'bad');
   t.innerHTML = text;
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => t.classList.add('hidden'), 6500);
 }
 function radio(msg) {
   B.radio.unshift({ t: fmtTime(B.now), msg });
+  sfx('radio');
   sys(`📻 ${msg}`, 'warn');
   if (B.tab === 'radio') renderPane();
 }
 function announceBanner(text) {
   const el = $('#annBanner');
   el.innerHTML = `<b>📢</b> ${esc(text)}`;
+  sfx('pa');
   el.classList.remove('hidden');
   clearTimeout(announceBanner.t);
   announceBanner.t = setTimeout(() => el.classList.add('hidden'), 7000);
@@ -872,6 +877,7 @@ function scan() {
     a.scan = { ok: true, lines };
   }
   scene.flashBgr(a.scan.ok);
+  sfx(a.scan.ok ? 'scan' : 'scanBad');
   sys(a.scan.lines[0], a.scan.ok ? 'ok' : 'err');
   renderPane();
 }
@@ -1285,7 +1291,7 @@ function gateBubbles(dt) {
   } else if (B.zone === 0 && B.now >= B.at(-30)) lv = 2;
   else if (B.zone === 0 && B.now >= B.at(-40)) lv = 1;
   gateBubbleIn = lv >= 2 ? 2 + Math.random() * 2 : lv === 1 ? 3.5 + Math.random() * 3 : 5 + Math.random() * 5;
-  scene.queueBubble?.(...bubbleFor(lv));
+  if (settings().bubbles) scene.queueBubble?.(...bubbleFor(lv));
 }
 
 // "Preguntale a Viviana" en la puerta: el próximo paso del procedimiento (nunca la decisión)

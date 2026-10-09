@@ -1,14 +1,14 @@
 // MODO HISTORIA: "Tu primer mes en Aeroplata".
 // Cada día: briefing con la supervisora → check-in de un vuelo → embarque de ESE vuelo con los mismos pasajeros.
 import { FLIGHTS, AIRLINE, STATION, EXIT_CONTROL_CODES, exitControl } from './data.js';
-import { esc, fmtTime, timeToday, dayOnly } from './util.js';
+import { esc, fmtTime, timeToday, dayOnly, fmtAgo } from './util.js';
 import { getPlayer, setPlayer, gtxt, playerFace } from './player.js';
 import { dayNews, newsHTML, reviewData, reviewHTML, replayDecks } from './dayend.js';
 import { teamCrew } from './team.js';
 import { askConfirm } from './confirm.js';
-import { careerUnlocked, showCareerHub, showProfileStats } from './endless.js';
+import { careerUnlocked, showCareerHub, showProfileStats, careerPending } from './endless.js';
 import { cloudBadgeHTML, bindBadge, openLogin, cloudReady, cloudUser } from './cloud.js';
-import { renameProgress as renameStats } from './progress.js';
+import { renameProgress as renameStats, load, rankOf, RANKS } from './progress.js';
 
 const $ = (s) => document.querySelector(s);
 let api;
@@ -141,43 +141,82 @@ function saveStars(name, day, stars) {
 }
 const studentName = () => { try { return localStorage.getItem('ckName') || ''; } catch { return ''; } };
 
+// ------------------------------------------------------------------
+// Inicio (menú principal): Continuar / Jugar / Perfil / Configuración / Manual
+// ------------------------------------------------------------------
 export function showHome() {
   const pl = getPlayer();
   // La primera vez (o si falta algo), se pide el perfil; después se recuerda
   if (!pl.name || !pl.gender) { showProfile({ first: true }); return; }
   api.setStudent(pl.name);
+  api.ambience?.(false);
+  // Lo que quedó a medias: historia y carrera se guardan aparte; Continuar lleva al más reciente
+  const pend = [storyPending(), careerPending()].filter(Boolean).sort((a, b) => b.at - a.at);
+  const rank = careerUnlocked() ? RANKS[rankOf(load().career.xp)].name : null;
   api.openModal(`
-    <div class="start home">
+    <div class="start home mainMenu">
       <div class="startHero">
         <img src="assets/logo-512.png" alt="Next, please!" class="heroLogo" />
         <p>Simulador de atención al pasajero · Check-in y embarque en Ezeiza con ${AIRLINE.name}</p>
       </div>
       <div class="profileBar">
         ${api.faceSVG(playerFace(), { w: 52, h: 65, bg: '#dce7f0' })}
-        <div><small>${esc(gtxt('¡Bienvenido/a de nuevo!'))}</small><b>${esc(pl.name)}</b></div>
+        <div><small>${esc(gtxt('¡Bienvenido/a de nuevo!'))}</small><b>${esc(pl.name)}</b>${rank ? `<small>${esc(gtxt(rank))}</small>` : ''}</div>
         <span id="cloudSlot" class="cloudSlot">${cloudBadgeHTML()}</span>
-        <button class="btn sm ghost" id="hStats"><i class="mdi mdi-chart-bar"></i> Mi perfil</button>
-        <button class="btn sm ghost" id="hEdit"><i class="mdi mdi-pencil"></i> Editar perfil</button>
       </div>
-      <div class="homeGrid">
-        <button class="homeCard" id="hStory"><span class="icoTile y"><i class="mdi mdi-airplane-takeoff"></i></span><h2>Modo Historia</h2><p>${gtxt('Sos agente recién ingresado/a. Briefing, counter y puerta de embarque, día a día, con tu supervisora.')}</p></button>
-        <button class="homeCard" id="hPractice"><span class="icoTile b"><i class="mdi mdi-bullseye-arrow"></i></span><h2>Práctica libre</h2><p>Elegí puesto (counter o puerta), nivel y modo (aprendizaje o desafío contra reloj).</p></button>
-        <button class="homeCard" id="hOnline"><span class="icoTile o"><i class="mdi mdi-account-group"></i></span><h2>Jugar en sala</h2><p>Con hasta dos compañeros en línea: cada uno en su mostrador, misma fila y mismos vuelos.</p></button>
-        <button class="homeCard ${careerUnlocked() ? '' : 'locked'}" id="hCareer"><span class="icoTile g"><i class="mdi mdi-${careerUnlocked() ? 'briefcase' : 'lock'}"></i></span><h2>Carrera</h2><p>${careerUnlocked() ? 'Días de trabajo sin fin: sueldo, bonos, multas, ascensos e hitos. Cada turno, distinto.' : 'Se habilita al terminar el Día 4 del Modo Historia. Viviana no le da carrera a cualquiera.'}</p></button>
+      <div class="menuList">
+        ${pend.length ? `<button class="btn ok big menuMain" id="hContinue"><i class="mdi mdi-play-circle"></i><span>Continuar<small>${esc(pend[0].label)} · guardado ${fmtAgo(pend[0].at)}</small></span></button>` : ''}
+        <button class="btn ${pend.length ? '' : 'ok'} big menuMain" id="hPlay"><i class="mdi mdi-airplane-takeoff"></i><span>Jugar<small>Historia, práctica libre, sala online${careerUnlocked() ? ', carrera' : ''}</small></span></button>
+        <div class="menuRow">
+          <button class="btn" id="hStats"><i class="mdi mdi-card-account-details"></i> Perfil</button>
+          <button class="btn" id="hSettings"><i class="mdi mdi-cog"></i> Configuración</button>
+          <button class="btn" id="hManual"><i class="mdi mdi-book-open-variant"></i> Manual</button>
+        </div>
       </div>
       <p class="disclaimer">Las reglas documentarias están simplificadas con fines didácticos. En la operación real siempre se consulta Timatic y los procedimientos vigentes de la compañía.</p>
     </div>`, 'wide');
-  $('#hEdit').onclick = () => showProfile({ first: false });
+  if (pend.length) $('#hContinue').onclick = () => (pend[0].mode === 'career' ? showCareerHub() : showDays());
+  $('#hPlay').onclick = showPlay;
+  $('#hStats').onclick = () => showProfileStats(showHome);
+  $('#hSettings').onclick = () => api.showSettings({ back: showHome });
+  $('#hManual').onclick = () => api.showManual(showHome);
+  bindBadge();
+}
+
+// Jugar: elegir modo. Cada modo con lo suyo a medias, sin pisar a los otros.
+export function showPlay() {
+  const sp = storyPending(), cp = careerPending();
+  const badge = (p) => (p ? `<span class="tag amber"><i class="mdi mdi-content-save"></i> A medias · ${esc(p.label.split(' · ').slice(1).join(' · '))}</span>` : '');
+  api.openModal(`
+    <div class="start home">
+      <h1><i class="mdi mdi-airplane-takeoff"></i> Jugar</h1>
+      <div class="homeGrid">
+        <button class="homeCard" id="hStory"><span class="icoTile y"><i class="mdi mdi-airplane-takeoff"></i></span><h2>Modo Historia</h2><p>${gtxt('Sos agente recién ingresado/a. Briefing, counter y puerta de embarque, día a día, con tu supervisora.')}</p>${badge(sp)}</button>
+        <button class="homeCard" id="hPractice"><span class="icoTile b"><i class="mdi mdi-bullseye-arrow"></i></span><h2>Práctica libre</h2><p>Elegí puesto (counter o puerta), nivel y modo (aprendizaje o desafío contra reloj).</p></button>
+        <button class="homeCard" id="hOnline"><span class="icoTile o"><i class="mdi mdi-account-group"></i></span><h2>Jugar en sala</h2><p>Con hasta dos compañeros en línea: cada uno en su mostrador, misma fila y mismos vuelos.</p></button>
+        <button class="homeCard ${careerUnlocked() ? '' : 'locked'}" id="hCareer"><span class="icoTile g"><i class="mdi mdi-${careerUnlocked() ? 'briefcase' : 'lock'}"></i></span><h2>Carrera</h2><p>${careerUnlocked() ? 'Días de trabajo sin fin: sueldo, bonos, multas, ascensos e hitos. Cada turno, distinto.' : 'Se habilita al terminar el Día 4 del Modo Historia. Viviana no le da carrera a cualquiera.'}</p>${badge(cp)}</button>
+      </div>
+      <p class="hint">La historia y la carrera se guardan por separado: podés jugar una práctica o una sala y después seguir donde estabas.</p>
+      <div class="row end"><button class="btn ghost" id="pBack">← Menú principal</button></div>
+    </div>`, 'wide');
   $('#hStory').onclick = showDays;
   $('#hPractice').onclick = () => { api.closeModal(); api.showPractice(); };
   $('#hOnline').onclick = () => api.showOnline();
   $('#hCareer').onclick = () => { if (careerUnlocked()) showCareerHub(); };
-  $('#hStats').onclick = () => showProfileStats();
-  bindBadge();
+  $('#pBack').onclick = showHome;
+}
+
+// Día de la historia a medias (counter, puerta o entre los dos)
+function storyPending() {
+  const saved = loadCheckpoint(), shift = loadShift(), gateSave = saved && loadGate();
+  if (shift) return { mode: 'story', at: shift.at, label: `Historia · Día ${shift.day} · counter` };
+  if (gateSave && gateSave.day === saved.day) return { mode: 'story', at: gateSave.at, label: `Historia · Día ${gateSave.day} · puerta de embarque` };
+  if (saved) return { mode: 'story', at: saved.at, label: `Historia · Día ${saved.day} · falta el embarque` };
+  return null;
 }
 
 // Perfil del agente: nombre y trato. La primera vez es una bienvenida; después, "Editar perfil".
-function showProfile({ first }) {
+export function showProfile({ first }) {
   const pl = getPlayer();
   let gender = pl.gender;
   const opt = (g, label, hello) => `<button class="gBtn ${gender === g ? 'on' : ''}" data-g="${g}">${api.faceSVG(playerFace(g), { w: 64, h: 80, bg: '#dce7f0' })}<b>${label}</b><small>"${hello}"</small></button>`;
@@ -270,7 +309,7 @@ ${pending ? `<div class="resume"><span class="icoTile y"><i class="mdi mdi-conte
     };
   });
   if (pending) $("#dResume").onclick = pending.go;
-  $('#dBack').onclick = showHome;
+  $('#dBack').onclick = showPlay;
 }
 
 // Diálogo de la supervisora, en páginas
@@ -536,16 +575,6 @@ function crewIntro() {
   const c = teamCrew();
   if (c.length < 2) return '';
   return `Te acompañan <b>${esc(c[0].name)}</b> en el 21 y <b>${esc(c[1].name)}</b> en el 23: la fila es una sola. Tocá sus tarjetas (arriba a la derecha) para ver cómo atienden${c[1].role === 'nuevo' ? `, y si ${esc(c[1].name)} te consulta algo, dale una mano` : ''}.`;
-}
-
-// "hace 5 minutos", "hace 2 horas", "el 08/10"
-function fmtAgo(t) {
-  const m = Math.round((Date.now() - t) / 60000);
-  if (m < 1) return 'recién';
-  if (m < 60) return `hace ${m} min`;
-  if (m < 24 * 60) return `hace ${Math.round(m / 60)} h`;
-  const d = new Date(t);
-  return `el ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 // Opciones del counter de un día (las usan el inicio normal y el retomado)

@@ -1,0 +1,138 @@
+// Sonido: todo sintetizado con Web Audio (sin archivos). Efectos del mostrador y la puerta
+// (llamado, impresora, escáner, error del sistema, anuncios) y ambiente de aeropuerto (murmullo).
+// Volúmenes en Configuración, guardados en este navegador (ckSettings).
+const KEY = 'ckSettings';
+const DEF = { master: 0.8, sfx: 0.8, amb: 0.4, mute: false, bubbles: true, quality: 'high' };
+let S = { ...DEF };
+try { S = { ...DEF, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch {}
+
+export const settings = () => S;
+export function setSetting(k, v) {
+  S[k] = v;
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {}
+  applyVolumes();
+}
+
+let ctx = null, master, sfxBus, ambBus, noiseBuf, amb = null, ambWanted = false;
+function ac() {
+  if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return ctx; }
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  ctx = new AC();
+  master = ctx.createGain(); master.connect(ctx.destination);
+  sfxBus = ctx.createGain(); sfxBus.connect(master);
+  ambBus = ctx.createGain(); ambBus.connect(master);
+  // Ruido de 2 s para impresora, cinta, murmullo
+  noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+  const d = noiseBuf.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < d.length; i++) { const w = Math.random() * 2 - 1; last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; } // ruido marrón
+  applyVolumes();
+  return ctx;
+}
+function applyVolumes() {
+  if (!ctx) return;
+  const t = ctx.currentTime;
+  master.gain.setTargetAtTime(S.mute ? 0 : S.master, t, 0.05);
+  sfxBus.gain.setTargetAtTime(S.sfx, t, 0.05);
+  ambBus.gain.setTargetAtTime(S.amb * 0.5, t, 0.3);
+}
+// El navegador sólo deja sonar después de un gesto del usuario
+const unlock = () => { ac(); if (ambWanted) startAmb(); };
+window.addEventListener('pointerdown', unlock, { capture: true });
+window.addEventListener('keydown', unlock, { capture: true });
+
+// ------------------------------------------------------------------
+// Bloques
+// ------------------------------------------------------------------
+function tone(freq, start, dur, { type = 'sine', vol = 0.3, to = null, bus } = {}) {
+  const c = ac(); if (!c || S.mute) return;
+  const t = c.currentTime + start;
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t);
+  if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(bus || sfxBus);
+  o.start(t); o.stop(t + dur + 0.05);
+}
+function noise(start, dur, { vol = 0.3, freq = 2000, q = 1, type = 'bandpass', bus } = {}) {
+  const c = ac(); if (!c || S.mute) return;
+  const t = c.currentTime + start;
+  const src = c.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+  const f = c.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
+  g.gain.setValueAtTime(vol, t + Math.max(0.01, dur - 0.04));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(f); f.connect(g); g.connect(bus || sfxBus);
+  src.start(t, Math.random()); src.stop(t + dur + 0.05);
+}
+
+// ------------------------------------------------------------------
+// Efectos
+// ------------------------------------------------------------------
+const FX = {
+  click: () => tone(1800, 0, 0.03, { type: 'square', vol: 0.04 }),
+  // "¡Siguiente!": dos notas tipo llamador de fila
+  next: () => { tone(988, 0, 0.35, { vol: 0.18 }); tone(784, 0.16, 0.5, { vol: 0.18 }); },
+  // Sistema: confirmación y error
+  ok: () => tone(1320, 0, 0.08, { type: 'square', vol: 0.06 }),
+  err: () => { tone(220, 0, 0.14, { type: 'sawtooth', vol: 0.1 }); tone(196, 0.15, 0.2, { type: 'sawtooth', vol: 0.1 }); },
+  // Escáner de tarjeta / documento
+  scan: () => tone(2400, 0, 0.09, { type: 'square', vol: 0.07 }),
+  scanBad: () => { tone(400, 0, 0.12, { type: 'square', vol: 0.08 }); tone(400, 0.16, 0.12, { type: 'square', vol: 0.08 }); },
+  // Impresora térmica (tarjeta, etiqueta)
+  print: () => { for (let i = 0; i < 9; i++) noise(i * 0.055, 0.04, { vol: 0.16, freq: 3200, q: 3 }); noise(0.52, 0.06, { vol: 0.12, freq: 1500, q: 2 }); },
+  // Cinta de equipaje
+  belt: () => { noise(0, 0.9, { vol: 0.12, freq: 180, q: 0.7, type: 'lowpass' }); tone(70, 0, 0.9, { type: 'triangle', vol: 0.08 }); },
+  // Gong de anuncio del aeropuerto (tres notas)
+  pa: () => { [523, 659, 784].forEach((f, i) => { tone(f, i * 0.32, 1.1, { vol: 0.16 }); tone(f * 2, i * 0.32, 0.6, { vol: 0.03 }); }); },
+  good: () => { tone(660, 0, 0.12, { type: 'triangle', vol: 0.15 }); tone(880, 0.1, 0.12, { type: 'triangle', vol: 0.15 }); tone(1320, 0.2, 0.3, { type: 'triangle', vol: 0.14 }); },
+  bad: () => { tone(330, 0, 0.18, { type: 'triangle', vol: 0.16 }); tone(262, 0.18, 0.35, { type: 'triangle', vol: 0.16 }); },
+  // Alarma de imprevisto
+  alarm: () => { for (let i = 0; i < 4; i++) { tone(880, i * 0.4, 0.18, { type: 'square', vol: 0.07 }); tone(660, i * 0.4 + 0.2, 0.18, { type: 'square', vol: 0.07 }); } },
+  // Caja registradora (sueldo)
+  cash: () => { noise(0, 0.08, { vol: 0.2, freq: 4000, q: 2 }); tone(2093, 0.08, 0.5, { vol: 0.12 }); tone(2637, 0.12, 0.6, { vol: 0.1 }); },
+  radio: () => { noise(0, 0.12, { vol: 0.1, freq: 1800, q: 1.5 }); tone(1200, 0.12, 0.05, { type: 'square', vol: 0.03 }); },
+  stamp: () => { noise(0, 0.07, { vol: 0.35, freq: 300, q: 0.8, type: 'lowpass' }); tone(90, 0, 0.12, { vol: 0.2 }); },
+  levelUp: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.12, 0.35, { type: 'triangle', vol: 0.15 })),
+};
+export function sfx(name) { try { FX[name]?.(); } catch {} }
+
+// ------------------------------------------------------------------
+// Ambiente: murmullo de gente + algún gong lejano de vez en cuando
+// ------------------------------------------------------------------
+function startAmb() {
+  const c = ac(); if (!c || amb) return;
+  const src = c.createBufferSource(); src.buffer = noiseBuf; src.loop = true;
+  const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 450; f.Q.value = 0.6;
+  // El murmullo sube y baja despacio
+  const g = c.createGain(); g.gain.value = 0.35;
+  const lfo = c.createOscillator(), lg = c.createGain();
+  lfo.frequency.value = 0.13; lg.gain.value = 0.12; lfo.connect(lg); lg.connect(g.gain);
+  src.connect(f); f.connect(g); g.connect(ambBus);
+  src.start(); lfo.start();
+  const far = setInterval(() => {
+    if (Math.random() < 0.5 || S.mute) return;
+    [523, 659, 784].forEach((fq, i) => tone(fq, i * 0.32, 1.2, { vol: 0.05, bus: ambBus }));
+  }, 45000);
+  amb = { src, lfo, far };
+}
+function stopAmb() {
+  if (!amb) return;
+  try { amb.src.stop(); amb.lfo.stop(); } catch {}
+  clearInterval(amb.far);
+  amb = null;
+}
+export function ambience(on) {
+  ambWanted = on;
+  if (!on) { stopAmb(); return; }
+  if (ctx) startAmb();
+}
+
+// Clic suave en todos los botones
+document.addEventListener('click', (e) => { if (e.target.closest?.('.btn, .homeCard, button')) sfx('click'); }, { capture: true });

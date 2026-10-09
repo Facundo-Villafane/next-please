@@ -2,7 +2,7 @@
 import { AirportScene } from './scene3d.js';
 import { startBoarding, boardingActive, resumeBoarding, gateHint } from './boarding.js';
 import { vivSay, HINT_COST, resetHints, hintCount } from './hints.js';
-import { initCareer, showHome } from './career.js';
+import { initCareer, showHome, showPlay, showProfile } from './career.js';
 import { initQueue, resetQueue, queueTick, queuePaxDone } from './queue.js';
 import { initEvents, planEvents, maybeEvent, eventsOnPax, eventsSummaryHTML, eventLog } from './events.js';
 import { initTeam, teamStart, teamStop, teamTick, teamSyncQueue, teamOn, teamWaiting, teamSummaryHTML, teamLocal } from './team.js';
@@ -18,6 +18,8 @@ import { buildDeck, buildSmartDeck, createPassenger, SCENARIOS } from './generat
 import { recordCounter, weightFn, randomShift } from './progress.js';
 import { initEndless, showCareerHub } from './endless.js';
 import { initCloud } from './cloud.js';
+import { sfx, ambience } from './sound.js';
+import { initMenu, pauseMenu, showSettings } from './menu.js';
 import { evaluate, computeExcess, REASONS, isIdDoc, isExitRow, partyMembers } from './rules.js';
 import { faceSVG, renderDoc, docTitle } from './docs.js';
 import { AGENT_EN } from './dialogues.js';
@@ -153,7 +155,7 @@ function showPractice() {
     startShift({ practice: true });
   };
   $('#stManual').onclick = () => showManual(showPractice);
-  $('#stBack').onclick = () => { closeModal(); showHome(); };
+  $('#stBack').onclick = showPlay;
 }
 
 function startShift(opts = {}) {
@@ -162,6 +164,7 @@ function startShift(opts = {}) {
   G.onEnd = opts.onEnd || null;
   G.career = opts.career || null;
   G.saveTag = opts.saveTag || null;
+  G.online = !!opts.online;
   resetHints();
   $('.brand span').textContent = `Check-in · EZE · ${G.mode === 'challenge' ? '⏱ Desafío' : '📘 Aprendizaje'}`;
   const today = dayOnly(new Date());
@@ -184,6 +187,7 @@ function startShift(opts = {}) {
   resetOutageLook();
   G.pax = deck.map((entry, i) => createPassenger(entry, new Date(G.now.getTime() + i * 9 * 60000), G.flights));
   G.idx = -1; G.results = []; G.score = 0; G.running = true; G.paused = false;
+  ambience(true);
   G.cancelled = [];
   resetQueue();
   // Carrera: si llegaste tarde la fila ya está impaciente; las zapatillas cómodas la calman; decoración del mostrador
@@ -238,6 +242,7 @@ function nextPassenger() {
     if (p.flexible) G.ovbk.flexSeen++;
   }
   scene.replaceFront(p);
+  sfx('next');
   teamLocal('call', { name: `${p.first} ${p.last}`, sex: p.sex });
   G.cur = p;
   G.act = {
@@ -380,6 +385,7 @@ function sys(msg, kind = '') {
   const el = $('#sysmsg');
   el.className = `sysmsg ${kind}`;
   el.textContent = `> ${msg}`;
+  if (kind === 'ok') sfx('ok'); else if (kind === 'err') sfx('err');
 }
 
 function renderTabs() {
@@ -635,6 +641,7 @@ function tagBag(i) {
   b.tag = `0${AIRLINE.ticketPrefix}${randomDigits(6)} ${AIRLINE.code} ${G.cur.flight.dest}`;
   scene.sendBag(i);
   sys(`ETIQUETA IMPRESA ${b.tag}`, 'ok');
+  sfx('print'); setTimeout(() => sfx('belt'), 500);
   renderPane();
   setTimeout(() => placeNextBag(), 900);
 }
@@ -867,6 +874,7 @@ function finish(decision) {
     say(A(`Acá tiene su tarjeta de embarque${a.bags.some((b) => b.tagged) ? ' y el comprobante de equipaje' : ''}. Embarca por la puerta ${f.gate} a las ${fmtTime(new Date(f.depTime - 45 * 60000))}; verifique la puerta en las pantallas. ¡Buen viaje!`, `Here's your boarding pass${a.bags.some((b) => b.tagged) ? ' and baggage receipt' : ''}. Boarding at gate ${f.gate} at ${fmtTime(new Date(f.depTime - 45 * 60000))}; please check the screens for gate changes. Have a nice flight!`), p.lines.accept);
   } else say(null, p.lines[decision.kind]);
   scene.dismiss(decision.kind);
+  if (decision.kind === 'accept') sfx('print');
   updateTop();
   saveShift();
   setTimeout(() => showFeedback(p, decision, ev, seat), 600);
@@ -892,6 +900,7 @@ function boardingPass(p, seat) {
 }
 
 function showFeedback(p, decision, ev, seat) {
+  sfx(ev.correct ? 'good' : 'bad');
   const icon = ev.correct ? '✔' : '✖';
   const items = ev.items.map((x) => `<li class="${x.ok === true ? 'ok' : x.ok === false ? 'bad' : 'info'}"><div><b>${esc(x.title)}</b>${x.detail ? `<p>${esc(x.detail)}</p>` : ''}</div>${x.pts ? `<span class="pts">${x.pts > 0 ? '+' : ''}${x.pts}</span>` : ''}</li>`).join('');
   openModal(`
@@ -916,7 +925,7 @@ function endShift() {
   if (teamSum) (G.queueLog = G.queueLog || []).push(teamSum);
   // Lo que se hizo en el turno alimenta las estadísticas y el repaso inteligente
   if (G.results.length) recordCounter(G.results);
-  if (G.saveTag) { clearShift(); G.saveTag = null; }
+  if (G.saveTag) { clearShift(G.saveTag.key); G.saveTag = null; }
   if (G.onEnd) { const cb = G.onEnd; G.onEnd = null; cb(G.results, G.score, G.queueLog || []); return; }
   G.cur = null;
   renderPane();
@@ -1074,8 +1083,9 @@ $('#btnViv').onclick = () => {
 };
 
 // Si hay un turno en curso, el navegador pregunta antes de actualizar o cerrar la pestaña
+// (salvo que se salga a propósito desde el menú de pausa)
 window.addEventListener('beforeunload', (e) => {
-  if (!G.running && !boardingActive()) return;
+  if (G.leaving || (!G.running && !boardingActive())) return;
   e.preventDefault();
   e.returnValue = '';
 });
@@ -1084,8 +1094,11 @@ $('#btnManual').onclick = () => showManual();
 $('#btnPause').onclick = () => {
   if (!G.running || modalOpen()) return;
   G.paused = true;
-  openModal('<div class="pause"><h1>⏸ Pausa</h1><p>El reloj del turno está detenido.</p><button class="btn ok big" id="resume">Continuar</button></div>');
-  $('#resume').onclick = () => { closeModal(); G.paused = false; };
+  pauseMenu({
+    where: 'counter', online: G.online,
+    saved: !!G.saveTag, save: () => { saveShift(); return !!G.saveTag; },
+    resume: () => { G.paused = false; },
+  });
 };
 
 initQueue(G, scene, { openModal, closeModal, modalOpen });
@@ -1102,7 +1115,7 @@ initCareer({
   showOnline,
   startBoarding: (opts) => startBoarding({ ...opts, oldScene: scene, ui: { openModal, closeModal, modalOpen } }),
   resumeBoarding: (saved, opts) => resumeBoarding(saved, { ...opts, oldScene: scene, ui: { openModal, closeModal, modalOpen } }),
-  showManual,
+  showManual, ambience, showSettings: (o) => showSettings(o),
 });
 
 // ------------------------------------------------------------------
@@ -1113,19 +1126,21 @@ const SHIFT_KEY = 'ckShift';
 function saveShift() {
   if (!G.saveTag) return;
   const snap = {
-    now: G.now, flights: G.flights, deck: G.deck, pax: G.pax, idx: G.idx, results: G.results, score: G.score,
+    // Si se guarda desde la pausa con alguien a medio atender, se retoma desde ese pasajero
+    now: G.now, flights: G.flights, deck: G.deck, pax: G.pax, idx: Math.min(G.idx, G.results.length - 1), results: G.results, score: G.score,
     checkedCount: G.checkedCount, seatMaps: Object.fromEntries(Object.entries(G.seatMaps).map(([k, s]) => [k, [...s]])),
     ovbk: G.ovbk, outage: G.outage, queueLog: G.queueLog, level: G.level, mode: G.mode, patience: G.patience,
   };
-  try { localStorage.setItem(SHIFT_KEY, JSON.stringify({ ...G.saveTag, at: Date.now(), snap })); } catch {}
+  try { localStorage.setItem(G.saveTag.key || SHIFT_KEY, JSON.stringify({ ...G.saveTag, at: Date.now(), snap })); } catch {}
 }
-const clearShift = () => { try { localStorage.removeItem(SHIFT_KEY); } catch {} };
+const clearShift = (key = SHIFT_KEY) => { try { localStorage.removeItem(key); } catch {} };
 
 function resumeShift(saved, opts) {
   const s = saved.snap;
   G.onEnd = opts.onEnd || null;
   G.career = null;
   G.saveTag = opts.saveTag || null;
+  G.online = !!opts.online;
   resetHints();
   G.level = s.level; G.mode = s.mode;
   $('.brand span').textContent = `Check-in · EZE · ${G.mode === 'challenge' ? '⏱ Desafío' : '📘 Aprendizaje'}`;
@@ -1135,6 +1150,9 @@ function resumeShift(saved, opts) {
   resetQueue();
   G.queueLog = s.queueLog || [];
   if (s.patience != null) G.patience = s.patience;
+  G.perkShoes = !!opts.perkShoes;
+  scene.setDeskDecor?.(opts.decor || []);
+  ambience(true);
   G.outage = s.outage || null;
   resetOutageLook();
   $('#tabOvbk').classList.toggle('hidden', !G.ovbk);
@@ -1171,7 +1189,14 @@ function toast(html) {
   clearTimeout(toast.t);
   toast.t = setTimeout(() => t.classList.add('hidden'), 8000);
 }
-initOnline({ openModal, closeModal, showHome, startOnline, toast });
+initOnline({ openModal, closeModal, showHome: showPlay, startOnline, toast });
+// Menú de pausa y Configuración
+initMenu({
+  openModal, closeModal, confirm: askConfirm,
+  editProfile: () => showProfile({ first: false }),
+  // Salir al inicio a propósito (sin el aviso del navegador)
+  leave: () => { G.leaving = true; location.reload(); },
+});
 
 // Nube (Firebase): cuenta con Google o correo; si no carga, se sigue jugando en el navegador
 initCloud({
@@ -1185,12 +1210,14 @@ initCloud({
 });
 // Carrera (modo sin fin)
 initEndless({
-  openModal, closeModal, showHome,
+  openModal, closeModal, showHome, showPlay,
+  resumeCheckin: (saved, opts) => { G.level = saved.snap.level; G.mode = saved.snap.mode; resumeShift(saved, opts); },
+  resumeBoarding: (saved, opts) => { resumeBoarding(saved, { ...opts, oldScene: scene, ui: { openModal, closeModal, modalOpen } }); G.sceneDisposed = true; },
   setStudent: (name) => { G.student = name; $('#tAvatar').innerHTML = faceSVG(playerFace(), { w: 30, h: 37, bg: '#dce7f0' }); },
   startCheckin: (opts) => { G.level = opts.level || 'basico'; G.mode = opts.mode || 'challenge'; startShift(opts); },
   startBoarding: (opts) => { startBoarding({ ...opts, oldScene: scene, ui: { openModal, closeModal, modalOpen } }); G.sceneDisposed = true; },
   // Una pantalla de diálogo con un botón para seguir
-  storyLine: (html, next) => { openModal(`${html}<div class="row end"><button class="btn ok big" id="slGo">¡A trabajar! ▶</button></div>`, 'wide'); $('#slGo').onclick = () => { closeModal(); next(); }; },
+  storyLine: (html, next, cta = '¡A trabajar! ▶') => { openModal(`${html}<div class="row end"><button class="btn ok big" id="slGo">${cta}</button></div>`, 'wide'); $('#slGo').onclick = () => { closeModal(); next(); }; },
   hintCount, eventLog, confirm: askConfirm,
 });
 // Repaso de los casos que fallaron en un día del Modo Historia

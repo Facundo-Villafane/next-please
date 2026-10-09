@@ -19,7 +19,7 @@ const CONFIG = {
   appId: '1:819527064140:web:a0b5c918eafa8076d532e9',
 };
 // Lo que se guarda en la nube (claves del navegador)
-const KEYS = ['ckName', 'ckGender', 'ckCareer', 'ckProgress', 'ckCheckpoint', 'ckShift', 'ckGate', 'ckTeam', 'ckEvents', 'ckBook-checkin', 'ckBook-gate'];
+const KEYS = ['ckName', 'ckGender', 'ckCareer', 'ckProgress', 'ckCheckpoint', 'ckShift', 'ckGate', 'ckCShift', 'ckCGate', 'ckTeam', 'ckEvents', 'ckBook-checkin', 'ckBook-gate'];
 const OWNER = 'ckCloudUid', DIRTY = 'ckCloudDirty';
 
 let api, fb = null, user = null, applying = false, pushT = null, justIn = false;
@@ -217,3 +217,10 @@ export function bindBadge() {
   });
 }
 function setBadge() { const el = $('#cloudSlot'); if (el) { el.innerHTML = cloudBadgeHTML(); bindBadge(); } }
+
+// Configuración: subir ya mismo (devuelve si quedó en la nube)
+export async function syncNow() {
+  if (!user || !fb) return false;
+  await push();
+  return !C.error;
+}

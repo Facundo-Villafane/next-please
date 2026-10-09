@@ -6,7 +6,8 @@ import { buildSmartDeck } from './generator.js';
 import { faceSVG } from './docs.js';
 import { SUP } from './supervisor.js';
 import { getPlayer, gtxt, playerFace } from './player.js';
-import { esc, pick, chance, rnd } from './util.js';
+import { esc, pick, chance, rnd, fmtAgo } from './util.js';
+import { sfx } from './sound.js';
 import { load, save, weightFn, randomShift, RANKS, rankOf, settleCounter, settleGate, xpOf, fmtMoney, MILESTONES, topicStats, WEEKS_PER_MONTH, LIFE, SHOP, MOVE_COST, lifeOf, monthExpenses, commuteRoll } from './progress.js';
 
 const $ = (s) => document.querySelector(s);
@@ -62,10 +63,68 @@ export function showCareerHub() {
       <button class="btn" id="cProfile"><i class="mdi mdi-chart-bar"></i> Perfil</button>
       <button class="btn ok big" id="cGo">Empezar el ${DAYS[c.day - 1].toLowerCase()} ▶</button>
     </div></div>`, 'wide');
-  $('#cBack').onclick = () => { api.closeModal(); api.showHome(); };
+  $('#cBack').onclick = () => api.showPlay();
   $('#cProfile').onclick = () => showProfileStats(showCareerHub);
   $('#cLife').onclick = showLife;
-  $('#cGo').onclick = startDay;
+  const pend = careerSave();
+  if (pend) {
+    $('.career .hint').insertAdjacentHTML('afterend', `<div class="resume"><span class="icoTile y"><i class="mdi mdi-content-save-check"></i></span>
+      <div><b>Tenés el ${DAYS[c.day - 1].toLowerCase()} a medias</b><small>${pend.where}, guardado ${fmtAgo(pend.at)}.</small></div>
+      <button class="btn ok" id="cResume">Seguir ▶</button></div>`);
+    $('#cResume').onclick = () => resumeCareer(pend);
+    $('#cGo').textContent = 'Empezar de nuevo';
+    $('#cGo').classList.remove('ok', 'big');
+  }
+  $('#cGo').onclick = async () => {
+    if (pend && !(await api.confirm({ title: 'Día a medias', text: `Si empezás el ${DAYS[c.day - 1].toLowerCase()} de nuevo, se descarta lo que tenías guardado de hoy. ¿Seguir igual?`, ok: 'Empezar de nuevo', cancel: 'Volver', icon: 'content-save-alert' }))) return;
+    clearCareerSave();
+    startDay();
+  };
+}
+
+// ------------------------------------------------------------------
+// Guardado del día de carrera (aparte de la historia): counter por pasajero o puerta
+// ------------------------------------------------------------------
+const C_SHIFT = 'ckCShift', C_GATE = 'ckCGate';
+const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+function careerSave() {
+  const c = load().career, name = getPlayer().name || 'Agente';
+  const read = (k, dates) => { try { return JSON.parse(localStorage.getItem(k) || 'null', dates ? (key, v) => (typeof v === 'string' && ISO.test(v) ? new Date(v) : v) : undefined); } catch { return null; } };
+  const ok = (s) => s && s.name === name && s.week === c.week && s.day === c.day;
+  const sh = read(C_SHIFT, true), gt = read(C_GATE, false);
+  if (ok(sh)) return { kind: 'counter', saved: sh, at: sh.at, where: `Counter: atendiste ${sh.snap.idx + 1} de ${sh.snap.pax.length} pasajeros` };
+  if (ok(gt)) return { kind: 'gate', saved: gt, at: gt.at, where: gt.closed ? 'Puerta: vuelo cerrado, falta el informe' : `Puerta de embarque: ${gt.boarded} de ${gt.checked} a bordo` };
+  return null;
+}
+function clearCareerSave() { [C_SHIFT, C_GATE].forEach((k) => { try { localStorage.removeItem(k); } catch {} }); }
+// Para el inicio: si hay un día de carrera a medias
+export function careerPending() {
+  if (!careerUnlocked()) return null;
+  const s = careerSave();
+  return s ? { mode: 'career', at: s.at, label: `Carrera · ${DAYS[load().career.day - 1]} · ${s.kind === 'gate' ? 'puerta de embarque' : 'counter'}` } : null;
+}
+function careerTag(key, extra) {
+  const c = load().career;
+  return { key, name: getPlayer().name || 'Agente', week: c.week, day: c.day, extra };
+}
+function resumeCareer(pend) {
+  const c = ensure(load().career);
+  const s = pend.saved;
+  today = { extra: s.extra || [] };
+  api.closeModal();
+  api.setStudent(getPlayer().name || 'Agente');
+  api.storyLine(viv(pick(['Volviste. Tu puesto quedó como lo dejaste. Nadie lo tocó: nadie quiere tu laburo.', 'Ah, apareciste. Seguimos donde estabas, que el reloj no espera a nadie.'])), () => {
+    if (pend.kind === 'gate') {
+      api.resumeBoarding(s, { onDone: (gate) => dayEnd({ type: 'gate', gate }), saveTag: careerTag(C_GATE, today.extra) });
+      return;
+    }
+    api.resumeCheckin(s, {
+      counterLabel: 'Mostrador 22 · Carrera', signLabel: 'CARRERA · AEROPLATA',
+      perkShoes: !!c.owned.zapatillas, decor: decorOf(c),
+      onEnd: (results, score, queueLog) => dayEnd({ type: 'counter', results, queueLog }),
+      saveTag: careerTag(C_SHIFT, today.extra),
+    });
+  }, 'Volver al puesto ▶');
 }
 
 const START_LINES = [
@@ -100,7 +159,7 @@ function startDay() {
   if (c.day === GATE_DAY) {
     const fl = pick(FLIGHTS.filter((f) => f.country !== 'AR'));
     api.storyLine(viv(`${opener} Hoy es miércoles: <b>puerta de embarque</b>, el ${fl.no} a ${fl.city}. Embarque en orden, nadie sin escanear, y cerrame el vuelo a horario.`), () => {
-      api.startBoarding({ student: name, level: R.level, mode: 'challenge', flightNo: fl.no, onDone: (gate) => dayEnd({ type: 'gate', gate }) });
+      api.startBoarding({ student: name, level: R.level, mode: 'challenge', flightNo: fl.no, onDone: (gate) => dayEnd({ type: 'gate', gate }), saveTag: careerTag(C_GATE, today.extra) });
     });
     return;
   }
@@ -116,6 +175,7 @@ function startDay() {
       patience: roll.late ? 65 : null, perkShoes: !!c.owned.zapatillas, decor: decorOf(c),
       counterLabel: `Mostrador 22 · ${label}`, signLabel: 'CARRERA · AEROPLATA',
       onEnd: (results, score, queueLog) => dayEnd({ type: 'counter', results, queueLog }),
+      saveTag: careerTag(C_SHIFT, today.extra),
     });
   });
 }
@@ -124,6 +184,7 @@ function startDay() {
 // Fin del día: liquidación, experiencia, hitos y ascensos
 // ------------------------------------------------------------------
 function dayEnd({ type, results, gate }) {
+  clearCareerSave();
   const p = load(), c = ensure(p.career), st = p.stats;
   const r0 = rankOf(c.xp), R = RANKS[r0];
   const hints = api.hintCount();
@@ -175,6 +236,7 @@ function dayEnd({ type, results, gate }) {
       : s.net > 0 ? 'Ganaste algo. Poco. Como todos acá. Mañana prestá más atención.'
         : 'Hoy le debés plata a la empresa. Bienvenido/a al club: yo le debo la juventud.';
   const dayName = DAYS[(week ? 5 : c.day - 1) - 1].toLowerCase();
+  sfx(r1 > r0 ? 'levelUp' : 'cash');
   api.openModal(`<div class="home career dayPay">
     <h1>🧾 Liquidación del ${dayName} · ${type === 'gate' ? 'Puerta de embarque' : 'Counter'}</h1>
     ${r1 > r0 ? `<div class="promo">${rankTile(r1, true)}<div><small>¡Ascenso!</small><b>${esc(gtxt(RANKS[r1].name))}</b><p>Nuevo jornal: ${fmtMoney(RANKS[r1].pay)}. Más pasajeros, más vuelos y casos más difíciles.</p></div></div>` : ''}
@@ -227,6 +289,7 @@ function showPayslip(m) {
     : m.net >= 300000 ? 'Buen mes. Si te preguntan, el mérito es mío por enseñarte. Ahorrá, que esto no dura.'
       : m.net > 0 ? 'Cobraste, pagaste y te sobró algo. Eso, en este país, es un triunfo.'
         : 'Este mes gastaste más de lo que ganaste. Bienvenido/a a la adultez. Revisá cómo vivís, en "Mi vida".';
+  sfx('cash');
   api.openModal(`<div class="home career payslip">
     <h1>💵 Recibo de sueldo · Mes ${m.n}</h1>
     <div class="slip"><div class="slipHead"><b>AEROPLATA S.A.</b><span>Estación EZE · ${esc(getPlayer().name || 'Agente')}</span></div>
