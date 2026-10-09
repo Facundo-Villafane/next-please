@@ -19,7 +19,7 @@ const CONFIG = {
   appId: '1:819527064140:web:a0b5c918eafa8076d532e9',
 };
 // Lo que se guarda en la nube (claves del navegador)
-const KEYS = ['ckName', 'ckGender', 'ckCareer', 'ckProgress', 'ckCheckpoint', 'ckShift', 'ckGate', 'ckCShift', 'ckCGate', 'ckTeam', 'ckEvents', 'ckBook-checkin', 'ckBook-gate'];
+const KEYS = ['ckName', 'ckGender', 'ckCareer', 'ckProgress', 'ckCheckpoint', 'ckShift', 'ckGate', 'ckCShift', 'ckCGate', 'ckDaily', 'ckTeam', 'ckEvents', 'ckBook-checkin', 'ckBook-gate'];
 const OWNER = 'ckCloudUid', DIRTY = 'ckCloudDirty';
 
 let api, fb = null, user = null, applying = false, pushT = null, justIn = false;
@@ -223,4 +223,27 @@ export async function syncNow() {
   if (!user || !fb) return false;
   await push();
   return !C.error;
+}
+
+// ------------------------------------------------------------------
+// Turno del día: ranking compartido (daily/{fecha}/scores/{uid}). Vale el primer intento:
+// las reglas no dejan pisar un puntaje ya cargado.
+// ------------------------------------------------------------------
+export async function submitDaily(day, data) {
+  if (!user || !fb) return { ok: false, why: 'login' };
+  try {
+    const ref = fb.doc(fb.db, 'daily', day, 'scores', user.uid);
+    const prev = await fb.getDoc(ref);
+    if (prev.exists()) return { ok: false, why: 'dup', prev: prev.data() };
+    await fb.setDoc(ref, { ...data, at: fb.serverTimestamp() });
+    return { ok: true };
+  } catch (e) { return { ok: false, why: e.code || e.message }; }
+}
+export async function fetchDaily(day, max = 50) {
+  if (!user || !fb) return null;
+  try {
+    const q = fb.query(fb.collection(fb.db, 'daily', day, 'scores'), fb.orderBy('score', 'desc'), fb.limit(max));
+    const snap = await fb.getDocs(q);
+    return snap.docs.map((d) => ({ uid: d.id, me: d.id === user.uid, ...d.data() }));
+  } catch { return null; }
 }

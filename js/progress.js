@@ -5,7 +5,7 @@
 import { FLIGHTS } from './data.js';
 import { SCENARIOS } from './generator.js';
 import { getPlayer } from './player.js';
-import { pick, shuffle, timeToday, dayOnly } from './util.js';
+import { pick, shuffle, timeToday, dayOnly, dateKey } from './util.js';
 
 const KEY = 'ckProgress';
 const who = () => getPlayer().name || 'Agente';
@@ -151,6 +151,10 @@ export const MILESTONES = [
   { k: 'in_debt', icon: 'emoticon-cry-outline', name: 'Vivo en cuotas', desc: 'Cerraste un mes con los ahorros en negativo.' },
   { k: 'saver', icon: 'piggy-bank', name: 'Ahorrista', desc: 'Juntaste $ 1.000.000 de ahorros.' },
   { k: 'first_car', icon: 'car-side', name: 'Primer auto', desc: 'Te compraste un auto. Chau colectivo.' },
+  { k: 'presence7', icon: 'calendar-check', name: 'Presentismo perfecto', desc: '7 días reales seguidos jugando.' },
+  { k: 'presence30', icon: 'calendar-star', name: 'Un mes sin faltar', desc: '30 días reales seguidos jugando. Ni Viviana.' },
+  { k: 'daily_first', icon: 'calendar-today', name: 'Turno del día', desc: 'Jugaste tu primer turno del día.' },
+  { k: 'daily_podium', icon: 'podium-gold', name: 'Al podio', desc: 'Terminaste entre los 3 primeros del turno del día.' },
   { k: 'nice_home', icon: 'home-heart', name: 'Mudanza con estilo', desc: 'Te mudaste a un depto o a una casa.' },
 ];
 
@@ -286,4 +290,31 @@ export function commuteRoll(c) {
   const F = LIFE.food.options[L.food];
   const out = { late: Math.random() < T.late[far], incident: T.incident && Math.random() < T.incident ? (L.transport === 'auto' ? pick([['Se te pinchó una goma: gomería', 25000], ['Service del auto (ruido raro en el tren delantero)', 85000], ['Multa por estacionar en la dársena de remises', 40000]]) : pick([['Se te pinchó la rueda de la moto', 15000], ['Te mojaste entero/a: tintorería del uniforme', 12000]])) : null, forgot: !!F.forget && Math.random() < F.forget };
   return out;
+}
+
+// ------------------------------------------------------------------
+// Presentismo: días reales seguidos jugando (Turno del día o un día de Carrera)
+// ------------------------------------------------------------------
+export const PRESENCE_BONUS = (streak) => 1500 * Math.min(streak, 10);
+// Lo marca el primer turno terminado de cada día real. newDay: si es el primero de hoy.
+export function markPresence() {
+  const p = load(), today = dateKey();
+  const pr = p.presence || { last: null, streak: 0, best: 0, days: 0 };
+  if (pr.last === today) return { newDay: false, streak: pr.streak, best: pr.best };
+  pr.streak = pr.last === dateKey(Date.now() - 864e5) ? pr.streak + 1 : 1;
+  pr.best = Math.max(pr.best, pr.streak);
+  pr.days++;
+  pr.last = today;
+  p.presence = pr;
+  if (pr.streak >= 7 && !p.career.milestones.presence7) p.career.milestones.presence7 = Date.now();
+  if (pr.streak >= 30 && !p.career.milestones.presence30) p.career.milestones.presence30 = Date.now();
+  save(p);
+  return { newDay: true, streak: pr.streak, best: pr.best };
+}
+// Racha vigente (si ayer o hoy jugaste) y si hoy ya contó
+export function presence() {
+  const pr = load().presence;
+  if (!pr) return { streak: 0, today: false, best: 0 };
+  const today = pr.last === dateKey(), alive = today || pr.last === dateKey(Date.now() - 864e5);
+  return { streak: alive ? pr.streak : 0, today, best: pr.best };
 }

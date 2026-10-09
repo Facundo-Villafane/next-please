@@ -6,9 +6,9 @@ import { buildSmartDeck } from './generator.js';
 import { faceSVG } from './docs.js';
 import { SUP } from './supervisor.js';
 import { getPlayer, gtxt, playerFace } from './player.js';
-import { esc, pick, chance, rnd, fmtAgo } from './util.js';
+import { esc, pick, chance, rnd, fmtAgo, dateKey } from './util.js';
 import { sfx } from './sound.js';
-import { load, save, weightFn, randomShift, RANKS, rankOf, settleCounter, settleGate, xpOf, fmtMoney, MILESTONES, topicStats, WEEKS_PER_MONTH, LIFE, SHOP, MOVE_COST, lifeOf, monthExpenses, commuteRoll } from './progress.js';
+import { load, save, weightFn, randomShift, RANKS, rankOf, settleCounter, settleGate, xpOf, fmtMoney, MILESTONES, topicStats, WEEKS_PER_MONTH, LIFE, SHOP, MOVE_COST, lifeOf, monthExpenses, commuteRoll, markPresence, PRESENCE_BONUS, presence } from './progress.js';
 
 const $ = (s) => document.querySelector(s);
 const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
@@ -51,6 +51,7 @@ export function showCareerHub() {
     <h1>💼 Carrera en Aeroplata</h1>
     <div class="rankCard">${rankTile(r, true)}<div><small>Tu rango</small><b>${esc(gtxt(R.name))}</b>${xpBar(c.xp)}</div>
       <div class="money"><small>Ahorros</small><b class="${c.money < 0 ? 'neg' : ''}">${fmtMoney(c.money)}</b><small>A cobrar este mes: <b class="inl">${fmtMoney(c.pending)}</b></small></div></div>
+    ${presenceHTML()}
     <div class="weekRow">${DAYS.map((d, i) => {
       const done = c.weekLedger.find((x) => x.day === i + 1);
       return `<div class="wd ${i + 1 === c.day ? 'today' : ''} ${done ? 'done' : ''}"><small>${d}</small><i class="mdi mdi-${i + 1 === GATE_DAY ? 'airplane-takeoff' : 'account-tie-voice'}"></i><b>${done ? fmtMoney(done.net) : i + 1 === c.day ? 'Hoy' : '—'}</b></div>`;
@@ -127,6 +128,15 @@ function resumeCareer(pend) {
   }, 'Volver al puesto ▶');
 }
 
+// Racha de presentismo (días reales seguidos)
+function presenceHTML() {
+  const pr = presence();
+  const paid = load().career.presencePaid === dateKey();
+  const next = PRESENCE_BONUS(pr.today ? pr.streak : pr.streak + 1);
+  return `<div class="presence ${paid ? 'done' : ''}"><i class="mdi mdi-fire"></i><div><b>Presentismo: ${pr.streak === 1 ? '1 día' : `${pr.streak} días seguidos`}</b>
+    <small>${paid ? 'Hoy ya cobraste el presentismo. Volvé mañana para que la racha siga.' : `Tu primer día de carrera de hoy cobra ${fmtMoney(next)} de presentismo (más cuantos más días seguidos vengas, hasta ${fmtMoney(PRESENCE_BONUS(10))}). La racha suma con la carrera o con el Turno del día; si faltás un día, vuelve a cero.`}</small></div></div>`;
+}
+
 const START_LINES = [
   'Otro día, otro dólar. Bueno, otro peso. Devaluado.',
   'Llegaste puntual. Anotado. No te lo voy a decir de nuevo.',
@@ -185,11 +195,15 @@ function startDay() {
 // ------------------------------------------------------------------
 function dayEnd({ type, results, gate }) {
   clearCareerSave();
+  // Presentismo: el primer turno de cada día real suma, y más si venís todos los días
+  // (se marca antes de cargar el progreso, para que el guardado de abajo no lo pise)
+  const pres = markPresence();
   const p = load(), c = ensure(p.career), st = p.stats;
   const r0 = rankOf(c.xp), R = RANKS[r0];
   const hints = api.hintCount();
   const evLog = type === 'counter' ? api.eventLog() : [];
-  const extra = today?.extra || [];
+  const extra = [...(today?.extra || [])];
+  if (c.presencePaid !== dateKey()) { c.presencePaid = dateKey(); extra.push({ label: `Presentismo: ${pres.streak === 1 ? 'viniste hoy' : `${pres.streak} días seguidos`}`, amount: PRESENCE_BONUS(pres.streak) }); }
   const s = type === 'counter' ? settleCounter(results, evLog, hints, R, extra, c.owned) : settleGate(gate, hints, R, extra);
   const xp = xpOf(s);
   c.xp += xp;

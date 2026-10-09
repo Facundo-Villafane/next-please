@@ -93,6 +93,15 @@ En medio del turno pueden pasar cosas, y se ven en el hall (no son sólo pregunt
 
 Uno por turno (dos en avanzado), elegido entre los que sean posibles con los vuelos abiertos en ese momento. Se pueden desactivar en la pantalla de Práctica libre.
 
+## Turno del día y presentismo
+
+- **Turno del día**: el mismo turno para toda la clase cada día real (vuelos, ocupación, casos y pasajeros salen de la
+  fecha como semilla; `js/daily.js`). Counter solo, contra reloj, sin imprevistos; el nivel cambia según el día de la
+  semana. **Vale el primer intento**: con cuenta en la nube va al ranking (`daily/{fecha}/scores/{uid}` en Firestore;
+  las reglas sólo dejan crear el propio puntaje una vez). Se puede repetir para practicar, sin contar.
+- **Presentismo**: racha de días reales seguidos jugando (Turno del día o un día de carrera). En la carrera, el primer
+  día de cada fecha cobra $ 1.500 × días de racha (hasta $ 15.000). Hitos: 7 y 30 días seguidos, primer turno del día, podio.
+
 ## Carrera (después de la historia)
 
 Se habilita al terminar el Día 4. Turnos sin fin con rango, XP, hitos y plata:

@@ -455,3 +455,31 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
 .switch:checked::after { left: 23px; }
 .acct { display: flex; align-items: center; gap: 10px; margin: 6px 0 8px; }
 @media (max-width: 600px) { .setRow { flex-wrap: wrap; } .setRow input[type=range] { flex: 1; } }
+.presence { display: flex; align-items: center; gap: 10px; margin: 10px 0 0; padding: 8px 12px; background: #fff3e6; border: 2px solid #f0a050; border-radius: 14px; }
+.presence > i { font-size: 30px; color: #e8501c; }
+.presence.done > i { color: #f2a900; }
+.presence b { display: block; font-family: var(--display); font-weight: 600; color: var(--navy2); }
+.presence small { color: #6a4a2a; }
+.streakChip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 10px; background: #fff3e6; color: #c2410c; font-weight: 800; font-size: 13px; }
+
+/* ---------- Turno del día ---------- */
+.icoTile.r { background: linear-gradient(#b48cff, #7b4fe0 55%, #5a32b8); }
+.dailyPlan { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 0; }
+.dailyPlan > div { background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: 6px 10px; }
+.dailyPlan span { display: block; font-size: 12px; color: var(--muted); }
+.dailyPlan b { font-family: var(--display); font-weight: 600; color: var(--navy2); }
+@media (max-width: 640px) { .dailyPlan { grid-template-columns: 1fr 1fr; } }
+.dailyMine { display: flex; align-items: center; gap: 12px; margin: 10px 0 0; padding: 8px 12px; background: #e9f8ef; border: 2px solid var(--ok); border-radius: 14px; }
+.dailyMine small { display: block; color: var(--muted); }
+.dailyMine b { font-family: var(--display); font-weight: 600; color: var(--navy2); }
+.rankList { max-height: 300px; overflow: auto; border: 2px solid var(--line); border-radius: 14px; background: #fff; }
+.rankList > .hint { padding: 10px 12px; margin: 0; }
+.rk { display: grid; grid-template-columns: 36px 1fr auto 64px; align-items: center; gap: 8px; padding: 7px 12px; border-bottom: 1px solid #e6edf6; }
+.rk:last-child { border-bottom: 0; }
+.rk .pos { text-align: center; font-weight: 800; color: var(--muted); }
+.rk.top1 .pos { color: #e0a800; font-size: 20px; }
+.rk.top2 .pos { color: #9aa7b8; font-size: 20px; }
+.rk.top3 .pos { color: #c07a3a; font-size: 20px; }
+.rk small { color: var(--muted); }
+.rk .pts { text-align: right; font-family: var(--display); font-weight: 600; color: var(--navy2); font-size: 17px; }
+.rk.me { background: #fff6d6; }

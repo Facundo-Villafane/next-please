@@ -141,3 +141,18 @@ export function fmtAgo(t) {
   const d = new Date(t);
   return `el ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
+
+// Fecha local "2026-10-09" (el día real, para el turno del día y el presentismo)
+export function dateKey(t = Date.now()) {
+  const d = new Date(t);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+// Azar con semilla: mientras dura, Math.random da siempre la misma secuencia. Devuelve la función para volver atrás.
+export function seedRandom(seed) {
+  let h = 1779033703 ^ String(seed).length;
+  for (const ch of String(seed)) { h = Math.imul(h ^ ch.charCodeAt(0), 3432918353); h = (h << 13) | (h >>> 19); }
+  let a = h >>> 0;
+  const orig = Math.random;
+  Math.random = () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  return () => { Math.random = orig; };
+}

@@ -20,11 +20,12 @@ import { initEndless, showCareerHub } from './endless.js';
 import { initCloud } from './cloud.js';
 import { sfx, ambience } from './sound.js';
 import { initMenu, pauseMenu, showSettings } from './menu.js';
+import { initDaily, showDaily } from './daily.js';
 import { evaluate, computeExcess, REASONS, isIdDoc, isExitRow, partyMembers } from './rules.js';
 import { faceSVG, renderDoc, docTitle } from './docs.js';
 import { AGENT_EN } from './dialogues.js';
 import { OVBK_POLICY, protectionsFor, volunteerScript, volunteerScriptEn, compForm, gradeComp } from './overbooking.js';
-import { esc, fmtTime, fmtGds, fmtDate, timeToday, dayOnly, norm, rndf, rnd, pick, randomDigits, shuffle, chance } from './util.js';
+import { esc, fmtTime, fmtGds, fmtDate, timeToday, dayOnly, norm, rndf, rnd, pick, randomDigits, shuffle, chance, seedRandom } from './util.js';
 
 const $ = (s) => document.querySelector(s);
 // Desafío: reloj en tiempo real más exigente. Aprendizaje: cada atención consume LEARN_MINUTES_PER_PAX.
@@ -161,6 +162,8 @@ function showPractice() {
 function startShift(opts = {}) {
   // Práctica libre: vuelos y hora de inicio al azar (que no sea siempre el mismo día)
   if (opts.practice) { const rs = randomShift({ basico: 2, intermedio: 3, avanzado: 4 }[G.level] || 3); opts = { ...opts, start: rs.start, flights: rs.flights }; }
+  // Turno del día: con la misma semilla, todos tienen los mismos vuelos, ocupación y pasajeros
+  const unseed = opts.seed ? seedRandom(opts.seed) : null;
   G.onEnd = opts.onEnd || null;
   G.career = opts.career || null;
   G.saveTag = opts.saveTag || null;
@@ -186,6 +189,8 @@ function startShift(opts = {}) {
   planOutage({ outage: opts.ovbk ? null : outCfg });
   resetOutageLook();
   G.pax = deck.map((entry, i) => createPassenger(entry, new Date(G.now.getTime() + i * 9 * 60000), G.flights));
+  if (unseed) unseed();
+  G.seed = opts.seed || null;
   G.idx = -1; G.results = []; G.score = 0; G.running = true; G.paused = false;
   ambience(true);
   G.cancelled = [];
@@ -233,7 +238,10 @@ function nextPassenger() {
   G.idx++;
   if (G.idx >= G.pax.length) return endShift();
   // El pasajero se genera al llegar al mostrador, con la hora real del turno
+  // (en el Turno del día, cada puesto de la fila tiene su semilla: mismo pasajero para todos)
+  const unseed = G.seed ? seedRandom(`${G.seed}-${G.idx}`) : null;
   const p = G.deck[G.idx].pre || createPassenger(G.deck[G.idx], G.now, G.flights);
+  if (unseed) unseed();
   G.pax[G.idx] = p;
   if (inOvbk(p)) {
     // Asegura que aparezcan al menos dos posibles voluntarios en el turno
@@ -1206,7 +1214,16 @@ initCloud({
     if (G.running || boardingActive()) return;
     const empty = document.querySelector('#modal')?.classList.contains('hidden');
     if (empty || document.querySelector('#modalBox .profileBar, #modalBox .profile')) showHome();
+    else if (document.querySelector('#modalBox #dGo')) showDaily(); // turno del día: aparece el ranking
   },
+});
+// Turno del día (mismo turno para todos, con ranking)
+initDaily({
+  openModal, closeModal, showPlay, toast,
+  setStudent: (name) => { G.student = name; $('#tAvatar').innerHTML = faceSVG(playerFace(), { w: 30, h: 37, bg: '#dce7f0' }); },
+  startCheckin: (opts) => { G.level = opts.level; G.mode = opts.mode; startShift(opts); },
+  // Al terminar se recarga la página (escena limpia) y se vuelve a esa pantalla
+  backTo: (where) => { try { sessionStorage.setItem('ckOpen', where); } catch {} G.leaving = true; location.reload(); },
 });
 // Carrera (modo sin fin)
 initEndless({
@@ -1246,5 +1263,6 @@ const replay = (() => { try { const r = JSON.parse(sessionStorage.getItem('ckRep
 // Después de cada día de la Carrera la página se recarga y vuelve al centro de la carrera
 const reopen = (() => { try { const v = sessionStorage.getItem('ckOpen'); sessionStorage.removeItem('ckOpen'); return v; } catch { return null; } })();
 if (replay) startReplay(replay);
+else if (reopen === 'daily' && getPlayer().name) { G.student = getPlayer().name; showDaily(); }
 else if (reopen === 'career' && getPlayer().name) { G.student = getPlayer().name; $('#tAvatar').innerHTML = faceSVG(playerFace(), { w: 30, h: 37, bg: '#dce7f0' }); showCareerHub(); }
 else showHome();

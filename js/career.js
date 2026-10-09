@@ -8,7 +8,8 @@ import { teamCrew } from './team.js';
 import { askConfirm } from './confirm.js';
 import { careerUnlocked, showCareerHub, showProfileStats, careerPending } from './endless.js';
 import { cloudBadgeHTML, bindBadge, openLogin, cloudReady, cloudUser } from './cloud.js';
-import { renameProgress as renameStats, load, rankOf, RANKS } from './progress.js';
+import { renameProgress as renameStats, load, rankOf, RANKS, presence } from './progress.js';
+import { showDaily, dailyDone } from './daily.js';
 
 const $ = (s) => document.querySelector(s);
 let api;
@@ -162,6 +163,7 @@ export function showHome() {
       <div class="profileBar">
         ${api.faceSVG(playerFace(), { w: 52, h: 65, bg: '#dce7f0' })}
         <div><small>${esc(gtxt('¡Bienvenido/a de nuevo!'))}</small><b>${esc(pl.name)}</b>${rank ? `<small>${esc(gtxt(rank))}</small>` : ''}</div>
+        ${presence().streak ? `<span class="streakChip" title="Presentismo: días seguidos jugando"><i class="mdi mdi-fire"></i> ${presence().streak}</span>` : ''}
         <span id="cloudSlot" class="cloudSlot">${cloudBadgeHTML()}</span>
       </div>
       <div class="menuList">
@@ -192,6 +194,7 @@ export function showPlay() {
       <h1><i class="mdi mdi-airplane-takeoff"></i> Jugar</h1>
       <div class="homeGrid">
         <button class="homeCard" id="hStory"><span class="icoTile y"><i class="mdi mdi-airplane-takeoff"></i></span><h2>Modo Historia</h2><p>${gtxt('Sos agente recién ingresado/a. Briefing, counter y puerta de embarque, día a día, con tu supervisora.')}</p>${badge(sp)}</button>
+        <button class="homeCard" id="hDaily"><span class="icoTile r"><i class="mdi mdi-calendar-today"></i></span><h2>Turno del día</h2><p>El mismo turno para toda la clase, cambia cada día. Vale el primer intento y hay ranking.</p>${dailyDone() ? '<span class="tag green"><i class="mdi mdi-check"></i> Hoy ya jugaste</span>' : '<span class="tag amber"><i class="mdi mdi-fire"></i> Pendiente hoy</span>'}</button>
         <button class="homeCard" id="hPractice"><span class="icoTile b"><i class="mdi mdi-bullseye-arrow"></i></span><h2>Práctica libre</h2><p>Elegí puesto (counter o puerta), nivel y modo (aprendizaje o desafío contra reloj).</p></button>
         <button class="homeCard" id="hOnline"><span class="icoTile o"><i class="mdi mdi-account-group"></i></span><h2>Jugar en sala</h2><p>Con hasta dos compañeros en línea: cada uno en su mostrador, misma fila y mismos vuelos.</p></button>
         <button class="homeCard ${careerUnlocked() ? '' : 'locked'}" id="hCareer"><span class="icoTile g"><i class="mdi mdi-${careerUnlocked() ? 'briefcase' : 'lock'}"></i></span><h2>Carrera</h2><p>${careerUnlocked() ? 'Días de trabajo sin fin: sueldo, bonos, multas, ascensos e hitos. Cada turno, distinto.' : 'Se habilita al terminar el Día 4 del Modo Historia. Viviana no le da carrera a cualquiera.'}</p>${badge(cp)}</button>
@@ -200,6 +203,7 @@ export function showPlay() {
       <div class="row end"><button class="btn ghost" id="pBack">← Menú principal</button></div>
     </div>`, 'wide');
   $('#hStory').onclick = showDays;
+  $('#hDaily').onclick = showDaily;
   $('#hPractice').onclick = () => { api.closeModal(); api.showPractice(); };
   $('#hOnline').onclick = () => api.showOnline();
   $('#hCareer').onclick = () => { if (careerUnlocked()) showCareerHub(); };
