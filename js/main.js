@@ -6,6 +6,7 @@ import { initQueue, resetQueue, queueTick, queuePaxDone } from './queue.js';
 import { initEvents, planEvents, maybeEvent, eventsOnPax, eventsSummaryHTML } from './events.js';
 import { initTeam, teamStart, teamStop, teamTick, teamSyncQueue, teamOn, teamWaiting, teamSummaryHTML, teamLocal } from './team.js';
 import { initOnline, showOnline } from './online.js';
+import { openBook } from './book.js';
 import { conflictTrigger, runConflict, MARTA } from './conflict.js';
 import { firearmModal, avihModal } from './restricted.js';
 import { playerFace, getPlayer } from './player.js';
@@ -943,38 +944,69 @@ function endShift() {
 function showManual(after) {
   const wasPaused = G.paused;
   G.paused = true;
-  openModal(`<div class="manual">
-    <h1>📘 Manual del agente de check-in</h1>
-    <p class="hint">Basado en la Guía de Atención al Pasajero · Unidad 4 (Billetaje y Reservas · TUGA). Cada aerolínea define sus tiempos y procedimientos: en el trabajo real manda el manual de la compañía.</p>
-    <h3>Tiempos (vuelos internacionales)</h3>
-    <p>Internacional: set up −190 STD · apertura −180 · <b>cierre −70</b>. Cabotaje: set up −130 · apertura −120 · <b>cierre −50</b>. El cierre por sistema (CLOSE CHECK-IN) es obligatorio. Observe el reloj y el tablero.</p>
-    <h3>Secuencia de atención en counter</h3>
-    <ol>
-      <li><b>Saludo cordial</b> con contacto visual. Pida documento de viaje y reserva. Compare la <b>foto</b> con la persona: forma de la cara, nariz, cejas, ojos y tono de piel (peinado, color de pelo o anteojos pueden cambiar).</li>
-      <li><b>Identificar la reserva</b> en el sistema (pestaña 1) por código de reserva o apellido: pasajero correcto, vuelo, <b>fecha de hoy</b> y <b>boleto emitido</b>. Identificación positiva: el nombre del boleto coincide con el documento.</li>
-      <li><b>Requisitos de ingreso</b> con TIMATIC (pestaña 5): documento aceptado, visa / ESTA / e-Visa, validez y, para visitantes no residentes en EE.UU. y España, <b>pasaje de regreso o de continuación</b> (Migraciones de Argentina no lo controla: es responsabilidad del agente). Quien no cumple no puede ser chequeado ni despachar equipaje.</li>
-      <li><b>Familias:</b> con ambos padres, partida de nacimiento + documento del menor; con un solo padre, permiso notarial del que no viaja; con otro adulto (abuelo/a), permiso de ambos padres que lo identifique. Casos especiales: progenitor fallecido → certificado de defunción; ausente → autorización del tribunal de familia (para ese destino); en el exterior → autorización por consulado (no sirve una carta simple); tutor/a → certificado del tribunal que acredite la tutela. Infantes: documento propio, en la reserva (INF), cochecito sin cargo (counter con limited release o Gate Dispatch), nunca en salida de emergencia. APIS y asiento para cada integrante.</li>
-      <li><b>Menores:</b> si viaja solo, permiso notarial de ambos padres; con un solo padre, permiso del que no viaja. Servicio UMNR obligatorio entre ${UM_POLICY.mandatoryFrom} y ${UM_POLICY.mandatoryTo} años (política de la compañía del juego).</li>
-      <li><b>Gestantes:</b> hasta la semana 28 viajan sin certificado; de la 29 a la 38 con certificado médico / MEDIF de gineco-obstetra, emitido como máximo 10 días antes, con semanas, itinerario y declaración expresa de aptitud; desde la semana 39 no pueden viajar.</li>
-      <li><b>Pasajeros insubordinados:</b> CAT 1, tono agresivo o insultos menores pero acata (lo resuelve el agente, con cortesía y firmeza, sin conceder nada fuera de la tarifa). CAT 2, desafiante, no acata: supervisor o seguridad, no se acepta. CAT 3, violencia, daños o amenazas ("llevo una bomba", aunque sea en chiste): se interrumpe la atención, no se toca el equipaje, aviso a la PSA, no viaja.</li>
-      <li><b>Cabotaje:</b> documento de viaje vigente (DNI o pasaporte; extranjeros, pasaporte o documento del Mercosur). Por extravío o robo: licencia de conducir vigente, denuncia policial o certificado de trámite. Sin documento no embarca. Datos del documento en el sistema, obligatorios.</li>
-      <li><b>Armas de fuego (en este juego, sólo en vuelos de cabotaje):</b> son retenidos. Documento ORIGINAL de tenencia y portación y estuche RÍGIDO. La PSA revisa el documento, SSR WEAP, aviso a operaciones, bolsa de retenidos y entrega en la puerta al equipo de seguridad con la aeronave en posición. DGR 2024: sin NOTOC si la munición pesa menos de 5 kg.</li>
-      <li><b>Mascotas en bodega (AVIH):</b> perros y gatos, salvo braquicéfalos y razas peligrosas. Canil rígido, en buen estado, con ventilación, fondo impermeable y tamaño para pararse, darse vuelta y acostarse; precintos en las puertas. Hasta 2 adultos (14 kg c/u) o 3 cachorros de la misma camada por canil. CVI de SENASA para el exterior. SSR AVIH y NOTOC con aviso al capitán.</li>
-      <li><b>Condiciones legales:</b> DEPA (detenido/extraditado): reserva con 24 h, mínimo 2 escoltas de una fuerza reconocida por el Estado (uno del mismo sexo si es mujer), ropa de civil, 1 por vuelo, esposado desde la puerta, embarca primero, última fila. Deportado con escolta: al menos 1 escolta (del mismo sexo si es uno), sin esposas, última fila, sin límite de horas. DEPU: sin restricciones.</li>
-      <li><b>Alcohol:</b> si observa dos o más señales (habla trabada, rostro congestionado, inestabilidad, incoherencia, no sigue instrucciones, agresividad), el pasajero no debe ser embarcado.</li>
-      <li><b>API</b> (pestaña 2): ingrese los datos del documento VIGENTE con el que viaja. En vuelos a EE.UU. verifique la respuesta iAPI (OK TO BOARD / DO NOT BOARD).</li>
-      <li><b>Equipaje</b> (pestaña 3): inspección visual en <b>360°</b> de cada pieza; <b>limited release</b> para equipajes no convencionales, en film, sobredimensionados, heavy o con daños. Máximo ${BAG_FEES.maxKg} kg por pieza (ART): reacondicionar. Excesos → cobrar (EMD).</li>
-      <li><b>Cartilla de mercancías peligrosas:</b> preguntar siempre y asegurar la respuesta. Ante dudas, Tabla 2.3.A vigente. <b>Artículos de valor:</b> recomendar llevarlos en cabina.</li>
-      <li><b>Asiento</b> (pestaña 4): ofrezca proactivamente la salida de emergencia (filas ${SEATMAP.exitRows.join(' y ')}). Solo mayores de 15 años, que lean y comprendan español o inglés, sin movilidad reducida (WCHR/WCHS/WCHC/WCBD/WCBW), sin mascota en cabina (PETC), BLND, DEAF o PPOC, y dispuestos a asistir.</li>
-      <li><b>Sistema caído (atención manual):</b> kit de contingencia (boarding pass y bag tag manuales, lista de pasajeros, planilla de control, planilla API manual, planilla de estiba). Tildar al pasajero en la lista, copiar el documento en la planilla API, escribir bag tag (destino y vuelo) y boarding pass a mano. Al volver el sistema, cargar a los pasajeros manuales y transmitir la API antes del cierre.</li>
-      <li><b>Decisión:</b> <span class="tag green">Aceptar</span> emite la tarjeta de embarque · <span class="tag red">No aceptar</span> documentación, admisión, identidad, gestación, alcohol · <span class="tag amber">Derivar</span> problemas comerciales (boleto, fecha, nombre, cierre, servicio UM).</li>
-      <li><b>Despedida:</b> entregue tarjeta de embarque y comprobante de equipaje, e indique puerta y hora de presentación (verificar en pantallas).</li>
-    </ol>
-    <h3>Regla de oro</h3>
-    <p>Nunca etiquete equipaje antes de confirmar que el pasajero puede viajar: el vuelo no lleva equipajes sin su pasajero. Un pasajero inadmisible (INAD) debe ser devuelto al origen y le cuesta a la aerolínea multas y el vuelo de retorno.</p>
-    <div class="row end"><button class="btn ok" id="manClose">Entendido</button></div>
-  </div>`, 'wide');
-  $('#manClose').onclick = () => { closeModal(); G.paused = wasPaused; if (after) after(); };
+  const ch = (icon, title, html) => ({ icon, title, html });
+  openBook({
+    id: 'checkin', title: 'Manual del agente de check-in', subtitle: `${AIRLINE.name} · Ezeiza`,
+    openModal, closeModal, onClose: () => { G.paused = wasPaused; if (after) after(); },
+    chapters: [
+      ch('clock-outline', 'Tiempos y regla de oro', `
+        <p>Basado en la Guía de Atención al Pasajero · Unidad 4 (Billetaje y Reservas · TUGA). Cada aerolínea define sus tiempos y procedimientos: en el trabajo real manda el manual de la compañía.</p>
+        <p><b>Internacional:</b> set up −190 STD · apertura −180 · <b>cierre −70</b>.<br><b>Cabotaje:</b> set up −130 · apertura −120 · <b>cierre −50</b>.</p>
+        <p>El cierre por sistema (CLOSE CHECK-IN) es obligatorio. Observe el reloj y el tablero.</p>
+        <div class="tip"><b>Regla de oro:</b> nunca etiquete equipaje antes de confirmar que el pasajero puede viajar: el vuelo no lleva equipajes sin su pasajero. Un pasajero inadmisible (INAD) debe ser devuelto al origen y le cuesta a la aerolínea multas y el vuelo de retorno.</div>`),
+      ch('account-tie-voice', 'Secuencia de atención', `<ol>
+        <li><b>Saludo cordial</b> con contacto visual. Pida documento de viaje y reserva. Compare la <b>foto</b> con la persona: forma de la cara, nariz, cejas, ojos y tono de piel (peinado, color de pelo o anteojos pueden cambiar).</li>
+        <li><b>Identificar la reserva</b> en el sistema (pestaña 1) por código de reserva o apellido: pasajero correcto, vuelo, <b>fecha de hoy</b> y <b>boleto emitido</b>. Identificación positiva: el nombre del boleto coincide con el documento.</li>
+        <li><b>Requisitos de ingreso</b> con TIMATIC (pestaña 5): documento aceptado, visa / ESTA / e-Visa, validez y, para visitantes no residentes en EE.UU. y España, <b>pasaje de regreso o de continuación</b> (Migraciones de Argentina no lo controla: es responsabilidad del agente). Quien no cumple no puede ser chequeado ni despachar equipaje.</li>
+        <li><b>Despedida:</b> entregue tarjeta de embarque y comprobante de equipaje, e indique puerta y hora de presentación (verificar en pantallas).</li></ol>`),
+      ch('account-child-circle', 'Familias y menores', `
+        <p><b>Familias:</b> con ambos padres, partida de nacimiento + documento del menor; con un solo padre, permiso notarial del que no viaja; con otro adulto (abuelo/a), permiso de ambos padres que lo identifique.</p>
+        <p><b>Casos especiales:</b> progenitor fallecido → certificado de defunción; ausente → autorización del tribunal de familia (para ese destino); en el exterior → autorización por consulado (no sirve una carta simple); tutor/a → certificado del tribunal que acredite la tutela.</p>
+        <p><b>Infantes:</b> documento propio, en la reserva (INF), cochecito sin cargo (counter con limited release o Gate Dispatch), nunca en salida de emergencia. APIS y asiento para cada integrante.</p>
+        <p><b>Menores:</b> si viaja solo, permiso notarial de ambos padres; con un solo padre, permiso del que no viaja. Servicio UMNR obligatorio entre ${UM_POLICY.mandatoryFrom} y ${UM_POLICY.mandatoryTo} años (política de la compañía del juego).</p>
+        <p><b>Grupos de menores</b> (egresados, delegaciones): la regla es la misma que para cualquier menor. El coordinador suele llevar la documentación y muestra el permiso de cada chico cuando pasa. Conviene preguntar el destino: muchas veces son vuelos especiales.</p>`),
+      ch('human-pregnant', 'Gestantes y alcohol', `
+        <p><b>Gestantes:</b> hasta la semana 28 viajan sin certificado; de la 29 a la 38 con certificado médico / MEDIF de gineco-obstetra, emitido como máximo 10 días antes, con semanas, itinerario y declaración expresa de aptitud; desde la semana 39 no pueden viajar.</p>
+        <p><b>Alcohol:</b> si observa dos o más señales (habla trabada, rostro congestionado, inestabilidad, incoherencia, no sigue instrucciones, agresividad), el pasajero no debe ser embarcado.</p>`),
+      ch('account-alert', 'Pasajeros insubordinados', `<ul>
+        <li><b>CAT 1:</b> tono agresivo o insultos menores, pero acata. Lo resuelve el agente, con cortesía y firmeza, sin conceder nada fuera de la tarifa.</li>
+        <li><b>CAT 2:</b> desafiante, no acata. Supervisor o seguridad; no se acepta.</li>
+        <li><b>CAT 3:</b> violencia, daños o amenazas ("llevo una bomba", aunque sea en chiste). Se interrumpe la atención, no se toca el equipaje, aviso a la PSA, no viaja.</li></ul>`),
+      ch('road-variant', 'Cabotaje', `
+        <p>Documento de viaje vigente (DNI o pasaporte; extranjeros, pasaporte o documento del Mercosur).</p>
+        <p>Por <b>extravío o robo</b>: licencia de conducir vigente, denuncia policial o certificado de trámite. Sin documento no embarca.</p>
+        <p>Datos del documento en el sistema, obligatorios. Control previo al embarque: PSA.</p>`),
+      ch('pistol', 'Armas y mascotas en bodega', `
+        <p><b>Armas de fuego (en este juego, sólo en vuelos de cabotaje):</b> son retenidos. Documento ORIGINAL de tenencia y portación y estuche RÍGIDO. La PSA revisa el documento, SSR WEAP, aviso a operaciones, bolsa de retenidos y entrega en la puerta al equipo de seguridad con la aeronave en posición. DGR 2024: sin NOTOC si la munición pesa menos de 5 kg.</p>
+        <p><b>Mascotas en bodega (AVIH):</b> perros y gatos, salvo braquicéfalos y razas peligrosas. Canil rígido, en buen estado, con ventilación, fondo impermeable y tamaño para pararse, darse vuelta y acostarse; precintos en las puertas. Hasta 2 adultos (14 kg c/u) o 3 cachorros de la misma camada por canil. CVI de SENASA para el exterior. SSR AVIH y NOTOC con aviso al capitán.</p>`),
+      ch('handcuffs', 'Condiciones legales', `<ul>
+        <li><b>DEPA</b> (detenido/extraditado): reserva con 24 h, mínimo 2 escoltas de una fuerza reconocida por el Estado (uno del mismo sexo si es mujer), ropa de civil, 1 por vuelo, esposado desde la puerta, embarca primero, última fila.</li>
+        <li><b>Deportado con escolta:</b> al menos 1 escolta (del mismo sexo si es uno), sin esposas, última fila, sin límite de horas.</li>
+        <li><b>DEPU:</b> sin restricciones.</li></ul>`),
+      ch('bag-suitcase', 'API, equipaje y mercancías peligrosas', `
+        <p><b>API</b> (pestaña 2): ingrese los datos del documento VIGENTE con el que viaja. En vuelos a EE.UU. verifique la respuesta iAPI (OK TO BOARD / DO NOT BOARD).</p>
+        <p><b>Equipaje</b> (pestaña 3): inspección visual en <b>360°</b> de cada pieza; <b>limited release</b> para equipajes no convencionales, en film, sobredimensionados, heavy o con daños. Máximo ${BAG_FEES.maxKg} kg por pieza (ART): reacondicionar. Excesos → cobrar (EMD).</p>
+        <p><b>Cartilla de mercancías peligrosas:</b> preguntar siempre y asegurar la respuesta. Ante dudas, Tabla 2.3.A vigente. Power banks y baterías de litio de repuesto, sólo en cabina; pirotecnia, nunca.</p>
+        <p><b>Artículos de valor:</b> recomendar llevarlos en cabina.</p>`),
+      ch('seat-passenger', 'Asientos', `
+        <p>Pestaña 4. Ofrezca proactivamente la <b>salida de emergencia</b> (filas ${SEATMAP.exitRows.join(' y ')}).</p>
+        <p>Sólo mayores de 15 años, que lean y comprendan español o inglés, sin movilidad reducida (WCHR/WCHS/WCHC/WCBD/WCBW), sin mascota en cabina (PETC), BLND, DEAF o PPOC, y dispuestos a asistir.</p>
+        <div class="tip">Familias juntas, infantes nunca en salida de emergencia, y la última fila queda para pasajeros con custodia.</div>`),
+      ch('wifi-off', 'Sistema caído (atención manual)', `
+        <p>Kit de contingencia: boarding pass y bag tag manuales, lista de pasajeros, planilla de control, planilla API manual, planilla de estiba.</p>
+        <ol><li>Tildar al pasajero en la lista.</li><li>Copiar el documento en la planilla API.</li><li>Escribir bag tag (destino y vuelo) y boarding pass a mano.</li><li>Al volver el sistema, cargar a los pasajeros manuales y transmitir la API antes del cierre.</li></ol>`),
+      ch('alert-octagon', 'Imprevistos', `
+        <p><b>Equipaje desatendido:</b> no se toca, no se mueve ni se abre. Quien lo detecta da aviso a la PSA. La PSA ordena evacuar el sector, lo acordona con tensabarriers y espera a la brigada de explosivos. Hasta que se habilita el sector, nadie atiende.</p>
+        <p><b>Cancelación (Res. ANAC 1532/98):</b> informar con claridad; protección en el primer vuelo disponible o reembolso; sin cargo, comunicación y comidas o refrigerios acordes a la espera, y hotel y traslados si hay que pernoctar. Una falla técnica no exime de la asistencia.</p>
+        <p><b>Demora:</b> informar la nueva hora estimada, asistencia según la espera, y proteger desde el origen a quien pierde una conexión.</p>
+        <div class="tip">La prioridad en la fila la dan la tarifa, la clase o una condición (PMR, cierre próximo), nunca la fama. Y los datos de los pasajeros son confidenciales.</div>`),
+      ch('check-decagram', 'La decisión', `
+        <p><span class="tag green">Aceptar</span> emite la tarjeta de embarque.</p>
+        <p><span class="tag red">No aceptar</span> documentación, admisión, identidad, gestación, alcohol.</p>
+        <p><span class="tag amber">Derivar</span> problemas comerciales (boleto, fecha, nombre, cierre, servicio UM).</p>
+        <div class="tip">Ante la duda, consultá Timatic y este manual. Una denegación injustificada también es un error: genera reclamos y compensaciones.</div>`),
+    ],
+  });
 }
 
 $('#btnManual').onclick = () => showManual();

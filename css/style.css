@@ -514,19 +514,19 @@ label.chk { display: flex; gap: 8px; align-items: center; margin: 4px 0 8px; col
 /* Trabajo en equipo: mostradores 21 · 22 · 23 */
 .team { position: absolute; top: 10px; right: 10px; z-index: 6; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; max-width: min(560px, calc(100% - 20px)); pointer-events: none; }
 .tmRow { display: flex; gap: 6px; pointer-events: auto; }
-.tm { display: flex; align-items: center; gap: 6px; background: rgba(14, 21, 32, .88); border: 1px solid var(--line); border-radius: 10px; padding: 4px 8px 4px 4px; cursor: pointer; width: 170px; transition: border-color .2s, background .2s; }
-.tm:hover { border-color: #4b6a92; }
-.tm.on { border-color: var(--warn); background: rgba(40, 34, 14, .92); }
-.tm.me { width: 120px; cursor: default; }
-.tm.me.back { cursor: pointer; border-color: var(--ok); }
-.tm.asking { animation: tmPulse 1s infinite; border-color: var(--warn); }
+.tmRow .tm { display: flex; align-items: center; gap: 6px; background: rgba(14, 21, 32, .88); border: 1px solid var(--line); border-radius: 10px; padding: 4px 8px 4px 4px; cursor: pointer; width: 170px; transition: border-color .2s, background .2s; }
+.tmRow .tm:hover { border-color: #4b6a92; }
+.tmRow .tm.on { border-color: var(--warn); background: rgba(40, 34, 14, .92); }
+.tmRow .tm.me { width: 120px; cursor: default; }
+.tmRow .tm.me.back { cursor: pointer; border-color: var(--ok); }
+.tmRow .tm.asking { animation: tmPulse 1s infinite; border-color: var(--warn); }
 @keyframes tmPulse { 50% { box-shadow: 0 0 0 3px rgba(255, 192, 77, .45); } }
-.tm svg { flex: none; border-radius: 6px; }
-.tm > div { min-width: 0; flex: 1; }
-.tm b { display: block; font-size: 12px; white-space: nowrap; }
-.tm b em { font-style: normal; color: var(--muted); font-weight: 400; font-family: var(--mono); margin-left: 3px; }
-.tm small { display: block; font-size: 10.5px; color: #b9c6d8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tm .cnt { font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--ok); }
+.tmRow .tm svg { flex: none; border-radius: 6px; }
+.tmRow .tm > div { min-width: 0; flex: 1; }
+.tmRow .tm b { display: block; font-size: 12px; white-space: nowrap; }
+.tmRow .tm b em { font-style: normal; color: var(--muted); font-weight: 400; font-family: var(--mono); margin-left: 3px; }
+.tmRow .tm small { display: block; font-size: 10.5px; color: #b9c6d8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tmRow .tm .cnt { font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--ok); }
 .tmAsk { pointer-events: auto; width: min(400px, 100%); background: var(--panel); border: 1px solid var(--warn); border-radius: 12px; padding: 10px 12px; box-shadow: 0 14px 34px rgba(0, 0, 0, .45); font-size: 13px; }
 .tmAskHead { display: flex; align-items: center; gap: 8px; }
 .tmAskHead > div { flex: 1; }
@@ -541,7 +541,7 @@ label.chk { display: flex; gap: 8px; align-items: center; margin: 4px 0 8px; col
 .tmBar i { display: block; height: 100%; width: 100%; background: var(--warn); transition: width .25s linear; }
 .teamSum { margin-top: 14px; }
 .teamSum h3 { margin: 0 0 6px; }
-@media (max-width: 900px) { .tm { width: 128px; } .tm.me { width: 84px; } .tm small { display: none; } }
+@media (max-width: 900px) { .tmRow .tm { width: 128px; } .tmRow .tm.me { width: 84px; } .tmRow .tm small { display: none; } }
 #view3d.peek #dialog { visibility: hidden; }
 
 /* Imprevistos */
@@ -575,5 +575,5 @@ label.chk { display: flex; gap: 8px; align-items: center; margin: 4px 0 8px; col
 .tmQuick { pointer-events: auto; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px; max-width: 470px; }
 .tmQuick > span { font-size: 16px; }
 .tmQuick .btn { padding: 3px 7px; font-size: 11px; background: rgba(14, 21, 32, .85); }
-.tm { position: relative; }
-.tm .bub { position: absolute; left: 50%; top: calc(100% + 6px); transform: translateX(-50%); background: #fffbe6; color: #2b2410; font-size: 12px; padding: 4px 9px; border-radius: 10px; white-space: nowrap; box-shadow: 0 6px 16px rgba(0, 0, 0, .35); z-index: 3; }
+.tmRow .tm { position: relative; }
+.tmRow .tm .bub { position: absolute; left: 50%; top: calc(100% + 6px); transform: translateX(-50%); background: #fffbe6; color: #2b2410; font-size: 12px; padding: 4px 9px; border-radius: 10px; white-space: nowrap; box-shadow: 0 6px 16px rgba(0, 0, 0, .35); z-index: 3; }

@@ -1,6 +1,7 @@
 // Módulo de EMBARQUE (Guía U4 · Parte II): apertura de puerta, anuncios, embarque por zonas,
 // control documental, búsqueda de equipaje (−15), des-chequeo y cierre del vuelo.
 // En el Modo Historia, los pasajeros que el agente aceptó en el check-in vuelven a aparecer en la puerta.
+import { openBook } from './book.js';
 import { GateScene } from './gate3d.js';
 import { FLIGHTS, AIRLINE, STATION, ENTRY_RULES, EXIT_ROW, SEATMAP, COUNTRIES, exitControl, EXIT_CONTROL_REASON } from './data.js';
 import { makePerson, makePassport, makeVisaUS, differentFace, makeEscort } from './generator.js';
@@ -1172,23 +1173,34 @@ function report() {
 
 function showGateManual() {
   const was = B.paused; B.paused = true;
-  ui.openModal(`<div class="manual">
-    <h1>📘 Manual de embarque</h1>
-    <p class="hint">Basado en la Guía de Atención al Pasajero · Unidad 4 · Parte II (Embarque). Cada aerolínea define sus procedimientos.</p>
-    <ol>
-      <li><b>Apertura (−60):</b> sistema y pantallas, materiales, layout de zonas y requerimientos especiales (PMR).</li>
-      <li><b>Esperá al TCP:</b> el embarque empieza cuando la tripulación autoriza (puede demorarse por aseo, mantenimiento, seguridad, meteorología o MEL).</li>
-      <li><b>Micrófono, en orden:</b> preembarque → embarque (bienvenida) → Zona 1 (prioritario, PMR, infantes, mayores de 60) → zonas 2, 3 y 4 → llamado final.</li>
-      <li><b>Podio:</b> escanear siempre (BGR), identificación positiva (tarjeta = documento), foto, visa si corresponde, salida de emergencia, Gate Dispatch.</li>
-      <li><b>Discrepancias:</b> tarjetas cruzadas → apartar y embarcar juntos al final. Tarjeta duplicada o sin tarjeta → reimprimir si el sistema lo permite y hay tiempo (hasta el −10); si no, queda abajo.</li>
-      <li><b>Sobreventa:</b> con pasajeros sin asiento, buscá voluntarios antes de embarcar (el gerente puede autorizar un aumento). Voluntario: VDBC. Sin voluntarios: DNBD y protección en el vuelo más próximo. Compensación y servicios según la matriz.</li>
-      <li><b>Stand-by:</b> los voluntarios del counter en stand-by embarcan con boarding manual si se liberan lugares por no show (des-chequeo); si no, reciben la compensación acordada.</li>
-      <li><b>Asiento inoperativo:</b> nuevo asiento de igual o superior categoría y nueva tarjeta.</li>
-      <li><b>Conducta:</b> CAT 1 (vapear, protestar) lo resolvés vos; CAT 2/3 o alcohol: no embarca, con supervisor / PSA.</li>
-      <li><b>Después del llamado final:</b> llamá por nombre a los no presentados con equipaje. Si no aparecen, recorré la sala.</li>
-      <li><b>−15:</b> búsqueda de equipaje y des-chequeo de quienes no embarcan. El vuelo no lleva equipaje sin su pasajero.</li>
-      <li><b>Cierre</b> del vuelo por sistema, idealmente antes del −5.</li>
-    </ol>
-    <div class="row end"><button class="btn ok" id="manClose">Entendido</button></div></div>`, 'wide');
-  $('#manClose').onclick = () => { ui.closeModal(); B.paused = was; };
+  const ch = (icon, title, html) => ({ icon, title, html });
+  openBook({
+    id: 'gate', title: 'Manual de embarque', subtitle: 'Puerta · Aeroplata · Ezeiza',
+    openModal: ui.openModal, closeModal: ui.closeModal, onClose: () => { B.paused = was; },
+    chapters: [
+      ch('door-open', 'Apertura y tripulación', `
+        <p>Basado en la Guía de Atención al Pasajero · Unidad 4 · Parte II (Embarque). Cada aerolínea define sus procedimientos.</p>
+        <p><b>Apertura (−60):</b> sistema y pantallas, materiales, layout de zonas y requerimientos especiales (PMR).</p>
+        <p><b>Esperá al TCP:</b> el embarque empieza cuando la tripulación autoriza (puede demorarse por aseo, mantenimiento, seguridad, meteorología o MEL).</p>`),
+      ch('bullhorn', 'Micrófono y zonas', `
+        <p><b>En orden:</b> preembarque → embarque (bienvenida) → Zona 1 (prioritario, PMR, infantes, mayores de 60) → zonas 2, 3 y 4 → llamado final.</p>
+        <p><b>Después del llamado final:</b> llamá por nombre a los no presentados con equipaje. Si no aparecen, recorré la sala.</p>`),
+      ch('barcode-scan', 'El podio', `
+        <p>Escanear siempre (BGR), identificación positiva (tarjeta = documento), foto, visa si corresponde, salida de emergencia, Gate Dispatch.</p>
+        <p><b>Web check-in:</b> quien no pasó por el counter se verifica en el podio: fecha y vuelo de la tarjeta, documento y, si el destino lo pide, pasaje de regreso.</p>`),
+      ch('account-switch', 'Discrepancias', `
+        <p><b>Tarjetas cruzadas:</b> apartar y embarcar juntos al final.</p>
+        <p><b>Tarjeta duplicada o sin tarjeta:</b> reimprimir si el sistema lo permite y hay tiempo (hasta el −10); si no, queda abajo.</p>
+        <p><b>Asiento inoperativo:</b> nuevo asiento de igual o superior categoría y nueva tarjeta.</p>`),
+      ch('account-multiple-plus', 'Sobreventa y stand-by', `
+        <p><b>Sobreventa:</b> con pasajeros sin asiento, buscá voluntarios antes de embarcar (el gerente puede autorizar un aumento). Voluntario: VDBC. Sin voluntarios: DNBD y protección en el vuelo más próximo. Compensación y servicios según la matriz.</p>
+        <p><b>Stand-by:</b> los voluntarios del counter en stand-by embarcan con boarding manual si se liberan lugares por no show (des-chequeo); si no, reciben la compensación acordada.</p>`),
+      ch('account-alert', 'Conducta', `
+        <p><b>CAT 1</b> (vapear, protestar): lo resolvés vos.</p>
+        <p><b>CAT 2/3 o alcohol:</b> no embarca, con supervisor / PSA.</p>`),
+      ch('lock', 'Cierre del vuelo', `
+        <p><b>−15:</b> búsqueda de equipaje y des-chequeo de quienes no embarcan. El vuelo no lleva equipaje sin su pasajero.</p>
+        <p><b>Cierre</b> del vuelo por sistema, idealmente antes del −5.</p>`),
+    ],
+  });
 }

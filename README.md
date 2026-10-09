@@ -102,6 +102,7 @@ Abrir http://localhost:5173. También funciona en cualquier hosting estático
 | `js/overbooking.js` | Sobreventa: matriz de compensación (USD 160/200), protección, servicios, formulario VDBC/DNBD y su corrección. |
 | `js/career.js` | Modo Historia: días, supervisora, briefing, tutorial guiado y progreso. |
 | `js/events.js` | Imprevistos de Práctica libre: equipaje desatendido (protocolo PSA con cinemática: evacuación, vallado, brigada de explosivos) y vuelo cancelado (Res. ANAC 1532/98, piquete si se maneja mal). |
+| `js/book.js` | Manual como librito: tapa, índice y capítulos, hojas que giran en 3D (doble página o una sola en el celular), recuerda la última página. |
 | `js/online.js` | Sala online: crear/unirse con código, sala de espera, anfitrión que reparte mostradores, corre los bots y reenvía los eventos; latido para detectar desconexiones. |
 | `js/team.js` | Trabajo en equipo: compañeros bot en los mostradores 21 y 23 (veterano/a, nuevo/a, charlatana) que atienden la misma fila única y el mismo vuelo (asientos y aceptados compartidos), panel del equipo, mirar el mostrador vecino y consultas entre compañeros con consecuencias. Pensado para que luego un puesto lo maneje un compañero conectado. |
 | `js/queue.js` | Paciencia de la fila (modo desafío): indicador, murmullos, fila 3D impaciente, aviso a la fila, colados (prioridad por cierre próximo vs. "haga la fila") y video viral. |
