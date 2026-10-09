@@ -975,7 +975,8 @@ export class AirportScene {
     this.look.y += (this.look.ty - this.look.y) * 0.05;
     this.camera.position.copy(this.camBase);
     const tgt = this.camTarget.clone();
-    tgt.x += this.look.x * 6; tgt.y -= this.look.y * 6;
+    // La cámara mira hacia +z: en pantalla, la derecha es -x (por eso resta)
+    tgt.x -= this.look.x * 6; tgt.y -= this.look.y * 6;
     this.camera.lookAt(tgt);
     if (this.perf.frame++ % this.perf.shadowEvery === 0) this.renderer.shadowMap.needsUpdate = true;
     this.renderer.render(this.scene, this.camera);
