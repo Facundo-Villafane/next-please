@@ -1,5 +1,5 @@
 // Menú de pausa y Configuración (sonido, juego, cuenta, perfil). El inicio y "Jugar" están en career.js.
-import { settings, setSetting, sfx, announce, voicesFor, canSpeak } from './sound.js';
+import { settings, setSetting, sfx, announce, voicesFor, canSpeak, autoVoiceName } from './sound.js';
 import { cloudUser, cloudReady, openLogin, logout, syncNow } from './cloud.js';
 import { esc } from './util.js';
 
@@ -69,7 +69,7 @@ export function showSettings({ back, inGame = false, tab = 'sound' } = {}) {
       <label class="setRow"><span><i class="mdi mdi-account-tie-voice-outline"></i> Voz en inglés</span><select id="sVoiceEn"></select></label>
       <label class="setRow"><span><i class="mdi mdi-speedometer"></i> Velocidad</span><select id="sRate"><option value="0.85">Pausada</option><option value="1">Normal</option><option value="1.15">Rápida</option></select></label>
       <div class="row gap wrap"><button class="btn sm ok" id="sTryAnn"><i class="mdi mdi-bullhorn"></i> Probar un anuncio</button></div>
-      <p class="hint">Las voces son las del navegador y el sistema: cambian según la compu. En Edge y Chrome suelen aparecer voces "naturales" o de Google, que suenan mejor.</p>` : '<p class="hint">Este navegador no tiene síntesis de voz: los anuncios se ven en el cartel, con el gong.</p>'}
+      <p class="hint">Los anuncios de la puerta los hacés vos: en automática, la voz es del mismo género que tu agente. Los de la empresa (demoras, cancelaciones) y la PSA usan otra voz. Las voces son las del navegador y el sistema: cambian según la compu. En Edge y Chrome suelen aparecer voces "naturales" o de Google, que suenan mejor.</p>` : '<p class="hint">Este navegador no tiene síntesis de voz: los anuncios se ven en el cartel, con el gong.</p>'}
       <h3>Probar efectos</h3>
       <div class="row gap wrap"><button class="btn sm" data-try="next"><i class="mdi mdi-play"></i> Llamado</button><button class="btn sm" data-try="print"><i class="mdi mdi-play"></i> Impresora</button><button class="btn sm" data-try="pa"><i class="mdi mdi-play"></i> Anuncio</button><button class="btn sm" data-try="err"><i class="mdi mdi-play"></i> Error</button></div>`,
     game: `${toggle('bubbles', 'Globitos de humor en la fila', 'message-alert', 'Íconos sobre los pasajeros que muestran cómo la llevan con la espera.')}
@@ -108,7 +108,7 @@ export function showSettings({ back, inGame = false, tab = 'sound' } = {}) {
     [['#sVoiceEs', 'es', 'voiceEs'], ['#sVoiceEn', 'en', 'voiceEn']].forEach(([sel, lang, k]) => {
       const el = $(sel); if (!el) return;
       const list = voicesFor(lang);
-      el.innerHTML = `<option value="">Automática${list[0] ? ` (${esc(list[0].name)})` : ''}</option>` + list.map((v) => `<option value="${esc(v.name)}">${esc(v.name)} · ${esc(v.lang)}</option>`).join('');
+      el.innerHTML = `<option value="">Automática, según tu agente${autoVoiceName(lang) ? ` (${esc(autoVoiceName(lang))})` : ''}</option>` + list.map((v) => `<option value="${esc(v.name)}">${esc(v.name)} · ${esc(v.lang)}</option>`).join('');
       el.value = S[k] || '';
       el.onchange = () => setSetting(k, el.value);
     });

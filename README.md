@@ -18,7 +18,8 @@ evalúa con una explicación, y al final del turno se genera un informe imprimib
   escáner, errores del sistema, anuncios, radio, alarma de imprevistos, caja registradora y murmullo de la terminal.
 - **Voces en los anuncios**: síntesis de voz del navegador (gong + castellano + inglés) en embarque, zonas, llamado
   final, llamados por nombre, voluntarios, demoras y cancelaciones; la PSA ordena el desalojo en voz alta. Voz,
-  velocidad e inglés sí/no en Configuración.
+  velocidad e inglés sí/no en Configuración. En automática, los anuncios de la puerta usan una voz del género del
+  agente y los de la empresa o la PSA, una del otro género (se deduce por el nombre de la voz).
 
 ## Modo Historia
 

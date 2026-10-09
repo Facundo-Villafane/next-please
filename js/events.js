@@ -370,7 +370,7 @@ async function runCancel() {
   api.boardUpdate();
   const waitH = Math.round(((next.depTime - f.depTime) / 3600000) * 10) / 10;
   card('✖', `${f.no} a ${f.city}: CANCELADO`, 'Imprevisto · IROPS', `El CCO informa: el ${f.no} de las ${f.dep} a ${f.city} se cancela por una falla técnica de la aeronave. En el tablero ya dice <b>CANCELADO</b> y los pasajeros del vuelo vienen todos juntos a tu mostrador.`);
-  setTimeout(() => announce(`Aeroplata informa a los pasajeros del vuelo ${f.no} con destino a ${f.city} que su vuelo ha sido cancelado. Les solicitamos acercarse a los mostradores de la compañía para su reprogramación.`, `Aeroplata regrets to inform passengers on flight ${f.no} to ${f.city} that the flight has been cancelled. Please proceed to the airline check-in counters for rebooking.`), 1800);
+  setTimeout(() => announce(`Aeroplata informa a los pasajeros del vuelo ${f.no} con destino a ${f.city} que su vuelo ha sido cancelado. Les solicitamos acercarse a los mostradores de la compañía para su reprogramación.`, `Aeroplata regrets to inform passengers on flight ${f.no} to ${f.city} that the flight has been cancelled. Please proceed to the airline check-in counters for rebooking.`, 'airport'), 1800);
   // Llega el grupo del vuelo cancelado
   const crowd = [];
   for (let i = 0; i < 9; i++) {
@@ -531,7 +531,7 @@ async function runDelay() {
   api.boardUpdate();
   const h = Math.round((mins / 60) * 10) / 10;
   card('⏳', `${f.no} a ${f.city}: DEMORADO`, 'Imprevisto · IROPS', `El CCO informa que el avión del ${f.no} llega tarde de su vuelo anterior: nueva hora estimada de salida <b>${f.delayed}</b> (${h} h de demora). En el tablero ya dice DEMORADO y en la fila empiezan los suspiros.`);
-  setTimeout(() => announce(`Aeroplata informa a los pasajeros del vuelo ${f.no} con destino a ${f.city} que su vuelo se encuentra demorado. Nuevo horario estimado de partida: ${f.delayed}. Les pedimos estar atentos a las pantallas.`, `Aeroplata informs passengers on flight ${f.no} to ${f.city} that the flight is delayed. The new estimated departure time is ${f.delayed}. Please check the screens for updates.`), 1800);
+  setTimeout(() => announce(`Aeroplata informa a los pasajeros del vuelo ${f.no} con destino a ${f.city} que su vuelo se encuentra demorado. Nuevo horario estimado de partida: ${f.delayed}. Les pedimos estar atentos a las pantallas.`, `Aeroplata informs passengers on flight ${f.no} to ${f.city} that the flight is delayed. The new estimated departure time is ${f.delayed}. Please check the screens for updates.`, 'airport'), 1800);
   sc.setQueueMood?.(1);
   talk(pick(['—¿Demorado? Le aviso a mi suegra que llego tarde... qué pena, che.', '—¡Tres horas! Ya me sé de memoria el cartel de mercancías peligrosas.', '—¿Y ahora qué hacemos acá tres horas?']), 5000);
   // El que se acuesta en el piso y el nene con el avioncito

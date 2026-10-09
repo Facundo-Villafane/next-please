@@ -152,9 +152,20 @@ export function voicesFor(lang) {
   if (!VOICES.length) loadVoices();
   return VOICES.filter((v) => v.lang.slice(0, 2) === lang).sort((a, b) => score(b, PREF[lang]) - score(a, PREF[lang]));
 }
-const pickVoice = (lang) => {
+// El navegador no dice si una voz es de hombre o de mujer: se deduce por el nombre
+const FEM = /female|mujer|helena|laura|elena|sabina|paloma|dalia|elvira|irene|luc[ií]a|m[oó]nica|paulina|valentina|camila|salom[eé]|ximena|abril|larissa|estrella|triana|vera|tania|catalina|renata|beatriz|andrea|marisol|zira|aria|jenny|michelle|emma|ava|jessa|sonia|libby|hazel|susan|linda|samantha|victoria|karen|moira|tessa|fiona|serena|allison|nora|joanna|clara|natasha|sara|google español|google us english/i;
+const MASC = /male|hombre|pablo|ra[uú]l|jorge|tom[aá]s|[aá]lvaro|gerardo|gonzalo|lorenzo|emilio|federico|diego|rodrigo|alonso|arnau|dar[ií]o|el[ií]as|esteban|sa[uú]l|teo|mateo|liam|alex|andrew|brian|christopher|eric|guy|roger|steffan|ryan|thomas|george|david|mark|daniel|fred|aaron|arthur|oliver|guillermo|carlos|juan/i;
+export const voiceGender = (v) => (MASC.test(v.name) && !/female/i.test(v.name) ? 'M' : FEM.test(v.name) ? 'F' : null);
+const playerGender = () => { try { return localStorage.getItem('ckGender') || null; } catch { return null; } };
+// who: 'agent' = la voz sos vos (anuncios de la puerta): tu género, o la voz elegida en Configuración.
+//      'airport' = otra persona (la empresa, la PSA): la voz del otro género, para que se note.
+const pickVoice = (lang, who = 'agent') => {
   const list = voicesFor(lang);
-  return list.find((v) => v.name === S[lang === 'es' ? 'voiceEs' : 'voiceEn']) || list[0] || null;
+  const chosen = S[lang === 'es' ? 'voiceEs' : 'voiceEn'];
+  if (who === 'agent' && chosen) { const v = list.find((x) => x.name === chosen); if (v) return v; }
+  const pg = playerGender();
+  const want = pg ? (who === 'agent' ? pg : pg === 'F' ? 'M' : 'F') : null;
+  return (want && list.find((v) => voiceGender(v) === want)) || list[0] || null;
 };
 export const canSpeak = () => !!synth;
 
@@ -166,10 +177,10 @@ function forSpeech(t) {
     .replace(/\bPSA\b/g, 'P S A')
     .replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu, '');
 }
-function say(text, lang) {
+function say(text, lang, who = 'agent') {
   return new Promise((res) => {
     const u = new SpeechSynthesisUtterance(forSpeech(text));
-    const v = pickVoice(lang);
+    const v = pickVoice(lang, who);
     if (v) u.voice = v;
     u.lang = v?.lang || (lang === 'es' ? 'es-AR' : 'en-US');
     u.rate = S.rate * (lang === 'es' ? 1 : 0.95);
@@ -182,22 +193,27 @@ function say(text, lang) {
 }
 let annSeq = 0;
 // Anuncio por altoparlante: corta el anterior, suena el gong y después la voz
-export async function announce(es, en = null) {
+export async function announce(es, en = null, who = 'agent') {
   sfx('pa');
   if (!synth || S.mute || !S.voices) return;
   const my = ++annSeq;
   synth.cancel();
   await new Promise((r) => setTimeout(r, 1300));
   if (my !== annSeq) return;
-  await say(es, 'es');
-  if (en && S.english && my === annSeq) { await new Promise((r) => setTimeout(r, 350)); if (my === annSeq) await say(en, 'en'); }
+  await say(es, 'es', who);
+  if (en && S.english && my === annSeq) { await new Promise((r) => setTimeout(r, 350)); if (my === annSeq) await say(en, 'en', who); }
 }
 export function stopVoices() { annSeq++; synth?.cancel(); }
 // Una frase dicha en vivo (sin gong): por ejemplo, la PSA ordenando desalojar
-export function voiceLine(text, lang = 'es') {
+export function voiceLine(text, lang = 'es', who = 'airport') {
   if (!synth || S.mute || !S.voices) return;
   annSeq++;
   synth.cancel();
-  say(text, lang);
+  say(text, lang, who);
 }
 window.addEventListener('pagehide', () => synth?.cancel());
+// Para Configuración: qué voz usa "Automática" (la de tu género, si hay)
+export function autoVoiceName(lang) {
+  const pg = playerGender(), list = voicesFor(lang);
+  return ((pg && list.find((v) => voiceGender(v) === pg)) || list[0])?.name || '';
+}
