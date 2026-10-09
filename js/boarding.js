@@ -2,6 +2,7 @@
 // control documental, búsqueda de equipaje (−15), des-chequeo y cierre del vuelo.
 // En el Modo Historia, los pasajeros que el agente aceptó en el check-in vuelven a aparecer en la puerta.
 import { openBook } from './book.js';
+import { bubbleFor } from './queue.js';
 import { askConfirm } from './confirm.js';
 import { GateScene } from './gate3d.js';
 import { FLIGHTS, AIRLINE, STATION, ENTRY_RULES, EXIT_ROW, SEATMAP, COUNTRIES, exitControl, EXIT_CONTROL_REASON } from './data.js';
@@ -495,6 +496,7 @@ function drift() {
   const t = performance.now();
   const dt = (t - B.lastReal) / 1000; B.lastReal = t;
   if (B.closed || B.paused || ui.modalOpen()) return;
+  gateBubbles(dt);
   if (!PACE.alwaysRun && (B.cur || B.queue.length)) return;
   const before = B.now.getMinutes();
   B.now = new Date(B.now.getTime() + (dt * 60000) / PACE.drift);
@@ -1265,4 +1267,20 @@ function showGateManual() {
         <p><b>Cierre</b> del vuelo por sistema, idealmente antes del −5.</p>`),
     ],
   });
+}
+
+// Globitos sobre la sala y la fila del podio: tranquilos, o impacientes si la atención en el podio
+// se alarga o si el embarque se demora (ya pasó la hora y no se llamó ninguna zona)
+let gateBubbleIn = 4;
+function gateBubbles(dt) {
+  gateBubbleIn -= dt;
+  if (gateBubbleIn > 0) return;
+  let lv = 0;
+  if (B.cur && B.act) {
+    const secs = (performance.now() - B.act.start) / 1000;
+    lv = secs > 180 ? 2 : secs > 90 ? 1 : 0;
+  } else if (B.zone === 0 && B.now >= B.at(-30)) lv = 2;
+  else if (B.zone === 0 && B.now >= B.at(-40)) lv = 1;
+  gateBubbleIn = lv >= 2 ? 2 + Math.random() * 2 : lv === 1 ? 3.5 + Math.random() * 3 : 5 + Math.random() * 5;
+  scene.queueBubble?.(...bubbleFor(lv));
 }

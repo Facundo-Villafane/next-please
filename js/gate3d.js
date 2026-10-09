@@ -168,6 +168,7 @@ export class GateScene extends AirportScene {
       const row = i % 3, col = Math.floor(Math.random() * 15);
       fig.position.set(-7 + col * 0.62, -0.38, 8.2 + row * 1.5 - 0.05);
       fig.userData.legs.forEach((l) => { l.rotation.x = Math.PI / 2; });
+      (this.seated = this.seated || []).push(fig);
       this.scene.add(fig);
     }
     // Gente circulando por el pasillo del fondo

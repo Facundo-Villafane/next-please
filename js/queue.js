@@ -67,17 +67,21 @@ function points(n, why) { G.score += n; G.queueLog.push({ type: 'pts', n, why })
 
 // Llamado cada 250 ms desde el reloj del counter
 // Globitos sobre la fila: el carácter de la gente y cómo la van llevando con la espera
-const BUBBLES = {
-  calm: ['📱', '🧉', '😴', '🗺️', '☕', '🎧', '📖', '🥐', '🤳', '💬'],
-  wait: ['⏰', '🙄', '😒', '⌚', '😮‍💨', '🥱'],
-  mad: ['😤', '💢', '😠', '📢', '🤦', '😡'],
+export const BUBBLES = {
+  calm: { color: '#1f6fe0', icons: ['cellphone', 'coffee', 'sleep', 'headphones', 'book-open-variant', 'food-croissant', 'map-outline', 'message-text', 'music-note'] },
+  wait: { color: '#d99500', icons: ['clock-alert-outline', 'timer-sand', 'emoticon-neutral-outline', 'emoticon-confused-outline', 'clock-outline'] },
+  mad: { color: '#e8501c', icons: ['emoticon-angry-outline', 'fire', 'bullhorn', 'alert-circle', 'emoticon-frown-outline', 'lightning-bolt'] },
+};
+export const bubbleFor = (level) => {
+  const b = level >= 2 ? BUBBLES.mad : level === 1 ? BUBBLES.wait : BUBBLES.calm;
+  return [pick(b.icons), b.color];
 };
 let bubbleIn = 3;
 function bubbles(dt, level) {
   bubbleIn -= dt;
   if (bubbleIn > 0) return;
   bubbleIn = level >= 2 ? 2 + Math.random() * 2 : level === 1 ? 3.5 + Math.random() * 3 : 6 + Math.random() * 6;
-  scene.queueBubble?.(pick(level >= 2 ? BUBBLES.mad : level === 1 ? BUBBLES.wait : BUBBLES.calm));
+  scene.queueBubble?.(...bubbleFor(level));
 }
 // En modo aprendizaje no hay paciencia que se agote, pero la fila igual nota si una atención se hace muy larga
 function learnLevel() {

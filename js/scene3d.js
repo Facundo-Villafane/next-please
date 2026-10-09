@@ -26,6 +26,21 @@ function canvasTex(w, h, draw) {
 
 export { canvasTex };
 
+// Carácter de un ícono de Material Design Icons (se lee del CSS cargado, por nombre)
+const mdiCache = {};
+function mdiChar(name) {
+  if (name in mdiCache) return mdiCache[name];
+  const i = document.createElement('i');
+  i.className = `mdi mdi-${name}`;
+  i.style.cssText = 'position:absolute;visibility:hidden';
+  document.body.appendChild(i);
+  const c = getComputedStyle(i, '::before').content;
+  i.remove();
+  const ch = c && c !== 'none' && c !== 'normal' ? c.replace(/^["']|["']$/g, '') : null;
+  if (ch) mdiCache[name] = ch;
+  return ch;
+}
+
 export class AirportScene {
   constructor(container) {
     this.container = container;
@@ -691,32 +706,37 @@ export class AirportScene {
     });
   }
 
-  // Globito con un emoji sobre alguien de la fila (carácter, impaciencia...). Desaparece solo.
-  queueBubble(emoji) {
-    const cands = this.queue.filter((q) => q.fig.visible && !q.fig.userData.bubble).slice(0, 10);
-    if (!cands.length) return;
-    const q = cands[Math.floor(Math.random() * cands.length)];
+  // Globito con un ícono (Material Design Icons) sobre alguien de la fila o de la sala:
+  // el carácter de la gente y cómo la va llevando con la espera. Desaparece solo.
+  queueBubble(icon, color = '#1f6fe0') {
+    const ch = mdiChar(icon);
+    if (!ch) return;
+    if (!document.fonts.check('64px "Material Design Icons"')) { document.fonts.load('64px "Material Design Icons"'); return; }
+    const figs = [...this.queue.map((q) => q.fig).slice(0, 10), ...(this.seated || [])].filter((f) => f.visible && !f.userData.bubble);
+    if (!figs.length) return;
+    const fig = figs[Math.floor(Math.random() * figs.length)];
     const t = canvasTex(128, 128, (g) => {
       g.fillStyle = '#fff'; g.strokeStyle = '#0e2c62'; g.lineWidth = 6;
       g.beginPath(); g.roundRect(8, 8, 112, 86, 26); g.fill(); g.stroke();
       g.beginPath(); g.moveTo(50, 92); g.lineTo(62, 120); g.lineTo(76, 92); g.fill();
       g.beginPath(); g.moveTo(50, 93); g.lineTo(62, 120); g.lineTo(76, 93); g.stroke();
-      g.font = '58px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", system-ui'; g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.fillText(emoji, 64, 54);
+      g.fillStyle = color; g.font = '64px "Material Design Icons"'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(ch, 64, 53);
     });
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t.tex, transparent: true, depthTest: false }));
+    // Mismo tamaño en pantalla, esté cerca (la fila) o lejos (la sala de la puerta)
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t.tex, transparent: true, depthTest: false, sizeAttenuation: false }));
     sp.renderOrder = 10;
     sp.position.set(0, 2.25, 0);
-    q.fig.add(sp);
-    q.fig.userData.bubble = sp;
+    fig.add(sp);
+    fig.userData.bubble = sp;
     let k = 0;
     const anim = (dt) => {
       k += dt;
-      const s = 0.6 * Math.min(1, 0.5 + k * 3) * (k > 2.9 ? Math.max(0.01, 1 - (k - 2.9) * 4) : 1);
+      const s = 0.1 * Math.min(1, 0.5 + k * 3) * (k > 2.9 ? Math.max(0.01, 1 - (k - 2.9) * 4) : 1);
       sp.scale.set(s, s, 1);
       sp.position.y = 2.25 + Math.sin(k * 3) * 0.03;
       if (k > 3.15) {
-        q.fig.remove(sp); q.fig.userData.bubble = null;
+        fig.remove(sp); fig.userData.bubble = null;
         sp.material.map.dispose(); sp.material.dispose();
         this.animators.splice(this.animators.indexOf(anim), 1);
       }
