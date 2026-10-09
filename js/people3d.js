@@ -22,7 +22,8 @@ const hashOf = (f) => [...`${f.shirt}${f.hairColor}${f.skin}${f.eye}${f.nose}`].
 // Cara (textura transparente sobre el frente de la cabeza)
 // ------------------------------------------------------------------
 function faceTexture(f) {
-  const key = [f.skin, f.eye, f.brows, f.nose, f.smile, f.glasses, f.flushed, f.age >= 55, f.sex, f.hairColor, f.hairStyle].join('|');
+  const kid = (f.age ?? 30) < 12;
+  const key = [f.skin, f.eye, f.brows, f.nose, f.smile, f.glasses, f.flushed, f.age >= 55, f.sex, f.hairColor, f.hairStyle, kid].join('|');
   if (faceCache.has(key)) return faceCache.get(key);
   const c = document.createElement('canvas');
   c.width = 256; c.height = 256;
@@ -32,30 +33,32 @@ function faceTexture(f) {
   const browCol = f.hairStyle === 'bald' ? '#5a463a' : shade(f.hairColor, 0.8);
   // Cejas
   g.strokeStyle = browCol; g.lineCap = 'round';
-  g.lineWidth = f.brows === 'thick' ? 11 : 6;
+  g.lineWidth = kid ? 4 : f.brows === 'thick' ? 11 : 6;
   [-1, 1].forEach((s) => { g.beginPath(); g.moveTo(cx + s * (eyeDX + 22), eyeY - 22); g.quadraticCurveTo(cx + s * eyeDX, eyeY - 38, cx + s * (eyeDX - 19), eyeY - 26); g.stroke(); });
   // Ojos
   [-1, 1].forEach((s) => {
     const ex = cx + s * eyeDX;
-    g.fillStyle = '#fbfbf8'; g.beginPath(); g.ellipse(ex, eyeY, 19, 12.5, 0, 0, Math.PI * 2); g.fill();
-    g.fillStyle = EYES[f.eye] || '#3b2a1d'; g.beginPath(); g.arc(ex, eyeY + 1, 10, 0, Math.PI * 2); g.fill();
-    g.fillStyle = '#111'; g.beginPath(); g.arc(ex, eyeY + 1, 4.8, 0, Math.PI * 2); g.fill();
+    const ew = kid ? 21 : 19, eh = kid ? 16 : 12.5, ir = kid ? 12.5 : 10;
+    g.fillStyle = '#fbfbf8'; g.beginPath(); g.ellipse(ex, eyeY, ew, eh, 0, 0, Math.PI * 2); g.fill();
+    g.fillStyle = EYES[f.eye] || '#3b2a1d'; g.beginPath(); g.arc(ex, eyeY + 1, ir, 0, Math.PI * 2); g.fill();
+    g.fillStyle = '#111'; g.beginPath(); g.arc(ex, eyeY + 1, kid ? 6 : 4.8, 0, Math.PI * 2); g.fill();
     g.fillStyle = '#fff'; g.beginPath(); g.arc(ex + 3.5, eyeY - 3, 2.6, 0, Math.PI * 2); g.fill();
     g.strokeStyle = 'rgba(40,25,20,.85)'; g.lineWidth = f.sex === 'F' ? 3.4 : 2.2;
-    g.beginPath(); g.ellipse(ex, eyeY, 19, 12.5, 0, Math.PI * 1.05, Math.PI * 1.95); g.stroke();
-    if (f.sex === 'F') { g.beginPath(); g.moveTo(ex + s * 18, eyeY - 4); g.lineTo(ex + s * 25, eyeY - 10); g.stroke(); }
+    g.beginPath(); g.ellipse(ex, eyeY, ew, eh, 0, Math.PI * 1.05, Math.PI * 1.95); g.stroke();
+    if (f.sex === 'F' && !kid) { g.beginPath(); g.moveTo(ex + s * 18, eyeY - 4); g.lineTo(ex + s * 25, eyeY - 10); g.stroke(); }
   });
   // Nariz (sombra)
-  g.strokeStyle = 'rgba(90,50,30,.5)'; g.lineWidth = 4;
+  g.strokeStyle = kid ? 'rgba(150,80,60,.35)' : 'rgba(90,50,30,.5)'; g.lineWidth = kid ? 3 : 4;
   g.beginPath();
-  if (f.nose === 0) { g.moveTo(cx - 2, eyeY + 8); g.lineTo(cx - 8, eyeY + 34); g.quadraticCurveTo(cx, eyeY + 40, cx + 8, eyeY + 34); }
+  if (kid) { g.moveTo(cx - 7, eyeY + 32); g.quadraticCurveTo(cx, eyeY + 38, cx + 7, eyeY + 32); }
+  else if (f.nose === 0) { g.moveTo(cx - 2, eyeY + 8); g.lineTo(cx - 8, eyeY + 34); g.quadraticCurveTo(cx, eyeY + 40, cx + 8, eyeY + 34); }
   else if (f.nose === 1) { g.moveTo(cx - 3, eyeY + 6); g.quadraticCurveTo(cx - 14, eyeY + 34, cx - 4, eyeY + 38); g.quadraticCurveTo(cx + 6, eyeY + 40, cx + 10, eyeY + 34); }
   else { g.moveTo(cx - 10, eyeY + 32); g.quadraticCurveTo(cx, eyeY + 42, cx + 10, eyeY + 32); }
   g.stroke();
   // Rubor (natural o por alcohol)
   [-1, 1].forEach((s) => {
     const rg = g.createRadialGradient(cx + s * 46, eyeY + 30, 2, cx + s * 46, eyeY + 30, 24);
-    rg.addColorStop(0, f.flushed ? 'rgba(220,60,50,.55)' : 'rgba(230,120,110,.18)'); rg.addColorStop(1, 'rgba(230,120,110,0)');
+    rg.addColorStop(0, f.flushed ? 'rgba(220,60,50,.55)' : kid ? 'rgba(240,110,110,.38)' : 'rgba(230,120,110,.18)'); rg.addColorStop(1, 'rgba(230,120,110,0)');
     g.fillStyle = rg; g.fillRect(cx + s * 46 - 26, eyeY + 4, 52, 52);
   });
   // Arrugas
@@ -67,7 +70,9 @@ function faceTexture(f) {
   // Boca
   const my = eyeY + 70;
   g.strokeStyle = f.sex === 'F' ? '#b5534f' : '#8a4a3c'; g.lineWidth = f.sex === 'F' ? 8 : 6;
-  g.beginPath(); g.moveTo(cx - 24, my); g.quadraticCurveTo(cx, my + (f.smile ? 16 : 4), cx + 24, my); g.stroke();
+  const mw = kid ? 15 : 24;
+  if (kid) { g.strokeStyle = '#c0605a'; g.lineWidth = 6; }
+  g.beginPath(); g.moveTo(cx - mw, my - (kid ? 6 : 0)); g.quadraticCurveTo(cx, my + (f.smile ? 16 : 4) - (kid ? 6 : 0), cx + mw, my - (kid ? 6 : 0)); g.stroke();
   // Anteojos
   if (f.glasses) {
     g.strokeStyle = '#1b1b1b'; g.lineWidth = 4.5;
@@ -168,6 +173,9 @@ export function buildPerson(f) {
   // Cuello y cabeza
   const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.056, 0.12, 12), skin); neck.position.y = 1.5; g.add(neck);
   const headG = new THREE.Group(); headG.position.y = 1.65; g.add(headG);
+  // Proporciones de chico: cabeza más grande respecto del cuerpo
+  const age = f.age ?? 30;
+  if (age < 12) { headG.scale.setScalar(age < 3 ? 1.34 : age < 7 ? 1.24 : 1.14); headG.position.y = 1.67; }
   const shapeS = { round: [1, 1.02, 1], oval: [0.93, 1.1, 1], long: [0.88, 1.17, 0.97] }[f.shape] || [0.93, 1.1, 1];
   const R = 0.122;
   const head = cast(new THREE.Mesh(new THREE.SphereGeometry(R, 28, 20), skin)); head.scale.set(...shapeS); headG.add(head);
@@ -182,16 +190,28 @@ export function buildPerson(f) {
   // Pelo
   const hr = R * 1.07;
   const hairPart = (geo) => { const m = cast(new THREE.Mesh(geo, hair)); m.scale.set(...shapeS); headG.add(m); return m; };
-  if (f.hairStyle !== 'bald') {
+  if (f.hairStyle === 'baby') {
+    // Bebé: apenas un mechoncito arriba
+    const tuft = hairPart(new THREE.SphereGeometry(hr * 0.99, 20, 10, 0, Math.PI * 2, 0, Math.PI * 0.2));
+    tuft.rotation.x = 0.35;
+    const curl = cast(new THREE.Mesh(new THREE.TorusGeometry(0.018, 0.007, 6, 12, Math.PI * 1.5), hair));
+    curl.position.set(0, hr * shapeS[1] * 0.97, -0.035); curl.rotation.set(0, Math.PI / 2, 0); headG.add(curl);
+  } else if (f.hairStyle !== 'bald') {
     // Casquete (la línea del pelo queda alta adelante)
     const capH = hairPart(new THREE.SphereGeometry(hr, 26, 16, 0, Math.PI * 2, 0, Math.PI * 0.36));
     capH.rotation.x = 0.2;
-    // Parte de atrás, hasta la nuca
-    hairPart(new THREE.SphereGeometry(hr * 0.99, 24, 14, Math.PI * 0.5 - Math.PI * 0.42, Math.PI * 0.84, 0, Math.PI * (f.hairStyle === 'short' && !female ? 0.62 : 0.7)));
+    // Parte de atrás y costados (sienes cubiertas hasta las orejas; con pelo largo, un poco más adelante)
+    const wide = female || f.hairStyle === 'long' || f.hairStyle === 'bun';
+    const span = wide ? 1.2 : 1.04;
+    hairPart(new THREE.SphereGeometry(hr * 0.99, 26, 14, Math.PI * 0.5 - Math.PI * span / 2, Math.PI * span, 0, Math.PI * (f.hairStyle === 'short' && !female ? 0.6 : 0.68)));
     if (f.hairStyle === 'long') {
       const back = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.2, 6, 14), hair));
       back.scale.set(1.05, 1, 0.42); back.position.set(0, -0.15, 0.075); headG.add(back);
-      [-1, 1].forEach((s) => { const lock = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.18, 4, 8), hair)); lock.position.set(s * 0.105, -0.1, -0.02); headG.add(lock); });
+      // Mechones a los costados de la cara (pegados a la cabeza, por detrás de las sienes)
+      [-1, 1].forEach((s) => {
+        const lock = cast(new THREE.Mesh(new THREE.CapsuleGeometry(0.042, 0.17, 4, 10), hair));
+        lock.scale.set(0.8, 1, 1.25); lock.position.set(s * 0.112, -0.09, 0.012); headG.add(lock);
+      });
     }
     if (f.hairStyle === 'bun') {
       const bun = cast(new THREE.Mesh(new THREE.SphereGeometry(0.058, 14, 12), hair)); bun.position.set(0, 0.075, 0.105); headG.add(bun);
@@ -208,7 +228,8 @@ export function buildPerson(f) {
   } else {
     // Calvo: cerquillo de pelo a los costados y atrás
     const fringe = cast(new THREE.Mesh(new THREE.TorusGeometry(R * 0.98, 0.022, 6, 24, Math.PI * 1.25), hair));
-    fringe.rotation.set(Math.PI / 2, 0, -Math.PI * 0.12 + Math.PI); fringe.position.y = -0.005; fringe.scale.set(shapeS[0], 1, 1); headG.add(fringe);
+    // El arco de 225° deja el hueco de 135° adelante (la cara); antes quedaba girado y cruzaba los ojos
+    fringe.rotation.set(Math.PI / 2, 0, -Math.PI * 0.125); fringe.position.y = -0.005; fringe.scale.set(shapeS[0], 1, 1); headG.add(fringe);
   }
   if (f.beard) {
     const b = hairPart(new THREE.SphereGeometry(R * 1.03, 22, 12, Math.PI * 1.5 - Math.PI * 0.45, Math.PI * 0.9, Math.PI * 0.62, Math.PI * 0.3));

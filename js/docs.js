@@ -13,15 +13,17 @@ export function faceSVG(f, { bg = '#dce7f0', w = 100, h = 125 } = {}) {
   const skin = SKIN[f.skin];
   const hair = f.hairColor;
   const shapes = { round: [24, 26], oval: [21, 28], long: [19, 31] };
-  const [rx, ry] = shapes[f.shape];
-  const cx = 50, cy = 56;
+  const kid = (f.age ?? 30) < 12, baby = (f.age ?? 30) < 3 || f.hairStyle === 'baby';
+  // Chicos: cara más redonda y grande en la foto; bebés todavía más
+  const [rx, ry] = baby ? [27, 27] : kid ? [24, 25.5] : (shapes[f.shape] || shapes.oval);
+  const cx = 50, cy = baby ? 60 : 56;
   const top = cy - ry;
   const p = [];
   p.push(`<rect width="100" height="125" fill="${bg}"/>`);
   // cabello largo (detrás)
   if (f.hairStyle === 'long') p.push(`<path d="M${cx - rx - 6},${cy - 6} Q${cx},${top - 22} ${cx + rx + 6},${cy - 6} L${cx + rx + 8},${cy + 34} L${cx - rx - 8},${cy + 34} Z" fill="${hair}"/>`);
   // hombros y cuello
-  p.push(`<path d="M8,125 Q12,96 40,92 L60,92 Q88,96 92,125 Z" fill="${f.shirt}"/>`);
+  p.push(baby ? `<path d="M20,125 Q24,102 40,98 L60,98 Q76,102 80,125 Z" fill="${f.shirt}"/>` : `<path d="M8,125 Q12,96 40,92 L60,92 Q88,96 92,125 Z" fill="${f.shirt}"/>`);
   p.push(`<rect x="${cx - 8}" y="${cy + ry - 8}" width="16" height="16" fill="${skin}"/>`);
   p.push(`<path d="M42,92 L50,102 L58,92" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.2"/>`);
   // orejas
@@ -35,6 +37,7 @@ export function faceSVG(f, { bg = '#dce7f0', w = 100, h = 125 } = {}) {
     p.push(`<path d="M${cx - rx - 1},${cy - 4} Q${cx - rx - 2},${top - 8} ${cx},${top - 7} Q${cx + rx + 2},${top - 8} ${cx + rx + 1},${cy - 4} Q${cx + rx - 4},${top + 6} ${cx + 4},${top + 8} Q${cx - rx + 2},${top + 8} ${cx - rx - 1},${cy - 4} Z" fill="${hair}"/>`);
   }
   if (f.hairStyle === 'bun') p.push(`<circle cx="${cx}" cy="${top - 10}" r="8" fill="${hair}"/>`);
+  if (f.hairStyle === 'baby') p.push(`<path d="M${cx - 4},${top + 3} q1,-9 9,-7 q-6,1 -5,7" fill="${hair}" stroke="${hair}" stroke-width="1.5" stroke-linejoin="round"/>`);
   if (f.hairStyle === 'curly') {
     for (let i = 0; i < 9; i++) {
       const a = Math.PI + (i / 8) * Math.PI;
@@ -45,25 +48,27 @@ export function faceSVG(f, { bg = '#dce7f0', w = 100, h = 125 } = {}) {
     p.push(`<path d="M${cx - rx},${cy - 2} q-1,-10 3,-14 M${cx + rx},${cy - 2} q1,-10 -3,-14" stroke="${hair}" stroke-width="5" fill="none" stroke-linecap="round"/>`);
   }
   // cejas
-  const bw = f.brows === 'thick' ? 2.6 : 1.3;
+  const bw = kid ? 1 : f.brows === 'thick' ? 2.6 : 1.3;
   const by = cy - 9;
   p.push(`<path d="M${cx - 15},${by} q6,-3 11,0 M${cx + 4},${by} q5,-3 11,0" stroke="${f.hairStyle === 'bald' ? '#5a463a' : hair}" stroke-width="${bw}" fill="none" stroke-linecap="round"/>`);
   // ojos
-  p.push(`<ellipse cx="${cx - 9}" cy="${cy - 2}" rx="4.2" ry="2.6" fill="#fff"/><ellipse cx="${cx + 9}" cy="${cy - 2}" rx="4.2" ry="2.6" fill="#fff"/>`);
-  p.push(`<circle cx="${cx - 9}" cy="${cy - 2}" r="2" fill="${EYES[f.eye]}"/><circle cx="${cx + 9}" cy="${cy - 2}" r="2" fill="${EYES[f.eye]}"/>`);
+  const erx = kid ? 4.8 : 4.2, ery = kid ? 3.6 : 2.6, eir = kid ? 2.7 : 2;
+  p.push(`<ellipse cx="${cx - 9}" cy="${cy - 2}" rx="${erx}" ry="${ery}" fill="#fff"/><ellipse cx="${cx + 9}" cy="${cy - 2}" rx="${erx}" ry="${ery}" fill="#fff"/>`);
+  p.push(`<circle cx="${cx - 9}" cy="${cy - 2}" r="${eir}" fill="${EYES[f.eye]}"/><circle cx="${cx + 9}" cy="${cy - 2}" r="${eir}" fill="${EYES[f.eye]}"/>`);
   // nariz
   const noses = [
     `M${cx},${cy} l-3,9 q3,2 6,0`,
     `M${cx - 1},${cy - 1} q-5,10 -1,11 q4,1 6,-1`,
     `M${cx},${cy} q-6,8 -4,10 h8 q2,-2 -4,-10`,
   ];
-  p.push(`<path d="${noses[f.nose]}" stroke="rgba(0,0,0,.35)" stroke-width="1.2" fill="none"/>`);
+  p.push(kid ? `<path d="M${cx - 2.5},${cy + 7} q2.5,2 5,0" stroke="rgba(0,0,0,.3)" stroke-width="1.1" fill="none" stroke-linecap="round"/>` : `<path d="${noses[f.nose] || noses[0]}" stroke="rgba(0,0,0,.35)" stroke-width="1.2" fill="none"/>`);
+  if (kid && !f.flushed) p.push(`<ellipse cx="${cx - 13}" cy="${cy + 7}" rx="5" ry="3" fill="#f08a8a" opacity=".35"/><ellipse cx="${cx + 13}" cy="${cy + 7}" rx="5" ry="3" fill="#f08a8a" opacity=".35"/>`);
   // barba
   if (f.beard) p.push(`<path d="M${cx - rx + 2},${cy + 4} Q${cx - rx + 4},${cy + ry + 2} ${cx},${cy + ry + 2} Q${cx + rx - 4},${cy + ry + 2} ${cx + rx - 2},${cy + 4} Q${cx + 8},${cy + 18} ${cx},${cy + 16} Q${cx - 8},${cy + 18} ${cx - rx + 2},${cy + 4} Z" fill="${hair}" opacity=".85"/>`);
   // rubor (consumo de alcohol: congestión en el rostro)
   if (f.flushed) p.push(`<ellipse cx="${cx - 12}" cy="${cy + 7}" rx="6" ry="3.5" fill="#e0473d" opacity=".45"/><ellipse cx="${cx + 12}" cy="${cy + 7}" rx="6" ry="3.5" fill="#e0473d" opacity=".45"/><path d="M${cx - 5},${cy - 2} h-8 M${cx + 5},${cy - 2} h8" stroke="#b33" stroke-width=".6" opacity=".6"/>`);
   // boca
-  p.push(`<path d="M${cx - 6},${cy + 15} q6,${f.smile ? 4 : 1.5} 12,0" stroke="#8a4a3c" stroke-width="1.6" fill="none" stroke-linecap="round"/>`);
+  p.push(kid ? `<path d="M${cx - 4},${cy + 13} q4,3 8,0" stroke="#b0574f" stroke-width="1.6" fill="none" stroke-linecap="round"/>` : `<path d="M${cx - 6},${cy + 15} q6,${f.smile ? 4 : 1.5} 12,0" stroke="#8a4a3c" stroke-width="1.6" fill="none" stroke-linecap="round"/>`);
   // anteojos
   if (f.glasses) {
     p.push(`<g fill="none" stroke="#222" stroke-width="1.5"><rect x="${cx - 16}" y="${cy - 7}" width="13" height="10" rx="3"/><rect x="${cx + 3}" y="${cy - 7}" width="13" height="10" rx="3"/><path d="M${cx - 3},${cy - 3} h6"/></g>`);

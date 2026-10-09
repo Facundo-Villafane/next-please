@@ -66,13 +66,34 @@ function toast(ok, html) {
 function points(n, why) { G.score += n; G.queueLog.push({ type: 'pts', n, why }); }
 
 // Llamado cada 250 ms desde el reloj del counter
+// Globitos sobre la fila: el carácter de la gente y cómo la van llevando con la espera
+const BUBBLES = {
+  calm: ['📱', '🧉', '😴', '🗺️', '☕', '🎧', '📖', '🥐', '🤳', '💬'],
+  wait: ['⏰', '🙄', '😒', '⌚', '😮‍💨', '🥱'],
+  mad: ['😤', '💢', '😠', '📢', '🤦', '😡'],
+};
+let bubbleIn = 3;
+function bubbles(dt, level) {
+  bubbleIn -= dt;
+  if (bubbleIn > 0) return;
+  bubbleIn = level >= 2 ? 2 + Math.random() * 2 : level === 1 ? 3.5 + Math.random() * 3 : 6 + Math.random() * 6;
+  scene.queueBubble?.(pick(level >= 2 ? BUBBLES.mad : level === 1 ? BUBBLES.wait : BUBBLES.calm));
+}
+// En modo aprendizaje no hay paciencia que se agote, pero la fila igual nota si una atención se hace muy larga
+function learnLevel() {
+  const secs = (performance.now() - (G.act?.start || performance.now())) / 1000;
+  return secs > 240 ? 2 : secs > 120 ? 1 : 0;
+}
+
 export function queueTick(dt) {
-  if (G.mode !== 'challenge' || !G.running) return;
+  if (!G.running) return;
   const active = G.cur && !G.paused && !ui.modalOpen() && !$('#dialog').classList.contains('hidden');
+  if (G.mode !== 'challenge') { if (active) bubbles(dt, learnLevel()); return; }
   if (active) {
     G.patience = Math.max(0, G.patience - (0.05 + 0.02 * Math.min(queueLen(), 12)) * dt);
     const lv = moodLevel();
     if (lv !== (scene.queueMood || 0)) scene.setQueueMood?.(lv);
+    bubbles(dt, lv);
     const now = performance.now();
     if (lv >= 1 && now - G.lastMurmur > (lv === 2 ? 11000 : 17000)) { G.lastMurmur = now; talk(pick(MURMURS[lv])); }
     if (G.patience <= 0) viral();

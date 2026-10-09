@@ -605,8 +605,10 @@ function makeKid(today, age, last, nat = 'AR') {
   const sex = chance(0.5) ? 'M' : 'F';
   const dob = age === 0 ? addDays(today, -rnd(70, 330)) : addDays(addYears(today, -age), -rnd(1, 360));
   const face = randomFace(sex, Math.max(age, 3), nat);
-  Object.assign(face, { age, glasses: false, beard: false });
-  if (age < 2) Object.assign(face, { hairStyle: chance(0.5) ? 'bald' : 'short', shape: 'round', shirt: pick(['#f4b6c2', '#a7d8f0', '#fff3b0']) });
+  // Chicos: rasgos suaves (sin anteojos ni barba, cejas finas); bebés con un mechoncito, nunca el cerquillo de calvo
+  Object.assign(face, { age, glasses: false, beard: false, brows: 'thin' });
+  if (face.hairStyle === 'bald') face.hairStyle = 'short';
+  if (age < 2) Object.assign(face, { hairStyle: 'baby', shape: 'round', nose: 2, smile: true, shirt: pick(['#f4b6c2', '#a7d8f0', '#fff3b0']) });
   return { sex, first: pick(NAMES.AR[sex]).split(' ')[0], last, dob, age: ageOn(dob, today), nationality: nat, face };
 }
 function kidDoc(kid, today, passportNeeded) {

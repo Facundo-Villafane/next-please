@@ -465,13 +465,29 @@ export class AirportScene {
   makePerson(f, withBag = false, scale = 1) {
     const { g, legs, arms } = buildPerson(f);
     if (f.accessory === 'stroller') {
+      // Cochecito bien visible: color vivo, capota, manija, ruedas claras y el bebé asomando
       const st = new THREE.Group();
-      const m = new THREE.MeshStandardMaterial({ color: '#2b4c6f', roughness: 0.7 });
-      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.35, 0.55), m); seat.position.y = 0.6; st.add(seat);
-      const hood = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8, 0, Math.PI), m); hood.position.set(0, 0.78, 0.15); hood.rotation.x = -Math.PI / 2; st.add(hood);
-      const wm = new THREE.MeshStandardMaterial({ color: '#111' });
-      [[-0.18, 0.2], [0.18, 0.2], [-0.18, -0.2], [0.18, -0.2]].forEach(([x, z]) => { const w = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 6, 12), wm); w.position.set(x, 0.08, z); w.rotation.y = Math.PI / 2; st.add(w); });
-      st.position.set(0, 0, -0.55); g.add(st);
+      const col = ['#e85d75', '#3fa7d6', '#f2a541', '#7bc67b'][(f.skin + (f.eye || 0)) % 4];
+      const m = new THREE.MeshStandardMaterial({ color: col, roughness: 0.55 });
+      const frame = new THREE.MeshStandardMaterial({ color: '#e9edf2', metalness: 0.6, roughness: 0.3 });
+      const basket = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.3, 0.66), m); basket.position.y = 0.56; basket.castShadow = true; st.add(basket);
+      const rim = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.04, 0.7), frame); rim.position.y = 0.72; st.add(rim);
+      const hood = new THREE.Mesh(new THREE.SphereGeometry(0.25, 16, 10, 0, Math.PI), m); hood.position.set(0, 0.72, 0.16); hood.rotation.x = -Math.PI / 2; hood.castShadow = true; st.add(hood);
+      const baby = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 10), new THREE.MeshStandardMaterial({ color: '#f1c7a5', roughness: 0.7 })); baby.position.set(0, 0.77, 0.02); st.add(baby);
+      const blanket = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.05, 0.36), new THREE.MeshStandardMaterial({ color: '#fdfdfd', roughness: 0.9 })); blanket.position.set(0, 0.73, -0.14); st.add(blanket);
+      // Manija hacia el adulto y patas
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.5, 8), frame); bar.rotation.z = Math.PI / 2; bar.position.set(0, 1.0, 0.5); st.add(bar);
+      [-0.22, 0.22].forEach((x) => {
+        const h = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.46, 8), frame); h.position.set(x, 0.86, 0.42); h.rotation.x = -0.6; st.add(h);
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.5, 8), frame); leg.position.set(x, 0.3, 0); st.add(leg);
+      });
+      const wm = new THREE.MeshStandardMaterial({ color: '#222', roughness: 0.6 });
+      const hub = new THREE.MeshStandardMaterial({ color: '#f4f4f4' });
+      [[-0.22, 0.24], [0.22, 0.24], [-0.22, -0.24], [0.22, -0.24]].forEach(([x, z]) => {
+        const w = new THREE.Mesh(new THREE.TorusGeometry(0.085, 0.028, 8, 16), wm); w.position.set(x, 0.1, z); w.rotation.y = Math.PI / 2; st.add(w);
+        const c = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.03, 10), hub); c.rotation.z = Math.PI / 2; c.position.set(x, 0.1, z); st.add(c);
+      });
+      st.position.set(0, 0, -0.62); g.add(st);
     }
     if (f.accessory === 'pet') {
       const pc = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.28, 0.25), new THREE.MeshStandardMaterial({ color: '#8a6d3b', roughness: 0.8 }));
@@ -673,6 +689,39 @@ export class AirportScene {
     return this.walkTo(q.fig, [[this.front[0], 1.8], [this.spot.x, this.spot.z]], 1.25).then(() => {
       q.fig.rotation.y = 0;
     });
+  }
+
+  // Globito con un emoji sobre alguien de la fila (carácter, impaciencia...). Desaparece solo.
+  queueBubble(emoji) {
+    const cands = this.queue.filter((q) => q.fig.visible && !q.fig.userData.bubble).slice(0, 10);
+    if (!cands.length) return;
+    const q = cands[Math.floor(Math.random() * cands.length)];
+    const t = canvasTex(128, 128, (g) => {
+      g.fillStyle = '#fff'; g.strokeStyle = '#0e2c62'; g.lineWidth = 6;
+      g.beginPath(); g.roundRect(8, 8, 112, 86, 26); g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(50, 92); g.lineTo(62, 120); g.lineTo(76, 92); g.fill();
+      g.beginPath(); g.moveTo(50, 93); g.lineTo(62, 120); g.lineTo(76, 93); g.stroke();
+      g.font = '58px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", system-ui'; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(emoji, 64, 54);
+    });
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t.tex, transparent: true, depthTest: false }));
+    sp.renderOrder = 10;
+    sp.position.set(0, 2.25, 0);
+    q.fig.add(sp);
+    q.fig.userData.bubble = sp;
+    let k = 0;
+    const anim = (dt) => {
+      k += dt;
+      const s = 0.6 * Math.min(1, 0.5 + k * 3) * (k > 2.9 ? Math.max(0.01, 1 - (k - 2.9) * 4) : 1);
+      sp.scale.set(s, s, 1);
+      sp.position.y = 2.25 + Math.sin(k * 3) * 0.03;
+      if (k > 3.15) {
+        q.fig.remove(sp); q.fig.userData.bubble = null;
+        sp.material.map.dispose(); sp.material.dispose();
+        this.animators.splice(this.animators.indexOf(anim), 1);
+      }
+    };
+    this.animators.push(anim);
   }
 
   setSway(on) { this.sway = on; }

@@ -218,13 +218,13 @@ export function checkinLines(p) {
     L.docs = 'Acá están los documentos de todos. Y los papeles de los chicos... creo que están todos. ¿Me falta alguno?';
     L.minor = {
       both: `Viajamos todos juntos: ${P.members.filter((m) => !m.isMinor).map((m) => m.first).join(', ')}, yo y ${kidNames}.`,
-      one: `Viajo sol${p.sex === 'F' ? 'a' : 'o'} con ${kidNames}. ${p.sex === 'F' ? 'El papá' : 'La mamá'} no viaja${p.docs.some((d) => d.type === 'AUTH_MINOR') ? ', firmó la autorización ante escribano' : '... ¿hacía falta algún papel?'}.`,
+      one: `Viajamos ${kidNames} y yo. ${p.sex === 'F' ? 'El papá' : 'La mamá'} no viaja${p.docs.some((d) => d.type === 'AUTH_MINOR') ? ', firmó la autorización ante escribano' : '... ¿hacía falta algún papel?'}.`,
       guardian: `Los chicos viven conmigo, tengo la tutela. ${p.docs.some((d) => d.type === 'GUARDIANSHIP') ? 'Acá está el papel del juzgado, que me costó dos años.' : '¿El papel del juzgado? Está en trámite... ¡pero todo el barrio sabe que viven conmigo!'}`,
       relative: `Viajo yo con ${kidNames}. Los padres se quedan trabajando. ${p.docs.some((d) => d.type === 'AUTH_MINOR') ? 'Me firmaron una autorización.' : ''}`,
     }[P.relation];
     const other = p.sex === 'F' ? 'el papá' : 'la mamá';
     if (P.absent === 'deceased') {
-      L.greet = `Hola. Viajo con ${kidNames} a ${city}. Es nuestro primer viaje solos, así que paciencia si estamos un poco desorganizados.`;
+      L.greet = `Hola. Viajo con ${kidNames} a ${city}. Es el primer viaje que hacemos sin ${p.sex === 'F' ? 'él' : 'ella'}, así que paciencia si estamos un poco desorganizados.`;
       L.minor = `${other.charAt(0).toUpperCase() + other.slice(1)}${kids.length > 1 ? ' de los chicos' : ''} falleció hace unos años. ${p.docs.some((d) => d.type === 'DEATH_CERT') ? 'Por las dudas traje el acta de defunción, me dijeron que la piden.' : '¿Hace falta algún papel? Nadie me dijo nada...'}`;
     } else if (P.absent === 'court') {
       L.greet = `Buenas. Viajo con ${kidNames} a ${city}. Traigo una carpeta así de gorda, preguntame lo que quieras.`;
@@ -529,6 +529,14 @@ export function gateLines(p, { city, otherCity, country }) {
       vape: '¿Y vos quién sos para decirme qué hacer? Jajaja, mentira... ¿o no?',
       deny: '¡¿Cómo que no subo?! ¡Llamame a tu jefe! ¡Pagué el pasaje!',
     }); break;
+  }
+  // Con familia o acompañantes, nunca "viajo solo/a": nombra a los que viajan con él o ella
+  const comp = (p.party?.members || []).filter((m) => m.role !== 'escort');
+  if (comp.length && p.party.relation !== 'custody') {
+    const names = comp.map((m) => m.first);
+    const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} y ${names.at(-1)}` : names[0];
+    const listEn = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names[0];
+    L.companion = S(`No, viajamos juntos: yo, ${list}.`, `No, we're traveling together: me, ${listEn}.`, `Não, viajamos juntos: eu, ${list.replace(' y ', ' e ')}.`);
   }
   return L;
 }
