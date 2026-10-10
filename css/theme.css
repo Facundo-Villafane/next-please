@@ -578,3 +578,13 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
   .pgBody .tip { font-size: 12.5px; padding: 6px 10px; }
   .cfmBox { width: calc(100% - 24px); }
 }
+@media (max-width: 760px) {
+  /* La página no se arrastra ni "rebota" (iPhone): sólo se desliza el contenido de cada panel o ventana */
+  html, body { overflow: hidden; height: 100%; }
+  body { position: fixed; inset: 0; width: 100%; }
+  .modal { overflow: hidden; overscroll-behavior: contain; }
+  /* Las ventanas sólo se deslizan de arriba a abajo, nunca de costado */
+  .modalBox { overflow-x: clip; touch-action: pan-y; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  .modalBox table { touch-action: pan-x pan-y; }
+  #desk, #dcs .pane { overscroll-behavior: contain; }
+}
