@@ -194,7 +194,9 @@ function forSpeech(t) {
     .replace(/\bPSA\b/g, 'P S A')
     .replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu, '');
 }
-function say(text, lang, who = 'agent') {
+// Las frases en curso quedan guardadas: si el navegador las "pierde" (Safari/Chrome), se cortan sin sonar
+const live = new Set();
+function say(text, lang, who = 'agent', retry = true) {
   return new Promise((res) => {
     const u = new SpeechSynthesisUtterance(forSpeech(text));
     const v = pickVoice(lang, who);
@@ -203,10 +205,28 @@ function say(text, lang, who = 'agent') {
     u.rate = S.rate * (lang === 'es' ? 1 : 0.95);
     u.pitch = 1;
     u.volume = Math.min(1, S.master * S.voice);
-    u.onend = u.onerror = () => res();
+    let done = false;
+    const end = () => { if (done) return; done = true; live.delete(u); res(); };
+    u.onend = end;
+    u.onerror = (e) => {
+      live.delete(u);
+      // Si la voz elegida no está disponible en este equipo, se reintenta con la del sistema
+      if (retry && v && e?.error && !/interrupted|canceled/.test(e.error)) { done = true; say(text, lang, who, false).then(res); return; }
+      end();
+    };
+    live.add(u);
+    synth.resume?.(); // iPhone y Chrome a veces dejan la voz "en pausa" al volver a la pestaña
     synth.speak(u);
-    setTimeout(res, 30000); // por si el navegador nunca avisa el final
+    setTimeout(end, 30000); // por si el navegador nunca avisa el final
   });
+}
+// Cortar lo que se está diciendo; en iPhone, hablar justo después de cortar a veces no suena: se espera un poco
+async function hush() {
+  if (synth.speaking || synth.pending) { synth.cancel(); await new Promise((r) => setTimeout(r, 180)); }
+}
+// Para un botón "probar": una frase vacía dentro del toque habilita la voz en el iPhone
+export function primeVoice() {
+  try { if (synth && !synth.speaking) { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; synth.speak(u); } } catch {}
 }
 let annSeq = 0;
 // Anuncio por altoparlante: corta el anterior, suena el gong y después la voz
@@ -214,8 +234,8 @@ export async function announce(es, en = null, who = 'agent') {
   sfx('pa');
   if (!synth || S.mute || !S.voices) return;
   const my = ++annSeq;
-  synth.cancel();
-  await new Promise((r) => setTimeout(r, 1300));
+  await hush();
+  await new Promise((r) => setTimeout(r, 1100));
   if (my !== annSeq) return;
   await say(es, 'es', who);
   if (en && S.english && my === annSeq) { await new Promise((r) => setTimeout(r, 350)); if (my === annSeq) await say(en, 'en', who); }
@@ -224,9 +244,8 @@ export function stopVoices() { annSeq++; synth?.cancel(); }
 // Una frase dicha en vivo (sin gong): por ejemplo, la PSA ordenando desalojar
 export function voiceLine(text, lang = 'es', who = 'airport') {
   if (!synth || S.mute || !S.voices) return;
-  annSeq++;
-  synth.cancel();
-  say(text, lang, who);
+  const my = ++annSeq;
+  hush().then(() => { if (my === annSeq) say(text, lang, who); });
 }
 window.addEventListener('pagehide', () => synth?.cancel());
 // Para Configuración: qué voz usa "Automática" (la de tu género, si hay)

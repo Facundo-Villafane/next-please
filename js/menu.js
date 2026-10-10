@@ -1,5 +1,5 @@
 // Menú de pausa y Configuración (sonido, juego, cuenta, perfil). El inicio y "Jugar" están en career.js.
-import { settings, setSetting, sfx, announce, voicesFor, canSpeak, autoVoiceName } from './sound.js';
+import { settings, setSetting, sfx, announce, voicesFor, canSpeak, autoVoiceName, primeVoice } from './sound.js';
 import { cloudUser, cloudReady, openLogin, logout, syncNow } from './cloud.js';
 import { esc } from './util.js';
 
@@ -116,7 +116,7 @@ export function showSettings({ back, inGame = false, tab = 'sound' } = {}) {
   fillVoices();
   if (window.speechSynthesis && !voicesFor('es').length) window.speechSynthesis.addEventListener?.('voiceschanged', fillVoices, { once: true });
   if ($('#sRate')) { $('#sRate').value = String(S.rate); $('#sRate').onchange = () => setSetting('rate', +$('#sRate').value); }
-  if ($('#sTryAnn')) $('#sTryAnn').onclick = (e) => { e.stopPropagation(); announce('Su atención por favor: llamado final de embarque a pasajeros del vuelo AP1100 con destino a Miami. Les pedimos embarcar de inmediato por la puerta 12.', 'Your attention please: this is the final boarding call for passengers on flight AP1100 to Miami. Please proceed immediately to gate 12.'); };
+  if ($('#sTryAnn')) $('#sTryAnn').onclick = (e) => { e.stopPropagation(); primeVoice(); announce('Su atención por favor: llamado final de embarque a pasajeros del vuelo AP1100 con destino a Miami. Les pedimos embarcar de inmediato por la puerta 12.', 'Your attention please: this is the final boarding call for passengers on flight AP1100 to Miami. Please proceed immediately to gate 12.'); };
   if ($('#sQuality')) { $('#sQuality').value = S.quality; $('#sQuality').onchange = () => setSetting('quality', $('#sQuality').value); }
   if ($('#sProfile')) $('#sProfile').onclick = () => api.editProfile();
   if ($('#sWipe')) $('#sWipe').onclick = async () => {
