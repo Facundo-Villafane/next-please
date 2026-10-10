@@ -588,3 +588,7 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
   .modalBox table { touch-action: pan-x pan-y; }
   #desk, #dcs .pane { overscroll-behavior: contain; }
 }
+@media (max-width: 760px) {
+  /* El iPhone agranda la pantalla al tocar un campo con letra de menos de 16 px: en el celu, todos a 16 */
+  input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea { font-size: 16px !important; }
+}
