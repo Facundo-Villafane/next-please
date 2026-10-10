@@ -556,3 +556,25 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
   #dcs .decide .btn i { font-size: 15px; }
   #dcs .tabs button { padding: 7px 9px; font-size: 12px; }
 }
+@media (max-width: 760px) {
+  /* Encabezado azul de las ventanas: acompaña el margen más chico del celu */
+  .modalBox > div:first-child > h1:first-child, .modalBox > h2:first-child { margin: -14px -14px 12px; padding: 10px 14px 9px; font-size: 18px; }
+  .modalBox h1 { font-size: 18px; }
+  .modalBox h2 { font-size: 17px; }
+  /* Nada más ancho que la ventana: campos, tablas, imágenes y grillas se acomodan */
+  .modalBox { overflow-x: hidden; }
+  .modalBox select, .modalBox input:not([type=checkbox]):not([type=radio]):not([type=range]), .modalBox textarea { max-width: 100%; min-width: 0; }
+  .modalBox img, .modalBox svg, .modalBox canvas { max-width: 100%; }
+  .modalBox table { display: block; max-width: 100%; overflow-x: auto; }
+  .modalBox pre { white-space: pre-wrap; word-break: break-word; }
+  .modalBox .row { flex-wrap: wrap; }
+  .modalBox .endTabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .modalBox .endTabs button { flex: none; white-space: nowrap; font-size: 13px; padding: 6px 9px; }
+  .setRow select { flex: 1 1 100%; }
+  .setRow input[type=range] { width: auto; flex: 1; min-width: 90px; }
+}
+@media (max-width: 760px) {
+  .pgBody { font-size: 13.5px; line-height: 1.45; }
+  .pgBody .tip { font-size: 12.5px; padding: 6px 10px; }
+  .cfmBox { width: calc(100% - 24px); }
+}
