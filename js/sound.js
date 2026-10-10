@@ -38,9 +38,26 @@ function applyVolumes() {
   ambBus.gain.setTargetAtTime(S.amb * 0.5, t, 0.3);
 }
 // El navegador sólo deja sonar después de un gesto del usuario
-const unlock = () => { ac(); if (ambWanted) startAmb(); };
-window.addEventListener('pointerdown', unlock, { capture: true });
-window.addEventListener('keydown', unlock, { capture: true });
+// iPhone: el sonido de la página va como "reproducción" (no como timbre), así suena aunque el
+// celu esté en silencio (iOS 17+). Y el audio sólo se habilita con un toque completo (touchend/click).
+try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch {}
+let unlocked = false;
+const unlock = () => {
+  const c = ac();
+  if (!c) return;
+  if (!unlocked) {
+    unlocked = true;
+    // Un sonido mudo dentro del toque "despierta" el audio en Safari
+    try { const b = c.createBuffer(1, 1, 22050), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); } catch {}
+    // Y una frase vacía despierta la voz de los anuncios
+    try { if (window.speechSynthesis) { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; window.speechSynthesis.speak(u); } } catch {}
+  }
+  if (c.state !== 'running') c.resume?.();
+  if (ambWanted) startAmb();
+};
+['pointerdown', 'touchend', 'click', 'keydown'].forEach((ev) => window.addEventListener(ev, unlock, { capture: true, passive: true }));
+// Al volver a la pestaña (o desbloquear el celu) el navegador puede haber pausado el audio
+document.addEventListener('visibilitychange', () => { if (!document.hidden && ctx && ctx.state !== 'running') ctx.resume?.(); });
 
 // ------------------------------------------------------------------
 // Bloques
