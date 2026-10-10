@@ -82,6 +82,7 @@ export class AirportScene {
     this.buildAmbientPeople();
 
     container.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return; // en el celu, tocar la pantalla no gira la cámara
       const r = container.getBoundingClientRect();
       this.look.tx = ((e.clientX - r.left) / r.width - 0.5) * 0.5;
       this.look.ty = ((e.clientY - r.top) / r.height - 0.5) * 0.18;

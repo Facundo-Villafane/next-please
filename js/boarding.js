@@ -14,6 +14,7 @@ import { gateLines as gateDialog, gateGreeting, AGENT_EN, paxLang } from './dial
 import { OVBK_POLICY, compForm, gradeComp, compSummary, protectionsFor } from './overbooking.js';
 import { conflictTrigger, runConflict } from './conflict.js';
 import { pauseMenu } from './menu.js';
+import { mobileShow, mobilePing } from './mobile.js';
 import { sfx, ambience, settings, announce } from './sound.js';
 
 const $ = (s) => document.querySelector(s);
@@ -405,9 +406,9 @@ function expected(p) {
 // Interfaz
 // ------------------------------------------------------------------
 function buildUI() {
-  const stats = document.querySelectorAll('#topbar .stat span');
-  stats[2].textContent = 'Embarcados';
-  stats[3].textContent = 'En fila';
+  // Las etiquetas de la barra de arriba (la de al lado de cada número)
+  $('#tPax').previousElementSibling.textContent = 'Embarcados';
+  $('#tQueue').previousElementSibling.textContent = 'En fila';
   $('.brand span').textContent = `Embarque · Puerta ${FLIGHT.gate} · ${B.mode === 'challenge' ? '⏱ Desafío' : '📘 Aprendizaje'}`;
   $('#dcs').innerHTML = `
     <div class="dcsHead"><span>SISTEMA DE EMBARQUE · ${AIRLINE.code}</span><span>${FLIGHT.no} ${STATION.code}-${FLIGHT.dest} · STD ${FLIGHT.dep} · PTA ${FLIGHT.gate}</span></div>
@@ -447,6 +448,7 @@ function buildUI() {
   };
   $('#btnManual').onclick = showGateManual;
   ambience(true);
+  mobileShow('dcs'); // en la puerta se arranca por la apertura (sistema)
   renderTabs(); renderPane(); updateTop();
 }
 
@@ -456,7 +458,7 @@ function renderPane() {
   saveGateSoon();
   renderTimeline();
 }
-function sys(msg, kind = '') { const el = $('#gSys'); el.className = `sysmsg ${kind}`; el.textContent = `> ${msg}`; }
+function sys(msg, kind = '') { const el = $('#gSys'); el.className = `sysmsg ${kind}`; el.textContent = `> ${msg}`; if (kind) mobilePing(); }
 function toast(ok, text) {
   const t = $('#toast');
   t.className = `toast ${ok ? 'ok' : 'bad'}`;
@@ -783,6 +785,7 @@ function nextPax() {
   if (B.cur || !B.queue.length) { renderPane(); return; }
   const p = B.queue[0];
   scene.replaceFront(p);
+  mobileShow('pax');
   B.queue.shift();
   B.cur = p;
   B.act = { asked: {}, scanned: false, scan: null, gateDispatch: false, reseated: false, start: performance.now() };

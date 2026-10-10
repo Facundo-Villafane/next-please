@@ -5,6 +5,13 @@ verificando documentación, requisitos de ingreso, reserva, APIS, equipaje, merc
 peligrosas y asiento, y decide **Aceptar / No aceptar / Derivar**. Cada atención se
 evalúa con una explicación, y al final del turno se genera un informe imprimible.
 
+## Celular
+
+En pantallas angostas (≤ 760 px, `js/mobile.js`) la escena 3D queda arriba y abajo hay dos pestañas: **Pasajero**
+(diálogo, preguntas y documentos) y **Sistema** (DCS y botones de decisión). Cuando llega un pasajero se pasa sola a
+*Pasajero*; si el sistema avisa algo mientras mirás la otra, aparece un punto rojo en *Sistema*. Tocar la pantalla no
+gira la cámara. Conviene jugar con el celu vertical.
+
 ## Menús
 
 - **Inicio**: *Continuar* (si hay algo a medias, lleva a la pantalla de ese modo: los días de la historia o el centro

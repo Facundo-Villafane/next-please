@@ -21,6 +21,7 @@ import { initCloud } from './cloud.js';
 import { sfx, ambience } from './sound.js';
 import { initMenu, pauseMenu, showSettings } from './menu.js';
 import { initDaily, showDaily } from './daily.js';
+import { initMobile, mobileShow, mobilePing } from './mobile.js';
 import { evaluate, computeExcess, REASONS, isIdDoc, isExitRow, partyMembers } from './rules.js';
 import { faceSVG, renderDoc, docTitle } from './docs.js';
 import { AGENT_EN } from './dialogues.js';
@@ -251,6 +252,7 @@ function nextPassenger() {
   }
   scene.replaceFront(p);
   sfx('next');
+  mobileShow('pax');
   teamLocal('call', { name: `${p.first} ${p.last}`, sex: p.sex });
   G.cur = p;
   G.act = {
@@ -396,6 +398,7 @@ function sys(msg, kind = '') {
   el.className = `sysmsg ${kind}`;
   el.textContent = `> ${msg}`;
   if (kind === 'ok') sfx('ok'); else if (kind === 'err') sfx('err');
+  if (kind) mobilePing();
 }
 
 function renderTabs() {
@@ -1111,6 +1114,7 @@ $('#btnPause').onclick = () => {
   });
 };
 
+initMobile();
 initQueue(G, scene, { openModal, closeModal, modalOpen });
 initTeam(G, scene);
 initEvents(G, scene, { boardUpdate: () => { scene.updateBoard(boardFlights(), G.now); if (G.tab === 'ident') renderPane(); } });

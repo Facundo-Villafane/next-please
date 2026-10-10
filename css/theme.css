@@ -483,3 +483,76 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
 .rk small { color: var(--muted); }
 .rk .pts { text-align: right; font-family: var(--display); font-weight: 600; color: var(--navy2); font-size: 17px; }
 .rk.me { background: #fff6d6; }
+
+/* =====================================================================
+   CELULAR (≤ 760 px): escena arriba, pestañas Pasajero / Sistema abajo
+   ===================================================================== */
+#mobTabs { display: none; }
+@media (max-width: 760px) {
+  html, body { overscroll-behavior: none; }
+  #app { height: 100dvh; min-height: 0; overflow: hidden; }
+  /* Barra superior compacta: sólo hora, pasajero y puntaje; botones con ícono */
+  #topbar { flex-wrap: nowrap; gap: 8px; padding: 4px 8px; }
+  .brandLogo { height: 34px; margin: 0; }
+  .agentStat, #topbar .stat:nth-of-type(5) { display: none; }
+  .stat span { font-size: 9px; }
+  .stat b { font-size: 14px; }
+  #topbar .btn { padding: 6px 9px; min-height: 0; font-size: 0; }
+  #topbar .btn i { font-size: 20px; }
+  #topbar .btn span { display: none; }
+  /* Escena + pestañas + panel */
+  #layout { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 33dvh auto minmax(0, 1fr); overflow: hidden; width: 100%; }
+  #view3d, #desk, #dcs, #mobTabs { min-width: 0; max-width: 100vw; }
+  #view3d > canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+  #dcs .pane table { display: block; overflow-x: auto; }
+  .chip { font-size: 12px; padding: 5px 9px; }
+  #left { display: contents; }
+  #view3d { grid-row: 1; }
+  #mobTabs { grid-row: 2; display: flex; background: var(--navy2); border-top: 3px solid var(--accent); }
+  #mobTabs button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 4px; background: none; border: 0; color: #b9cff2; font-family: var(--display); font-size: 15px; font-weight: 600; border-bottom: 4px solid transparent; }
+  #mobTabs button.on { color: #fff; border-bottom-color: var(--accent); background: rgba(255, 255, 255, .08); }
+  #mobTabs .dot { display: none; width: 9px; height: 9px; border-radius: 50%; background: var(--bad); }
+  #mobTabs button.ping .dot { display: inline-block; }
+  #desk, #dcs { grid-row: 3; min-height: 0; border: 0; }
+  body.mt-pax #dcs, body.mt-dcs #desk { display: none; }
+  #desk { overflow: auto; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+  #dcs { min-height: 0; }
+  #dcs .pane { overflow: auto; }
+  #dcs .tabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  #dcs .tabs button { flex: none; white-space: nowrap; padding: 8px 10px; font-size: 13px; }
+  #dcs .decide { flex-wrap: wrap; gap: 6px; padding: 6px; }
+  #dcs .decide .btn { flex: 1 1 30%; padding: 9px 6px; font-size: 13px; }
+  /* Diálogo con el pasajero: arriba del panel "Pasajero" (ya no flota sobre la escena) */
+  #desk #dialog { position: static; display: flex; gap: 8px; padding: 8px; border-radius: 14px; box-shadow: 0 3px 0 var(--edge); }
+  #desk #dialog.hidden { display: none; }
+  #desk .portrait { display: none; }
+  .bubble { font-size: 14px; }
+  .chips .btn, .chips button { font-size: 12px; padding: 6px 8px; }
+  .deskTitle small { display: none; }
+  #docs { overflow-x: auto; }
+  /* Compañeros: sólo la cara; consultas e imprevistos como tarjetas sobre todo */
+  .team { top: 6px; right: 6px; }
+  .tmRow .tm { width: auto; padding: 3px; }
+  .tmRow .tm > :not(:first-child) { display: none; }
+  .tmRow .tm.me { display: none; }
+  .tmAsk, .tmQuick { position: fixed; left: 8px; right: 8px; bottom: 8px; z-index: 40; max-height: 60dvh; overflow: auto; }
+  .evt { position: fixed; bottom: 8px; left: 8px; right: 8px; transform: none; width: auto; max-height: 62dvh; overflow: auto; z-index: 40; }
+  .mood { top: 6px; left: 6px; padding: 4px 8px; }
+  .annBanner { font-size: 12px; }
+  /* Ventanas: casi a pantalla completa */
+  .modal { padding: 52px 6px 6px; align-items: flex-start; }
+  .modalBox, .modalBox.wide { width: 100%; max-width: 100%; max-height: calc(100dvh - 58px); padding: 14px; border-radius: 16px; }
+  .homeGrid { grid-template-columns: 1fr; }
+  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .row.end { flex-wrap: wrap; }
+}
+@media (max-width: 760px) {
+  /* Paneles del sistema más compactos (sobre todo en la puerta, que tiene más cosas) */
+  #dcs .dcsHead { font-size: 10px; padding: 5px 10px; gap: 8px; }
+  #dcs .timeline { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 4px 6px; gap: 4px; }
+  #dcs .timeline > * { flex: none; font-size: 10px; padding: 3px 7px; }
+  #dcs .sysmsg { font-size: 11px; max-height: 3.4em; overflow: auto; padding: 4px 10px; }
+  #dcs .decide .btn { padding: 7px 4px; font-size: 12px; min-height: 0; }
+  #dcs .decide .btn i { font-size: 15px; }
+  #dcs .tabs button { padding: 7px 9px; font-size: 12px; }
+}
