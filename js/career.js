@@ -227,7 +227,7 @@ export function showProfile({ first }) {
   api.openModal(`
     <div class="start home profile">
       ${first
-        ? `<div class="startHero"><img src="assets/logo-512.png" alt="Next, please!" class="heroLogo sm" /><h1>¡Bienvenida/o a bordo!</h1><p>Antes de tu primer turno, contanos quién sos.</p>${cloudUser() ? `<span class="cloudBadge on"><i class="mdi mdi-cloud-check"></i> Conectado como ${esc(cloudUser().email || 'tu cuenta')}: completá tu perfil y queda guardado en la nube</span>` : '<button class="btn sm ghost" id="pfLogin"><i class="mdi mdi-cloud-download"></i> ¿Ya jugaste en otra compu? Entrá con tu cuenta</button>'}</div>`
+        ? `<div class="startHero"><img src="assets/logo-512.png" alt="Next, please!" class="heroLogo sm" /><h1>¡Bienvenida/o a bordo!</h1><p>Antes de tu primer turno, contanos quién sos.</p>${cloudUser() ? `<span class="cloudBadge on"><i class="mdi mdi-cloud-check"></i> Conectado como ${esc(cloudUser().email || 'tu cuenta')}: completá tu perfil y queda guardado en la nube</span>` : '<button class="btn sm ghost" id="pfLogin"><i class="mdi mdi-google"></i> Entrá con Google o tu correo: tu progreso queda guardado y seguís desde cualquier compu o el celu</button>'}</div>`
         : '<h1>Tu perfil</h1>'}
       <div class="pfStep"><span class="pfNum">1</span>
         <label>¿Cómo te llamás?<input id="hName" maxlength="40" placeholder="Ej.: Lucía Pérez" value="${esc(pl.name)}" autocomplete="given-name"></label>
