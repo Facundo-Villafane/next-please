@@ -606,3 +606,15 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
   .report tr, .report li, .kpis > div { break-inside: avoid; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+@media screen and (max-width: 760px) {
+  /* Panel "Pasajero": los documentos arriba, en una tira compacta que siempre se ve;
+     el diálogo abajo, con el texto largo del pasajero deslizándose dentro de su globo */
+  #desk .deskTitle { order: 0; margin: 0; font-size: 12px; }
+  #desk .docs { order: 1; flex: none; max-height: 172px; gap: 8px; padding-bottom: 4px; }
+  #desk .docs .empty { font-size: 12px; margin: 4px 0; }
+  #desk .docThumb .mini { zoom: .34; }
+  #desk .docThumb .dtitle { font-size: 10px; }
+  #desk #dialog { order: 2; }
+  #desk .bubble { max-height: 7.2em; overflow-y: auto; overscroll-behavior: contain; }
+  #desk .agentLine { max-height: 3em; overflow-y: auto; font-size: 12px; }
+}
