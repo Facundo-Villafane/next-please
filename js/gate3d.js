@@ -190,10 +190,15 @@ export class GateScene extends AirportScene {
           hairStyle: ['short', 'long', 'bald', 'bun'][i % 4], glasses: Math.random() < 0.3, beard: false,
           shirt: ['#7a2e2e', '#2e6b4f', '#555', '#b07a2a', '#1f7a8c', '#6b5b95'][i % 6], pants: '#2a2f38',
         }, true);
-        fig.position.set(-3 + Math.random() * 2, 0, 6.5);
+        // Los pasajeros "de fondo" de la zona también hacen la fila: recorren el zigzag de los
+        // tensabarriers, se paran un momento en el podio (escaneo de la tarjeta) y recién ahí van a la manga
+        fig.position.set(-3.2, 0, 6.6 + Math.random() * 0.5);
         this.scene.add(fig);
-        this.walkTo(fig, [[1.4, 2.4], ...this.exitPaths.accept.slice(1)], 1.4).then(() => this.scene.remove(fig));
-      }, i * 700);
+        this.walkTo(fig, [[-2.6, 6.0], [1.75, 6.0], [1.75, 4.8], [-2.45, 4.8], [-2.45, 3.6], [0.6, 3.6], [0.6, 2.2], [0.95, 1.05]], 1.6)
+          .then(() => { fig.rotation.y = 0; return new Promise((r) => setTimeout(r, 900)); })
+          .then(() => this.walkTo(fig, this.exitPaths.accept, 1.4))
+          .then(() => this.scene.remove(fig));
+      }, i * 1600);
     }
   }
 
