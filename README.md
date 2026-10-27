@@ -1,16 +1,19 @@
 # Next, please! · Simulador de Check-in EZE
 
-Juego web educativo: el alumno es agente de check-in en Ezeiza y atiende pasajeros
+Juego web para todo público: sos agente de check-in en Ezeiza y atiende pasajeros
 verificando documentación, requisitos de ingreso, reserva, APIS, equipaje, mercancías
 peligrosas y asiento, y decide **Aceptar / No aceptar / Derivar**. Cada atención se
-evalúa con una explicación, y al final del turno se genera un informe imprimible.
+evalúa con una explicación, y el resultado se puede **compartir como imagen** (`js/share.js`: tarjeta
+cuadrada con el logo, el agente y los números; en el celu abre el menú de compartir, en la compu se descarga).
+
+> Pauta: dentro del juego no se mencionan la clase, el curso ni los alumnos (es un juego para cualquiera).
 
 ## Celular
 
-En pantallas angostas (≤ 760 px, `js/mobile.js`) la escena 3D queda arriba y abajo hay dos pestañas: **Pasajero**
+En pantallas angostas (≤ 760 px, y tablets en vertical hasta 1100 px; `js/mobile.js`) la escena 3D queda arriba y abajo hay dos pestañas: **Pasajero**
 (diálogo, preguntas y documentos) y **Sistema** (DCS y botones de decisión). Cuando llega un pasajero se pasa sola a
 *Pasajero*; si el sistema avisa algo mientras mirás la otra, aparece un punto rojo en *Sistema*. Tocar la pantalla no
-gira la cámara. Conviene jugar con el celu vertical.
+gira la cámara. Con el celu acostado aparece un aviso para girarlo.
 
 ## Menús
 
@@ -73,8 +76,10 @@ ese código. Los mostradores vacíos (o de alguien que se desconecta) los atiend
 rápidos predefinidos (sin chat libre) y al final cada uno ve el resultado de los demás.
 
 Funciona sin servidor propio: los navegadores se conectan directamente (WebRTC, librería PeerJS desde
-CDN, con su servidor público gratuito para encontrarse). Requiere internet. Algunas redes muy
-restrictivas pueden bloquear la conexión directa; en ese caso habría que sumar un servidor TURN.
+CDN, con su servidor público gratuito para encontrarse). Requiere internet. Para las redes que bloquean la
+conexión directa se usa un relé público (TURN de Open Relay); si igual no conecta en 15 s, se avisa que pruebe con
+otra red o con los datos del celu. **Imprevistos en la sala**: si el anfitrión los activa, él decide cuál y en qué
+vuelo, y se lo pasa a los demás; cada uno lo vive al llamar a su próximo pasajero (el corte de luz no se usa en salas).
 
 ## Imprevistos (Práctica libre)
 
@@ -97,12 +102,18 @@ En medio del turno pueden pasar cosas, y se ven en el hall (no son sólo pregunt
 - **Egresados a Bariloche** (cabotaje): grupo con camperas iguales, bandera y cantos. Cada uno presenta su
   documento original (no fotocopias), la denuncia policial por extravío sirve en cabotaje y la
   pirotecnia no viaja ni en bodega ni en cabina.
+- **Corte de luz**: la terminal queda a oscuras (luces de emergencia). Calma e información a la fila, las valijas ya
+  aceptadas quedan a la vista y bajo control con la cinta parada, y como SITA no levanta, los próximos pasajeros se
+  atienden en manual con el kit de contingencia.
+- **Cambio de aeronave**: el vuelo sale con un avión más chico (otro plano y menos asientos). Reubicar y reimprimir
+  tarjetas (familias, PMR, salidas de emergencia), voluntarios antes de denegar, y al que pagó un asiento que ya no
+  existe: uno equivalente o el reintegro de ese cargo.
 
 Uno por turno (dos en avanzado), elegido entre los que sean posibles con los vuelos abiertos en ese momento. Se pueden desactivar en la pantalla de Práctica libre.
 
 ## Turno del día y presentismo
 
-- **Turno del día**: el mismo turno para toda la clase cada día real (vuelos, ocupación, casos y pasajeros salen de la
+- **Turno del día**: el mismo turno para todos los jugadores cada día real (vuelos, ocupación, casos y pasajeros salen de la
   fecha como semilla; `js/daily.js`). Counter solo, contra reloj, sin imprevistos; el nivel cambia según el día de la
   semana. **Vale el primer intento**: con cuenta en la nube va al ranking (`daily/{fecha}/scores/{uid}` en Firestore;
   las reglas sólo dejan crear el propio puntaje una vez). Se puede repetir para practicar, sin contar.
@@ -120,6 +131,10 @@ Se habilita al terminar el Día 4. Turnos sin fin con rango, XP, hitos y plata:
 - **Compras**: moto, auto, curso de idiomas (+$600 por pasajero extranjero), zapatillas (la fila se impacienta menos),
   cafetera (chau gasto de café de la máquina) y decoración del mostrador (mate, planta, foto) que se ve en 3D.
 - Si cerrás el mes en rojo, la deuda cobra 8 % de interés; si supera un mes de gastos, te mudás a la pieza.
+- **Puerta de embarque**: todos los miércoles y, en las semanas pares, también el viernes.
+- **Aguinaldo** en los meses 6 y 12 (la mitad del mejor sueldo del semestre). **Cada 4 meses**, ajuste: el alquiler
+  sube 10 % y el jornal 7 % (paritaria). **Imprevistos de la vida** en el recibo (dentista, celular roto, multa si tenés
+  auto o moto, regalo de cumpleaños, venta de cosas que no usás...).
 
 ## Modos de juego
 
@@ -204,7 +219,9 @@ fuego se juegan sólo en vuelos de cabotaje.
 
 **Condiciones legales**: detenido o extraditado (DEPA: 24 h de reserva, 2 escoltas de una fuerza
 reconocida, uno del mismo sexo si es mujer, uno por vuelo, última fila; en la puerta embarca primero
-y esposado), deportado con escolta y deportado sin escolta (DEPU).
+y esposado), deportado con escolta y deportado sin escolta (DEPU). En la puerta, **INAD** que vuelve a su país
+con el acta de Migraciones: se embarca con prioridad; si no tiene asiento (vuelo sobrevendido), se aparta, se
+consigue un voluntario y se le reasigna el asiento liberado.
 
 > Las reglas documentarias están simplificadas con fines didácticos. Verificar y ajustar
 > `js/data.js` según la normativa vigente y los procedimientos de la compañía.

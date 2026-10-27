@@ -488,7 +488,7 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
    CELULAR (≤ 760 px): escena arriba, pestañas Pasajero / Sistema abajo
    ===================================================================== */
 #mobTabs { display: none; }
-@media screen and (max-width: 760px) {
+@media screen and (max-width: 760px), screen and (max-width: 1100px) and (orientation: portrait) {
   html, body { overscroll-behavior: none; }
   #app { height: 100dvh; min-height: 0; overflow: hidden; }
   /* Barra superior compacta: sólo hora, pasajero y puntaje; botones con ícono */
@@ -546,7 +546,7 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
   .kpis { grid-template-columns: repeat(2, 1fr); }
   .row.end { flex-wrap: wrap; }
 }
-@media screen and (max-width: 760px) {
+@media screen and (max-width: 760px), screen and (max-width: 1100px) and (orientation: portrait) {
   /* Paneles del sistema más compactos (sobre todo en la puerta, que tiene más cosas) */
   #dcs .dcsHead { font-size: 10px; padding: 5px 10px; gap: 8px; }
   #dcs .timeline { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 4px 6px; gap: 4px; }
@@ -556,7 +556,7 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
   #dcs .decide .btn i { font-size: 15px; }
   #dcs .tabs button { padding: 7px 9px; font-size: 12px; }
 }
-@media screen and (max-width: 760px) {
+@media screen and (max-width: 760px), screen and (max-width: 1100px) and (orientation: portrait) {
   /* Encabezado azul de las ventanas: acompaña el margen más chico del celu */
   .modalBox > div:first-child > h1:first-child, .modalBox > h2:first-child { margin: -14px -14px 12px; padding: 10px 14px 9px; font-size: 18px; }
   .modalBox h1 { font-size: 18px; }
@@ -573,12 +573,12 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
   .setRow select { flex: 1 1 100%; }
   .setRow input[type=range] { width: auto; flex: 1; min-width: 90px; }
 }
-@media screen and (max-width: 760px) {
+@media screen and (max-width: 760px), screen and (max-width: 1100px) and (orientation: portrait) {
   .pgBody { font-size: 13.5px; line-height: 1.45; }
   .pgBody .tip { font-size: 12.5px; padding: 6px 10px; }
   .cfmBox { width: calc(100% - 24px); }
 }
-@media screen and (max-width: 760px) {
+@media screen and (max-width: 760px), screen and (max-width: 1100px) and (orientation: portrait) {
   /* La página no se arrastra ni "rebota" (iPhone): sólo se desliza el contenido de cada panel o ventana */
   html, body { overflow: hidden; height: 100%; }
   body { position: fixed; inset: 0; width: 100%; }
@@ -588,7 +588,7 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
   .modalBox table { touch-action: pan-x pan-y; }
   #desk, #dcs .pane { overscroll-behavior: contain; }
 }
-@media screen and (max-width: 760px) {
+@media screen and (max-width: 760px), screen and (max-width: 1100px) and (orientation: portrait) {
   /* El iPhone agranda la pantalla al tocar un campo con letra de menos de 16 px: en el celu, todos a 16 */
   input:not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea { font-size: 16px !important; }
 }
@@ -606,7 +606,7 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
   .report tr, .report li, .kpis > div { break-inside: avoid; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
-@media screen and (max-width: 760px) {
+@media screen and (max-width: 760px), screen and (max-width: 1100px) and (orientation: portrait) {
   /* Panel "Pasajero": los documentos arriba, en una tira compacta que siempre se ve;
      el diálogo abajo, con el texto largo del pasajero deslizándose dentro de su globo */
   #desk .deskTitle { order: 0; margin: 0; font-size: 12px; }
@@ -617,4 +617,15 @@ body.modalUp #btnPause { opacity: .45; cursor: not-allowed; }
   #desk #dialog { order: 2; }
   #desk .bubble { max-height: 7.2em; overflow-y: auto; overscroll-behavior: contain; }
   #desk .agentLine { max-height: 3em; overflow-y: auto; font-size: 12px; }
+}
+
+/* Celu acostado: la pantalla queda muy baja para jugar; se pide girarlo */
+#rotateHint { display: none; }
+@media screen and (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  #rotateHint { display: flex; position: fixed; inset: 0; z-index: 200; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    background: radial-gradient(circle at 70% 30%, #2f6fd1, #1a4a96 50%, #0e2c62); color: #fff; text-align: center; padding: 20px; font-family: var(--display); }
+  #rotateHint i { font-size: 64px; animation: rot 2.2s ease-in-out infinite; }
+  #rotateHint b { font-size: 24px; }
+  #rotateHint span { font-family: var(--font); font-size: 15px; color: #dbe7ff; max-width: 420px; }
+  @keyframes rot { 0%, 30% { transform: rotate(-90deg); } 60%, 100% { transform: rotate(0deg); } }
 }

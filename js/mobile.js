@@ -2,7 +2,8 @@
 // "Pasajero" (diálogo, preguntas y documentos) y "Sistema" (DCS y botones de decisión).
 // En la compu no cambia nada: el diálogo vuelve a flotar sobre la escena.
 const $ = (s) => document.querySelector(s);
-const mq = window.matchMedia('(max-width: 760px)');
+// Celu, y también tablet en vertical (mismo criterio que el CSS)
+const mq = window.matchMedia('(max-width: 760px), (max-width: 1100px) and (orientation: portrait)');
 let tab = 'pax';
 
 function apply() {
