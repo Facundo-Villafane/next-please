@@ -64,7 +64,7 @@ function setLook() {
 function goDown(onReady) {
   api.sys('*** SITA FUERA DE SERVICIO · SIN CONEXIÓN ***', 'err');
   api.openModal(`<div class="story"><div class="who">${api.marta(70)}<b>Viviana</b></div>
-    <div class="says"><p>📵 <b>Se cayó SITA en todo el aeropuerto.</b> Otra vez. No hay sistema, ni impresoras, ni APIS. Y no, no nos vamos a casa: seguimos en <b>manual</b>, como en los noventa.</p>
+    <div class="says"><p>${G.outage?.cause === 'power' ? '📵 <b>Volvió la luz, pero SITA no levanta.</b> Típico: el corte se lo llevó puesto. No hay sistema, ni impresoras, ni APIS.' : '📵 <b>Se cayó SITA en todo el aeropuerto.</b> Otra vez. No hay sistema, ni impresoras, ni APIS.'} Y no, no nos vamos a casa: seguimos en <b>manual</b>, como en los noventa.</p>
     <p>Armá el <b>kit de contingencia</b>: elegí lo que necesitás para atender sin sistema. Y no me traigas la abrochadora sola.</p></div></div>
     <div class="kit">${shuffle(KIT).map((x) => `<label><input type="checkbox" value="${x.k}"> ${esc(x.label)}</label>`).join('')}</div>
     <div class="row end"><button class="btn ok" id="kitGo">Listo, a atender ▶</button></div>`, 'wide');

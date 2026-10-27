@@ -230,7 +230,7 @@ function dayEnd({ type, results, gate }) {
   give('promo1', r1 > 0);
   give('rank_max', r1 === RANKS.length - 1);
   give('million', c.earned >= 1000000);
-  give('all_events', ['unattended', 'cancel', 'delay', 'celebrity', 'promo'].every((k) => st.events[k]));
+  give('all_events', ['unattended', 'cancel', 'delay', 'celebrity', 'promo', 'power', 'equip'].every((k) => st.events[k]));
   // Viernes: cierre de la semana; la semana 4 cierra el mes y se cobra
   let week = null, month = null;
   if (c.day === 5) {

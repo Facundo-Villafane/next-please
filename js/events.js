@@ -50,6 +50,9 @@ const RUNNERS = {
   delay: { ok: () => !!delayTarget(), run: () => runDelay() },
   celebrity: { ok: () => !!intlOpen().length, run: () => runCelebrity() },
   promo: { ok: () => !!promoFlight(), run: () => runPromo() },
+  // El corte de luz pasa a atención manual: no en salas, ni si ya hay una caída del sistema planeada
+  power: { ok: () => !G.outage && !G.online && G.pax.length - G.idx > 5 && !!api.manualAhead, run: () => runPower() },
+  equip: { ok: () => !!equipTarget(), run: () => runEquip() },
 };
 
 // Sala online: el anfitrión decide el imprevisto (y el vuelo) y se lo pasa a los demás, así todo el hall
@@ -59,6 +62,7 @@ function forceDetails(kind) {
   if (kind === 'cancel') { const t = cancelTarget(); return t ? { flight: t.f.no } : null; }
   if (kind === 'delay') { const f = delayTarget(); return f ? { flight: f.no, mins: pick([150, 165, 180, 195]) } : null; }
   if (kind === 'celebrity') { const f = pick(intlOpen()); return f ? { flight: f.no, celeb: rnd(0, CELEBS.length - 1) } : null; }
+  if (kind === 'equip') { const f = equipTarget(); return f ? { flight: f.no, swap: rnd(0, SWAPS.length - 1) } : null; }
   return {};
 }
 
@@ -814,6 +818,120 @@ async function runPromo() {
   sc.scene.remove(flag);
   leave([coord, ...kids], 1);
   await wait(3000);
+}
+
+// ------------------------------------------------------------------
+// 6) CORTE DE LUZ EN LA TERMINAL
+// Se apaga todo (luces, cintas, pantallas). La energía de emergencia vuelve enseguida, pero SITA no
+// levanta: se sigue en manual con el kit de contingencia (el mismo procedimiento de "sistema caído").
+// ------------------------------------------------------------------
+async function runPower() {
+  const lights = [];
+  sc.scene.traverse((o) => { if (o.isLight) lights.push([o, o.intensity]); });
+  const env = sc.scene.environmentIntensity, bg = sc.scene.background?.clone?.();
+  const dim = (k) => { lights.forEach(([l, i]) => { l.intensity = i * k; }); sc.scene.environmentIntensity = env * k; if (bg) sc.scene.background.copy(bg).multiplyScalar(Math.max(0.15, k)); };
+  dim(0.12);
+  sfx('err');
+  card('⚡', 'Corte de luz en la terminal', 'Imprevisto', 'Se apagó todo: luces, cintas de equipaje, pantallas y el sistema. Quedan encendidas las luces de emergencia y las balizas de salida. En la fila, cuarenta linternas de celular apuntando a tu cara.');
+  sc.setQueueMood?.(1);
+  talk(pick(['—¡Uh, se cortó la luz! ¿Y ahora? ¿Salimos igual?', '—¿Esto es parte del show? Porque no me está gustando.', '—¡Che, yo tengo el vuelo en una hora!']), 5000);
+  await wait(2500);
+  const errors = await quiz('power', [
+    {
+      q: '¿Qué hacés primero?', title: 'Corte de luz: la fila',
+      opts: [
+        { t: 'Mantengo la calma, informo a la fila que es un corte general y que la atención sigue apenas se pueda', ok: true },
+        { t: 'Cierro el mostrador hasta que vuelva la luz', ok: false },
+        { t: 'Sigo aceptando pasajeros "de memoria", sin sistema ni papeles', ok: false },
+      ],
+      why: 'Ante una contingencia, primero la información y la calma: qué pasa y qué se va a hacer. Cerrar el mostrador o atender sin ningún registro deja a la gente sin respuesta o al vuelo sin control.',
+    },
+    {
+      card: ['🧳', 'La cinta está parada', 'Hay valijas ya etiquetadas al costado del mostrador', ''],
+      q: '¿Qué pasa con las valijas que ya etiquetaste?', title: 'Corte de luz: equipaje',
+      opts: [
+        { t: 'Quedan junto al mostrador, a la vista y bajo control, hasta que vuelva la cinta o las retire el personal de rampa', ok: true },
+        { t: 'Se las devuelvo a los pasajeros para que las lleven en la mano', ok: false },
+        { t: 'Las dejo en el pasillo para que no estorben', ok: false },
+      ],
+      why: 'Un equipaje ya aceptado nunca queda sin custodia ni vuelve a manos del pasajero: si la cinta no anda, se resguarda a la vista hasta que se pueda despachar.',
+    },
+    {
+      card: ['🔋', 'Vuelve la energía de emergencia', 'Hay luz, pero SITA no levanta', ''],
+      q: 'Los vuelos siguen saliendo. ¿Cómo seguís?', title: 'Corte de luz: atención',
+      opts: [
+        { t: 'Paso a atención manual con el kit de contingencia y después cargo todo en el sistema', ok: true },
+        { t: 'Espero a que vuelva el sistema, aunque cierren los vuelos', ok: false },
+        { t: 'Le digo a la fila que vuelvan mañana', ok: false },
+      ],
+      why: 'Sin sistema, la operación sigue en manual: lista impresa, planilla API, bag tags y boarding pass manuales. Cuando vuelve, se cargan los pasajeros atendidos antes del cierre.',
+    },
+  ]);
+  // Vuelve la luz (generadores); el sistema sigue caído para los próximos pasajeros
+  dim(0.6); await wait(600); dim(1);
+  sc.setQueueMood?.(0);
+  if (errors >= 2) {
+    caption('😬', 'La fila se impacientó', 'Con poca información y la cinta parada, la paciencia se fue con la luz.');
+    if (G.patience != null) G.patience = Math.max(0, G.patience - 25);
+  } else caption('💡', 'Contingencia bien manejada', 'Volvió la luz. El sistema todavía no: los próximos pasajeros los atendés en manual.');
+  api.manualAhead?.();
+  await wait(4500);
+}
+
+// ------------------------------------------------------------------
+// 7) CAMBIO DE AERONAVE
+// El vuelo pasa a un avión más chico: cambia el plano de asientos y quedan pasajeros de más.
+// ------------------------------------------------------------------
+const SWAPS = [['Airbus A330', 'Boeing 767', 34], ['Boeing 787', 'Airbus A330', 28], ['Airbus A321', 'Boeing 737', 26]];
+function equipTarget() {
+  if (E.force?.flight) return G.flights.find((x) => x.no === E.force.flight && !x.equip && openNow(x, 20)) || null;
+  const c = G.flights.filter((f) => !f.equip && !f.cancelled && openNow(f, 30));
+  return c.length ? pick(c) : null;
+}
+async function runEquip() {
+  const f = equipTarget();
+  const [from, to, less] = SWAPS[E.force?.swap ?? rnd(0, SWAPS.length - 1)];
+  f.equip = to;
+  api.boardUpdate();
+  card('🛫', `${f.no} a ${f.city}: cambio de aeronave`, 'Imprevisto · IROPS', `Mantenimiento deja en tierra el ${from} del ${f.no}. Sale igual, en horario, pero con un <b>${to}</b>: <b>${less} asientos menos</b> y otro plano de cabina. El sistema reubicó a los que ya hicieron el check-in.`);
+  sc.setQueueMood?.(1);
+  talk(pick(['—¿Cambió el avión? ¿Y mi ventanilla?', '—Mientras vuele, que sea un monopatín si quieren.', '—¿Más chico? ¿Entramos todos?']), 5000);
+  await wait(2500);
+  await quiz('equip', [
+    {
+      q: '¿Qué pasa con los pasajeros que ya tienen tarjeta de embarque?', title: 'Cambio de aeronave: asientos',
+      opts: [
+        { t: 'Quedan reubicados en el plano nuevo: se reimprimen sus tarjetas, cuidando familias juntas, PMR y salidas de emergencia', ok: true },
+        { t: 'Siguen con la tarjeta vieja: el número de asiento es parecido', ok: false },
+        { t: 'Se les anula el check-in y vuelven a hacer la fila', ok: false },
+      ],
+      why: 'Con otro plano de cabina, las tarjetas viejas no sirven: se reubica a los pasajeros y se reimprimen las tarjetas (en el counter o en la puerta), respetando a quienes deben ir juntos y los requisitos de las salidas de emergencia.',
+    },
+    {
+      card: ['👥', 'Quedan pasajeros de más', `Con ${less} asientos menos, el ${f.no} queda sobrevendido`, ''],
+      q: '¿Cómo empezás a resolverlo?', title: 'Cambio de aeronave: sobreventa',
+      opts: [
+        { t: 'Busco voluntarios (VDBC) con su compensación antes de negarle el embarque a nadie', ok: true },
+        { t: 'Dejo afuera a los últimos que se presenten, sin preguntar', ok: false },
+        { t: 'Acepto a todos y que lo resuelvan en la puerta', ok: false },
+      ],
+      why: 'Igual que en una sobreventa: primero voluntarios con compensación y protección. Recién si no alcanzan, se deniega el embarque (DNBD) con los derechos que correspondan.',
+    },
+    {
+      card: ['💺', 'Asiento pagado', 'Había comprado un asiento de pasillo adelante', ''],
+      say: '—Yo pagué por un asiento de pasillo adelante, ¡y ahora me mandan a la fila 34 en el medio!',
+      q: '¿Qué le ofrecés?', title: 'Cambio de aeronave: asiento pagado',
+      opts: [
+        { t: 'El mejor asiento equivalente disponible y, si no lo hay, el reintegro del cargo por selección de asiento', ok: true },
+        { t: 'Nada: es un cambio operativo', ok: false },
+        { t: 'Lo paso a business gratis para que no se queje', ok: false },
+      ],
+      why: 'Si la compañía no puede darle el servicio que pagó (el asiento elegido), le ofrece uno equivalente o le reintegra ese cargo. Un ascenso de clase no es la respuesta estándar.',
+    },
+  ]);
+  sc.setQueueMood?.(0);
+  caption('🛫', 'Cambio de aeronave gestionado', `El ${f.no} sale en un ${to}. Algunos protestan por la ventanilla, pero todos saben qué pasa.`);
+  await wait(4500);
 }
 
 // Resumen para el informe del turno

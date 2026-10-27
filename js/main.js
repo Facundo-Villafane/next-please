@@ -1052,6 +1052,8 @@ function showManual(after) {
         <p><b>Equipaje desatendido:</b> no se toca, no se mueve ni se abre. Quien lo detecta da aviso a la PSA. La PSA ordena evacuar el sector, lo acordona con tensabarriers y espera a la brigada de explosivos. Hasta que se habilita el sector, nadie atiende.</p>
         <p><b>Cancelación (Res. ANAC 1532/98):</b> informar con claridad; protección en el primer vuelo disponible o reembolso; sin cargo, comunicación y comidas o refrigerios acordes a la espera, y hotel y traslados si hay que pernoctar. Una falla técnica no exime de la asistencia.</p>
         <p><b>Demora:</b> informar la nueva hora estimada, asistencia según la espera, y proteger desde el origen a quien pierde una conexión.</p>
+        <p><b>Corte de luz:</b> calma e información a la fila; las valijas ya aceptadas quedan a la vista y bajo control hasta que vuelva la cinta; si el sistema no levanta, atención manual con el kit de contingencia.</p>
+        <p><b>Cambio de aeronave:</b> se reubica a los pasajeros en el plano nuevo y se reimprimen sus tarjetas (familias juntas, PMR, salidas de emergencia). Si quedan pasajeros de más, primero voluntarios. A quien pagó un asiento que ya no existe: uno equivalente o el reintegro de ese cargo.</p>
         <div class="tip">La prioridad en la fila la dan la tarifa, la clase o una condición (PMR, cierre próximo), nunca la fama. Y los datos de los pasajeros son confidenciales.</div>`),
       ch('check-decagram', 'La decisión', `
         <p><span class="tag green">Aceptar</span> emite la tarjeta de embarque.</p>
@@ -1123,7 +1125,12 @@ $('#btnPause').onclick = () => {
 initMobile();
 initQueue(G, scene, { openModal, closeModal, modalOpen });
 initTeam(G, scene);
-const EV_API = { boardUpdate: () => { scene.updateBoard(boardFlights(), G.now); if (G.tab === 'ident') renderPane(); }, roomEmit: null };
+const EV_API = {
+  boardUpdate: () => { scene.updateBoard(boardFlights(), G.now); if (G.tab === 'ident') renderPane(); },
+  roomEmit: null,
+  // Corte de luz: el sistema no levanta y los próximos pasajeros se atienden en manual
+  manualAhead: () => { planOutage({ outage: { afterPax: G.idx + 1, duration: 3 } }); if (G.outage) G.outage.cause = 'power'; },
+};
 initEvents(G, scene, EV_API);
 initOutage(G, { openModal, closeModal, sys, renderPane, renderTabs, marta: (w) => faceSVG(MARTA, { w, h: Math.round(w * 1.25), bg: '#dce7f0' }) });
 initCareer({

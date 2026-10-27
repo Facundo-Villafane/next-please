@@ -147,7 +147,7 @@ export const MILESTONES = [
   { k: 'promo1', icon: 'arrow-up-bold-circle', name: 'Primer ascenso', desc: 'Subiste de rango.' },
   { k: 'rank_max', icon: 'crown', name: 'Supervisor/a', desc: 'Llegaste al rango máximo. Viviana tiembla.' },
   { k: 'million', icon: 'bank', name: 'Millonario/a', desc: 'Ganaste $ 1.000.000 en total.' },
-  { k: 'all_events', icon: 'alert-decagram', name: 'Lo vi todo', desc: 'Viviste los cinco imprevistos.' },
+  { k: 'all_events', icon: 'alert-decagram', name: 'Lo vi todo', desc: 'Viviste los siete imprevistos.' },
   { k: 'in_debt', icon: 'emoticon-cry-outline', name: 'Vivo en cuotas', desc: 'Cerraste un mes con los ahorros en negativo.' },
   { k: 'saver', icon: 'piggy-bank', name: 'Ahorrista', desc: 'Juntaste $ 1.000.000 de ahorros.' },
   { k: 'first_car', icon: 'car-side', name: 'Primer auto', desc: 'Te compraste un auto. Chau colectivo.' },
