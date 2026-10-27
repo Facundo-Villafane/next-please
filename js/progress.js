@@ -274,7 +274,7 @@ export function lifeOf(c) { return { ...DEFAULT_LIFE, ...(c.life || {}) }; }
 export function monthExpenses(c) {
   const L = lifeOf(c), owned = c.owned || {};
   const lines = [
-    { label: `Alquiler · ${LIFE.home.options[L.home].name}`, amount: -LIFE.home.options[L.home].cost },
+    { label: `Alquiler · ${LIFE.home.options[L.home].name}${(c.rentAdj || 1) > 1 ? ' (con ajustes)' : ''}`, amount: -Math.round((LIFE.home.options[L.home].cost * (c.rentAdj || 1)) / 1000) * 1000 },
     { label: `Transporte · ${LIFE.transport.options[L.transport].name}`, amount: -LIFE.transport.options[L.transport].cost },
     { label: `Comida · ${LIFE.food.options[L.food].name}`, amount: -LIFE.food.options[L.food].cost },
     { label: 'Servicios (luz, gas, internet, celular)', amount: -SERVICES },
@@ -317,4 +317,31 @@ export function presence() {
   if (!pr) return { streak: 0, today: false, best: 0 };
   const today = pr.last === dateKey(), alive = today || pr.last === dateKey(Date.now() - 864e5);
   return { streak: alive ? pr.streak : 0, today, best: pr.best };
+}
+
+// ------------------------------------------------------------------
+// Carrera: ajustes cada 4 meses (alquiler y paritaria), aguinaldo e imprevistos de la vida
+// ------------------------------------------------------------------
+export const ADJUST_EVERY = 4;     // meses entre ajustes
+export const RENT_ADJ = 1.10;      // el alquiler sube un 10 %
+export const PAY_ADJ = 1.07;       // el jornal sube un 7 % (paritaria)
+export const payOf = (rank, c) => Math.round((rank.pay * (c.payAdj || 1)) / 100) * 100;
+
+// Algo que pasa en el mes (o nada). Lo que depende de cómo vivís, sólo si aplica.
+export function lifeEvent(c) {
+  if (Math.random() < 0.35) return null;
+  const L = lifeOf(c);
+  const motor = L.transport === 'auto' || L.transport === 'moto';
+  const pool = [
+    { label: 'Dentista: una muela que venía avisando', amount: -45000 },
+    { label: 'Se te rompió el celular (pantalla nueva)', amount: -120000 },
+    { label: 'Regalo de cumpleaños de tu tía', amount: 15000 },
+    { label: 'Vendiste ropa y cosas que no usabas', amount: 30000 },
+    { label: 'Casamiento de un compañero de trabajo (el regalo)', amount: -25000 },
+    { label: 'Te devolvieron una plata que habías prestado (¡milagro!)', amount: 40000 },
+    { label: 'Veterinaria del gato de tu familia', amount: -35000 },
+    ...(motor ? [{ label: `Multa de tránsito (${L.transport === 'auto' ? 'estacionaste mal' : 'sin casco por dos cuadras'})`, amount: -60000 }, { label: `Service del ${L.transport === 'auto' ? 'auto' : 'la moto'}`, amount: -70000 }] : []),
+    ...(L.home === 'casa' ? [{ label: 'Se rompió el calefón', amount: -90000 }] : []),
+  ];
+  return pool[Math.floor(Math.random() * pool.length)];
 }

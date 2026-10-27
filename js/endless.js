@@ -9,11 +9,12 @@ import { getPlayer, gtxt, playerFace } from './player.js';
 import { esc, pick, chance, rnd, fmtAgo, dateKey } from './util.js';
 import { sfx } from './sound.js';
 import { shareBtnHTML, bindShare } from './share.js';
-import { load, save, weightFn, randomShift, RANKS, rankOf, settleCounter, settleGate, xpOf, fmtMoney, MILESTONES, topicStats, WEEKS_PER_MONTH, LIFE, SHOP, MOVE_COST, lifeOf, monthExpenses, commuteRoll, markPresence, PRESENCE_BONUS, presence } from './progress.js';
+import { load, save, weightFn, randomShift, RANKS, rankOf, settleCounter, settleGate, xpOf, fmtMoney, MILESTONES, topicStats, WEEKS_PER_MONTH, LIFE, SHOP, MOVE_COST, lifeOf, monthExpenses, commuteRoll, markPresence, PRESENCE_BONUS, presence, payOf, lifeEvent, ADJUST_EVERY, RENT_ADJ, PAY_ADJ } from './progress.js';
 
 const $ = (s) => document.querySelector(s);
 const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-const GATE_DAY = 3; // los miércoles toca la puerta de embarque
+// Puerta de embarque: todos los miércoles y, en las semanas pares, también el viernes
+const isGateDay = (day, week) => day === 3 || (day === 5 && week % 2 === 0);
 let api;
 
 export function initEndless(a) { api = a; }
@@ -47,7 +48,7 @@ export function showCareerHub() {
   const p = load(), c = ensure(p.career);
   const r = rankOf(c.xp), R = RANKS[r];
   const weekNet = c.weekLedger.reduce((s, d) => s + d.net, 0);
-  const isGate = c.day === GATE_DAY;
+  const isGate = isGateDay(c.day, c.week);
   api.openModal(`<div class="home career">
     <h1>💼 Carrera en Aeroplata</h1>
     <div class="rankCard">${rankTile(r, true)}<div><small>Tu rango</small><b>${esc(gtxt(R.name))}</b>${xpBar(c.xp)}</div>
@@ -55,10 +56,10 @@ export function showCareerHub() {
     ${presenceHTML()}
     <div class="weekRow">${DAYS.map((d, i) => {
       const done = c.weekLedger.find((x) => x.day === i + 1);
-      return `<div class="wd ${i + 1 === c.day ? 'today' : ''} ${done ? 'done' : ''}"><small>${d}</small><i class="mdi mdi-${i + 1 === GATE_DAY ? 'airplane-takeoff' : 'account-tie-voice'}"></i><b>${done ? fmtMoney(done.net) : i + 1 === c.day ? 'Hoy' : '—'}</b></div>`;
+      return `<div class="wd ${i + 1 === c.day ? 'today' : ''} ${done ? 'done' : ''}"><small>${d}</small><i class="mdi mdi-${isGateDay(i + 1, c.week) ? 'airplane-takeoff' : 'account-tie-voice'}"></i><b>${done ? fmtMoney(done.net) : i + 1 === c.day ? 'Hoy' : '—'}</b></div>`;
     }).join('')}</div>
     <p class="hint">Mes ${monthOf(c)} · semana ${weekInMonth(c)} de ${WEEKS_PER_MONTH} · esta semana llevás ${fmtMoney(weekNet)}. El sueldo se cobra al terminar la semana ${WEEKS_PER_MONTH}, con los gastos del mes (≈ ${fmtMoney(expensesTotal(c))}).
-      Hoy: <b>${DAYS[c.day - 1]}</b>, ${isGate ? 'te toca la <b>puerta de embarque</b>' : `<b>counter</b> con ${R.pax} pasajeros y ${R.flights} vuelos`}. Jornal: ${fmtMoney(R.pay)}.</p>
+      Hoy: <b>${DAYS[c.day - 1]}</b>, ${isGate ? 'te toca la <b>puerta de embarque</b>' : `<b>counter</b> con ${R.pax} pasajeros y ${R.flights} vuelos`}. Jornal: ${fmtMoney(payOf(R, c))}.</p>
     <div class="row end gap wrap">
       <button class="btn ghost" id="cBack">← Volver</button>
       <button class="btn" id="cLife"><i class="mdi mdi-home-heart"></i> Mi vida y compras</button>
@@ -167,9 +168,9 @@ function startDay() {
   if (roll.incident) today.extra.push({ label: `Imprevisto del viaje: ${roll.incident[0]}`, amount: -roll.incident[1] });
   const notes = [roll.forgot ? '¿Y la vianda? ¿Otra vez en la heladera? Hoy comés tostado de aeropuerto, a precio de oro.' : '', roll.incident ? `${roll.incident[0]}. Qué día empezaste, eh.` : ''].filter(Boolean).join(' ');
   const opener = (roll.late ? pick(LATE_LINES) : pick(START_LINES)) + (notes ? ` ${notes}` : '');
-  if (c.day === GATE_DAY) {
+  if (isGateDay(c.day, c.week)) {
     const fl = pick(FLIGHTS.filter((f) => f.country !== 'AR'));
-    api.storyLine(viv(`${opener} Hoy es miércoles: <b>puerta de embarque</b>, el ${fl.no} a ${fl.city}. Embarque en orden, nadie sin escanear, y cerrame el vuelo a horario.`), () => {
+    api.storyLine(viv(`${opener} Hoy te toca la <b>puerta de embarque</b>, el ${fl.no} a ${fl.city}. Embarque en orden, nadie sin escanear, y cerrame el vuelo a horario.`), () => {
       api.startBoarding({ student: name, level: R.level, mode: 'challenge', flightNo: fl.no, onDone: (gate) => dayEnd({ type: 'gate', gate }), saveTag: careerTag(C_GATE, today.extra) });
     });
     return;
@@ -205,7 +206,8 @@ function dayEnd({ type, results, gate }) {
   const evLog = type === 'counter' ? api.eventLog() : [];
   const extra = [...(today?.extra || [])];
   if (c.presencePaid !== dateKey()) { c.presencePaid = dateKey(); extra.push({ label: `Presentismo: ${pres.streak === 1 ? 'viniste hoy' : `${pres.streak} días seguidos`}`, amount: PRESENCE_BONUS(pres.streak) }); }
-  const s = type === 'counter' ? settleCounter(results, evLog, hints, R, extra, c.owned) : settleGate(gate, hints, R, extra);
+  const RP = { ...R, pay: payOf(R, c) }; // jornal con los aumentos de paritaria
+  const s = type === 'counter' ? settleCounter(results, evLog, hints, RP, extra, c.owned) : settleGate(gate, hints, RP, extra);
   const xp = xpOf(s);
   c.xp += xp;
   c.pending += s.net;
@@ -246,15 +248,15 @@ function dayEnd({ type, results, gate }) {
   } else c.day++;
   save(p);
 
-  const comment = s.net >= R.pay * 1.5 ? 'Mirá vos. Hoy hasta me caíste bien. No se lo cuentes a nadie.'
-    : s.net >= R.pay ? 'Correcto. Nada para festejar, nada para llorar. Como mi sueldo.'
+  const comment = s.net >= RP.pay * 1.5 ? 'Mirá vos. Hoy hasta me caíste bien. No se lo cuentes a nadie.'
+    : s.net >= RP.pay ? 'Correcto. Nada para festejar, nada para llorar. Como mi sueldo.'
       : s.net > 0 ? 'Ganaste algo. Poco. Como todos acá. Mañana prestá más atención.'
         : 'Hoy le debés plata a la empresa. Bienvenido/a al club: yo le debo la juventud.';
   const dayName = DAYS[(week ? 5 : c.day - 1) - 1].toLowerCase();
   sfx(r1 > r0 ? 'levelUp' : 'cash');
   api.openModal(`<div class="home career dayPay">
     <h1>🧾 Liquidación del ${dayName} · ${type === 'gate' ? 'Puerta de embarque' : 'Counter'}</h1>
-    ${r1 > r0 ? `<div class="promo">${rankTile(r1, true)}<div><small>¡Ascenso!</small><b>${esc(gtxt(RANKS[r1].name))}</b><p>Nuevo jornal: ${fmtMoney(RANKS[r1].pay)}. Más pasajeros, más vuelos y casos más difíciles.</p></div></div>` : ''}
+    ${r1 > r0 ? `<div class="promo">${rankTile(r1, true)}<div><small>¡Ascenso!</small><b>${esc(gtxt(RANKS[r1].name))}</b><p>Nuevo jornal: ${fmtMoney(payOf(RANKS[r1], c))}. Más pasajeros, más vuelos y casos más difíciles.</p></div></div>` : ''}
     <table class="grid pay">${s.lines.map((l) => `<tr><td>${esc(l.label)}${l.n != null ? ` <small>×${l.n}</small>` : ''}</td><td class="num ${l.amount < 0 ? 'neg' : 'pos'}">${fmtMoney(l.amount)}</td></tr>`).join('')}
       <tr class="tot"><td>Neto del día (a cobrar a fin de mes)</td><td class="num ${s.net < 0 ? 'neg' : 'pos'}">${fmtMoney(s.net)}</td></tr></table>
     <p class="hint">+${xp} XP · ${s.okPax} de ${s.total} bien resueltos.</p>
@@ -286,7 +288,19 @@ function closeMonth(c, give) {
   const income = c.pending;
   const exp = monthExpenses(c);
   const interest = c.money < 0 ? Math.round(c.money * 0.08) : 0;
-  const net = income + exp.reduce((s, l) => s + l.amount, 0) + interest;
+  const n = monthOf(c);
+  const extras = [];
+  // Aguinaldo (SAC): en los meses 6 y 12, la mitad del mejor sueldo del semestre
+  c.semester = [...(c.semester || []), income];
+  if (n % 6 === 0) {
+    const sac = Math.max(0, Math.round(Math.max(...c.semester) * 0.5));
+    if (sac) extras.push({ label: 'Aguinaldo (la mitad de tu mejor sueldo del semestre)', amount: sac });
+    c.semester = [];
+  }
+  // Algo que pasó en el mes
+  const ev = lifeEvent(c);
+  if (ev) extras.push(ev);
+  const net = income + exp.reduce((s, l) => s + l.amount, 0) + interest + extras.reduce((s, l) => s + l.amount, 0);
   c.money += net;
   const weeks = c.weekTotals.slice();
   c.pending = 0;
@@ -298,10 +312,17 @@ function closeMonth(c, give) {
     c.life.home = 'pieza';
     if (c.life.transport === 'remis') c.life.transport = 'colectivo';
   }
+  // Cada 4 meses: ajuste del alquiler y paritaria (rigen desde el mes que viene)
+  let adjust = null;
+  if (n % ADJUST_EVERY === 0) {
+    c.rentAdj = (c.rentAdj || 1) * RENT_ADJ;
+    c.payAdj = (c.payAdj || 1) * PAY_ADJ;
+    adjust = `Desde el mes que viene: el alquiler sube ${Math.round((RENT_ADJ - 1) * 100)} % (ajuste del contrato) y tu jornal ${Math.round((PAY_ADJ - 1) * 100)} % (paritaria).`;
+  }
   give('first_pay', true);
   give('in_debt', c.money < 0);
   give('saver', c.money >= 1000000);
-  return { n: monthOf(c), weeks, income, exp, interest, net, before, after: c.money, forced };
+  return { n, weeks, income, exp, interest, extras, adjust, net, before, after: c.money, forced };
 }
 
 function showPayslip(m) {
@@ -317,8 +338,10 @@ function showPayslip(m) {
         <tr class="tot"><td>Sueldo del mes</td><td class="num ${m.income < 0 ? 'neg' : 'pos'}">${fmtMoney(m.income)}</td></tr>
         ${m.exp.map((l) => `<tr><td>${esc(l.label)}</td><td class="num neg">${fmtMoney(l.amount)}</td></tr>`).join('')}
         ${m.interest ? `<tr><td>Intereses de la tarjeta (8 % de la deuda)</td><td class="num neg">${fmtMoney(m.interest)}</td></tr>` : ''}
+        ${(m.extras || []).map((l) => `<tr><td>${esc(l.label)}</td><td class="num ${l.amount < 0 ? 'neg' : 'pos'}">${fmtMoney(l.amount)}</td></tr>`).join('')}
         <tr class="tot"><td>Resultado del mes</td><td class="num ${m.net < 0 ? 'neg' : 'pos'}">${fmtMoney(m.net)}</td></tr>
         <tr><td>Ahorros: antes ${fmtMoney(m.before)} → ahora</td><td class="num ${m.after < 0 ? 'neg' : 'pos'}">${fmtMoney(m.after)}</td></tr></table></div>
+    ${m.adjust ? `<p class="hint"><i class="mdi mdi-trending-up"></i> ${esc(m.adjust)}</p>` : ''}
     ${viv(line)}
     <div class="row end"><button class="btn ok big" id="psGo">Seguir ▶</button></div></div>`, 'wide');
   $('#psGo').onclick = backToHub;
