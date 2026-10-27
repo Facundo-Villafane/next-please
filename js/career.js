@@ -10,6 +10,7 @@ import { careerUnlocked, showCareerHub, showProfileStats, careerPending } from '
 import { cloudBadgeHTML, bindBadge, openLogin, cloudReady, cloudUser } from './cloud.js';
 import { renameProgress as renameStats, load, rankOf, RANKS, presence } from './progress.js';
 import { showDaily, dailyDone } from './daily.js';
+import { shareBtnHTML, bindShare } from './share.js';
 
 const $ = (s) => document.querySelector(s);
 let api;
@@ -194,7 +195,7 @@ export function showPlay() {
       <h1><i class="mdi mdi-airplane-takeoff"></i> Jugar</h1>
       <div class="homeGrid">
         <button class="homeCard" id="hStory"><span class="icoTile y"><i class="mdi mdi-airplane-takeoff"></i></span><h2>Modo Historia</h2><p>${gtxt('Sos agente recién ingresado/a. Briefing, counter y puerta de embarque, día a día, con tu supervisora.')}</p>${badge(sp)}</button>
-        <button class="homeCard" id="hDaily"><span class="icoTile r"><i class="mdi mdi-calendar-today"></i></span><h2>Turno del día</h2><p>El mismo turno para toda la clase, cambia cada día. Vale el primer intento y hay ranking.</p>${dailyDone() ? '<span class="tag green"><i class="mdi mdi-check"></i> Hoy ya jugaste</span>' : '<span class="tag amber"><i class="mdi mdi-fire"></i> Pendiente hoy</span>'}</button>
+        <button class="homeCard" id="hDaily"><span class="icoTile r"><i class="mdi mdi-calendar-today"></i></span><h2>Turno del día</h2><p>El mismo turno para todos los jugadores, cambia cada día. Vale el primer intento y hay ranking.</p>${dailyDone() ? '<span class="tag green"><i class="mdi mdi-check"></i> Hoy ya jugaste</span>' : '<span class="tag amber"><i class="mdi mdi-fire"></i> Pendiente hoy</span>'}</button>
         <button class="homeCard" id="hPractice"><span class="icoTile b"><i class="mdi mdi-bullseye-arrow"></i></span><h2>Práctica libre</h2><p>Elegí puesto (counter o puerta), nivel y modo (aprendizaje o desafío contra reloj).</p></button>
         <button class="homeCard" id="hOnline"><span class="icoTile o"><i class="mdi mdi-account-group"></i></span><h2>Jugar en sala</h2><p>Con hasta dos compañeros en línea: cada uno en su mostrador, misma fila y mismos vuelos.</p></button>
         <button class="homeCard ${careerUnlocked() ? '' : 'locked'}" id="hCareer"><span class="icoTile g"><i class="mdi mdi-${careerUnlocked() ? 'briefcase' : 'lock'}"></i></span><h2>Carrera</h2><p>${careerUnlocked() ? 'Días de trabajo sin fin: sueldo, bonos, multas, ascensos e hitos. Cada turno, distinto.' : 'Se habilita al terminar el Día 4 del Modo Historia. Viviana no le da carrera a cualquiera.'}</p>${badge(cp)}</button>
@@ -521,6 +522,7 @@ function endDay(day, ck, gate) {
     2: ['Bien. Hay cosas para pulir, pero los pasajeros llegaron a destino y nadie me llamó a casa. Para mí eso es un éxito.', 'Aceptable. Repasá las observaciones del informe: mañana las quiero sin errores, que yo no estoy para repetir.'],
     1: ['Bueno... sobrevivimos. Más o menos. Sentate que repasamos los errores. Todos. Tenemos tiempo, total yo no tengo vida.', 'Fue un día malo. Yo tuve uno así en 1995 y todavía me acuerdo. Repasá el manual y volvé a intentarlo. Mañana te quiero mejor.'],
   }[stars];
+  const comment = comments[Math.floor(Math.random() * comments.length)];
   const isLast = day.id === 4;
   day.flightObj = FLIGHTS.find((f) => f.no === day.flight);
   const nw = dayNews(day, ck, gate);
@@ -545,7 +547,7 @@ function endDay(day, ck, gate) {
         <div><span>Embarcados</span><b>${gate.boarded}/${gate.checked}</b></div>
       </div>
       <div class="story"><div class="who">${api.faceSVG(MARTA.face, { w: 70, h: 88, bg: '#dce7f0' })}<b>${MARTA.short}</b></div>
-      <div class="says"><p>${esc(comments[Math.floor(Math.random() * comments.length)])}</p>${isLast && stars ? '<p>🎖 Completaste tu primer mes en Aeroplata. Te ganaste el pin de la compañía. Guardalo bien: es lo único que te van a dar.</p><p>🔓 <b>Se habilitó la Carrera</b> en el menú: días de trabajo con sueldo, bonos, multas y ascensos. Ahí no hay tutorial.</p>' : ''}
+      <div class="says"><p>${esc(comment)}</p>${isLast && stars ? '<p>🎖 Completaste tu primer mes en Aeroplata. Te ganaste el pin de la compañía. Guardalo bien: es lo único que te van a dar.</p><p>🔓 <b>Se habilitó la Carrera</b> en el menú: días de trabajo con sueldo, bonos, multas y ascensos. Ahí no hay tutorial.</p>' : ''}
       <p>Antes de irte, mirá <b>qué pasó después</b> con tus pasajeros${nRev ? '. Y repasá los errores: no pienso explicarte lo mismo dos veces' : ''}.</p></div></div>
     </div>
     <div class="etPane hidden" data-pane="news">
@@ -559,7 +561,12 @@ function endDay(day, ck, gate) {
         ${decks.gate.length ? `<button class="btn warn" id="rpGate">🔁 Practicar los casos de la puerta (${decks.gate.length})</button>` : ''}
       </div><p class="hint">Se arman pasajeros nuevos con los mismos casos, en modo aprendizaje y sin afectar tus estrellas.</p>` : ''}
     </div>
-    <div class="row end gap"><button class="btn ok" id="eMenu">Volver al menú</button></div></div>`, 'wide');
+    <div class="row end gap">${shareBtnHTML('eShare')}<button class="btn ok" id="eMenu">Volver al menú</button></div></div>`, 'wide');
+  bindShare('eShare', () => ({
+    title: `Día ${day.id} · ${day.title}`, subtitle: 'Modo Historia', stars,
+    stats: [['Counter', `${ck.ok}/${ck.total}`], ['Puerta', `${gate.ok}/${gate.total}`], ['Errores críticos', crit], ['A bordo', `${gate.boarded}/${gate.checked}`]],
+    line: `${MARTA.short}: ${comment}`,
+  }));
   document.querySelectorAll('[data-et]').forEach((t) => {
     t.onclick = () => {
       document.querySelectorAll('[data-et]').forEach((x) => x.classList.toggle('on', x === t));

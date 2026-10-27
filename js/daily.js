@@ -9,6 +9,7 @@ import { getPlayer, gtxt } from './player.js';
 import { faceSVG } from './docs.js';
 import { SUP } from './supervisor.js';
 import { esc, dateKey, seedRandom } from './util.js';
+import { shareBtnHTML, bindShare } from './share.js';
 
 const $ = (s) => document.querySelector(s);
 const KEY = 'ckDaily';
@@ -139,11 +140,16 @@ async function finishDaily(plan, counts, results, score, secs) {
     ${note ? `<p class="hint">${note}</p>` : ''}
     <h3>Ranking de hoy</h3>
     <div id="dRank" class="rankList"><p class="hint">${cloudUser() ? 'Cargando…' : 'Entrá con tu cuenta para aparecer en el ranking.'}</p></div>
-    <div class="row end gap"><button class="btn ok" id="dEnd">Volver al menú</button></div></div>`, 'wide');
+    <div class="row end gap">${shareBtnHTML('dShare')}<button class="btn ok" id="dEnd">Volver al menú</button></div></div>`, 'wide');
   $('#dEnd').onclick = () => api.backTo('daily');
+  let pos = -1;
+  bindShare('dShare', () => ({
+    title: `Turno del día · ${fmtDay(plan.day)}`, subtitle: pos >= 0 ? `Puesto ${pos + 1} del ranking de hoy` : 'El mismo turno para todos',
+    stats: [['Puntaje', r.score], ['Correctas', `${r.ok}/${r.total}`], ['Tiempo', fmtSecs(secs)], ['Presentismo', `${pres.streak} ${pres.streak === 1 ? 'día' : 'días'}`]],
+  }), api.toast);
   if (cloudUser()) list = await loadRanking(plan.day, true);
   // Podio
-  const pos = list ? list.findIndex((x) => x.me) : -1;
+  pos = list ? list.findIndex((x) => x.me) : -1;
   if (pos >= 0 && pos < 3) {
     const p = load();
     if (!p.career.milestones.daily_podium) { p.career.milestones.daily_podium = Date.now(); save(p); api.toast?.('<i class="mdi mdi-podium-gold"></i> Hito: <b>Al podio</b>. Terminaste entre los 3 primeros del turno del día.'); }

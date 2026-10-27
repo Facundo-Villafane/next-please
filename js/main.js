@@ -22,6 +22,7 @@ import { sfx, ambience } from './sound.js';
 import { initMenu, pauseMenu, showSettings } from './menu.js';
 import { initDaily, showDaily } from './daily.js';
 import { initMobile, mobileShow, mobilePing } from './mobile.js';
+import { shareBtnHTML, bindShare } from './share.js';
 import { evaluate, computeExcess, REASONS, isIdDoc, isExitRow, partyMembers } from './rules.js';
 import { faceSVG, renderDoc, docTitle } from './docs.js';
 import { AGENT_EN } from './dialogues.js';
@@ -953,7 +954,7 @@ function endShift() {
     const lab = { accept: 'Aceptó', reject: 'No aceptó', derive: 'Derivó', volunteer: 'Voluntario', dnbd: 'DNBD' };
     return `<tr class="${r.ev.correct ? '' : 'bad'}"><td>${i + 1}</td><td>${r.time}</td><td>${esc(norm(r.pax.last))}/${esc(norm(r.pax.first))}<br><small>${r.pax.flight.no} · ${COUNTRIES[r.pax.nationality].iso3}</small></td><td>${esc(SCENARIOS[r.pax.scenario])}</td><td>${lab[r.decision.kind]}<br><small>Correcto: ${lab[r.ev.analysis.expected]}</small></td><td>${errs.length ? errs.map(esc).join('<br>') : '—'}</td><td class="num">${r.ev.total}</td></tr>`;
   }).join('');
-  const grade = pct >= 90 ? 'Excelente' : pct >= 75 ? 'Muy bien' : pct >= 60 ? 'Aprobado' : 'A reforzar';
+  const grade = pct >= 90 ? 'Excelente' : pct >= 75 ? 'Muy bien' : pct >= 60 ? 'Bien' : 'A mejorar';
   openModal(`
     <div class="report" id="report">
       <h1>Informe de turno · Check-in ${STATION.code}</h1>
@@ -964,14 +965,17 @@ function endShift() {
         <div><span>Pasajeros INAD aceptados</span><b class="${inad ? 'err' : ''}">${inad}</b></div>
         <div><span>Denegaciones injustificadas</span><b class="${wrongDeny ? 'err' : ''}">${wrongDeny}</b></div>
         <div><span>Tiempo promedio</span><b>${Math.round(avg)} s</b></div>
-        <div><span>Calificación</span><b>${grade}</b></div>
+        <div><span>Desempeño</span><b>${grade}</b></div>
       </div>
       <table class="grid rep"><tr><th>#</th><th>Hora</th><th>Pasajero</th><th>Caso</th><th>Decisión</th><th>Errores</th><th>Pts</th></tr>${rows}</table>
       ${teamSummaryHTML(teamSum)}
       ${eventsSummaryHTML()}
     </div>
-    <div class="row end gap noprint"><button class="btn ghost" id="rpPrint">🖨 Imprimir / PDF</button><button class="btn ok" id="rpNew">Nuevo turno</button></div>`, 'wide report');
-  $('#rpPrint').onclick = () => window.print();
+    <div class="row end gap noprint">${shareBtnHTML('rpShare')}<button class="btn ok" id="rpNew">Nuevo turno</button></div>`, 'wide report');
+  bindShare('rpShare', () => ({
+    title: 'Turno de check-in', subtitle: `${{ basico: 'Básico', intermedio: 'Intermedio', avanzado: 'Avanzado' }[G.level] || G.level} · ${G.mode === 'challenge' ? 'Desafío' : 'Aprendizaje'}`,
+    stats: [['Puntaje', G.score], ['Decisiones correctas', `${ok}/${G.results.length}`], ['Desempeño', grade], ['Tiempo promedio', `${Math.round(avg)} s`]],
+  }), toast);
   $('#rpNew').onclick = () => location.reload();
   try {
     const hist = JSON.parse(localStorage.getItem('ckHistory') || '[]');
@@ -992,7 +996,7 @@ function showManual(after) {
     openModal, closeModal, onClose: () => { G.paused = wasPaused; if (after) after(); },
     chapters: [
       ch('clock-outline', 'Tiempos y regla de oro', `
-        <p>Basado en la Guía de Atención al Pasajero · Unidad 4 (Billetaje y Reservas · TUGA). Cada aerolínea define sus tiempos y procedimientos: en el trabajo real manda el manual de la compañía.</p>
+        <p>Procedimientos simplificados para el juego. Cada aerolínea define sus tiempos y procedimientos: en el trabajo real manda el manual de la compañía.</p>
         <p><b>Internacional:</b> set up −190 STD · apertura −180 · <b>cierre −70</b>.<br><b>Cabotaje:</b> set up −130 · apertura −120 · <b>cierre −50</b>.</p>
         <p>El cierre por sistema (CLOSE CHECK-IN) es obligatorio. Observe el reloj y el tablero.</p>
         <div class="tip"><b>Regla de oro:</b> nunca etiquete equipaje antes de confirmar que el pasajero puede viajar: el vuelo no lleva equipajes sin su pasajero. Un pasajero inadmisible (INAD) debe ser devuelto al origen y le cuesta a la aerolínea multas y el vuelo de retorno.</div>`),

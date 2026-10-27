@@ -8,6 +8,7 @@ import { SUP } from './supervisor.js';
 import { getPlayer, gtxt, playerFace } from './player.js';
 import { esc, pick, chance, rnd, fmtAgo, dateKey } from './util.js';
 import { sfx } from './sound.js';
+import { shareBtnHTML, bindShare } from './share.js';
 import { load, save, weightFn, randomShift, RANKS, rankOf, settleCounter, settleGate, xpOf, fmtMoney, MILESTONES, topicStats, WEEKS_PER_MONTH, LIFE, SHOP, MOVE_COST, lifeOf, monthExpenses, commuteRoll, markPresence, PRESENCE_BONUS, presence } from './progress.js';
 
 const $ = (s) => document.querySelector(s);
@@ -259,7 +260,12 @@ function dayEnd({ type, results, gate }) {
     <p class="hint">+${xp} XP · ${s.okPax} de ${s.total} bien resueltos.</p>
     ${got.length ? `<div class="newMs"><b>🏅 ${got.length === 1 ? 'Nuevo hito' : 'Nuevos hitos'}</b>${got.map((k) => { const m = MILESTONES.find((x) => x.k === k); return `<div class="ms on"><i class="mdi mdi-${m.icon}"></i><div><b>${esc(gtxt(m.name))}</b><small>${esc(gtxt(m.desc))}</small></div></div>`; }).join('')}</div>` : ''}
     ${viv(comment)}
-    <div class="row end"><button class="btn ok big" id="dpGo">${month ? 'Ver el recibo de sueldo del mes ▶' : week ? 'Ver el resumen de la semana ▶' : 'Seguir ▶'}</button></div></div>`, 'wide');
+    <div class="row end gap">${shareBtnHTML('dpShare')}<button class="btn ok big" id="dpGo">${month ? 'Ver el recibo de sueldo del mes ▶' : week ? 'Ver el resumen de la semana ▶' : 'Seguir ▶'}</button></div></div>`, 'wide');
+  bindShare('dpShare', () => ({
+    title: `Carrera · ${gtxt(RANKS[r1].name)}`, subtitle: `${DAYS[(week ? 5 : c.day - 1) - 1]} · ${type === 'gate' ? 'Puerta de embarque' : 'Counter'}`,
+    stats: [['Neto del día', fmtMoney(s.net)], ['Bien resueltos', `${s.okPax}/${s.total}`], ['Experiencia', `+${xp} XP`], ['Ahorros', fmtMoney(c.money)]],
+    line: `${SUP.short}: ${comment.replace('Bienvenido/a', gtxt('Bienvenido/a'))}`,
+  }));
   $('#dpGo').onclick = () => (month ? showPayslip(month) : week ? showWeek(week, c) : backToHub());
 }
 

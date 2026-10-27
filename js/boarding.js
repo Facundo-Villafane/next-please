@@ -14,6 +14,7 @@ import { gateLines as gateDialog, gateGreeting, AGENT_EN, paxLang } from './dial
 import { OVBK_POLICY, compForm, gradeComp, compSummary, protectionsFor } from './overbooking.js';
 import { conflictTrigger, runConflict } from './conflict.js';
 import { pauseMenu } from './menu.js';
+import { shareBtnHTML, bindShare } from './share.js';
 import { mobileShow, mobilePing } from './mobile.js';
 import { sfx, ambience, settings, announce } from './sound.js';
 
@@ -1255,8 +1256,11 @@ function report() {
       <h3>Proceso</h3>
       <ul class="fb">${B.proc.map((x) => `<li class="${x.ok ? 'ok' : 'bad'}"><div><b>${esc(x.title)}</b>${x.detail ? `<p>${esc(x.detail)}</p>` : ''}</div><span class="pts">${x.pts > 0 ? '+' : ''}${x.pts}</span></li>`).join('')}</ul>
     </div>
-    <div class="row end gap noprint"><button class="btn ghost" id="rpPrint">🖨 Imprimir / PDF</button><button class="btn ok" id="rpNew">${B.onDone ? 'Continuar ▶' : 'Volver al inicio'}</button></div>`, 'wide report');
-  $('#rpPrint').onclick = () => window.print();
+    <div class="row end gap noprint">${shareBtnHTML('rpShare')}<button class="btn ok" id="rpNew">${B.onDone ? 'Continuar ▶' : 'Volver al inicio'}</button></div>`, 'wide report');
+  bindShare('rpShare', () => ({
+    title: `Embarque · ${FLIGHT.no} a ${FLIGHT.city}`, subtitle: B.mode === 'challenge' ? 'Puerta de embarque · Desafío' : 'Puerta de embarque · Aprendizaje',
+    stats: [['Puntaje', s.score], ['Decisiones en el podio', `${s.ok}/${s.total}`], ['A bordo', `${s.boarded}/${s.checked}`], ['Cierre', fmtTime(B.closeTime)]],
+  }), (t) => toast(true, t));
   $('#rpNew').onclick = () => { B.saveTag = null; clearTimeout(saveGateSoon.t); saveGateSoon.t = null; ui.closeModal(); if (B.onDone) B.onDone(s); else location.reload(); };
 }
 
@@ -1268,7 +1272,7 @@ function showGateManual() {
     openModal: ui.openModal, closeModal: ui.closeModal, onClose: () => { B.paused = was; },
     chapters: [
       ch('door-open', 'Apertura y tripulación', `
-        <p>Basado en la Guía de Atención al Pasajero · Unidad 4 · Parte II (Embarque). Cada aerolínea define sus procedimientos.</p>
+        <p>Procedimientos simplificados para el juego. Cada aerolínea define los suyos: en el trabajo real manda el manual de la compañía.</p>
         <p><b>Apertura (−60):</b> sistema y pantallas, materiales, layout de zonas y requerimientos especiales (PMR).</p>
         <p><b>Esperá al TCP:</b> el embarque empieza cuando la tripulación autoriza (puede demorarse por aseo, mantenimiento, seguridad, meteorología o MEL).</p>`),
       ch('bullhorn', 'Micrófono y zonas', `
