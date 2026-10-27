@@ -12,7 +12,7 @@ import { sfx, announce, voiceLine } from './sound.js';
 
 const $ = (s) => document.querySelector(s);
 let G, sc, api;
-const E = { plan: [], active: null, log: [], protest: null };
+const E = { plan: [], active: null, log: [], protest: null, queue: [], force: null };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export function initEvents(g, scene, a) {
@@ -33,7 +33,7 @@ export const eventLog = () => E.log;
 
 // Un imprevisto por turno (dos en avanzado), en un momento al azar
 export function planEvents({ on }) {
-  E.plan = []; E.log = []; E.active = null;
+  E.plan = []; E.log = []; E.active = null; E.queue = []; E.force = null;
   endProtest(true);
   (E.after || []).forEach((a) => a.done()); E.after = [];
   if (!on) return;
@@ -52,21 +52,42 @@ const RUNNERS = {
   promo: { ok: () => !!promoFlight(), run: () => runPromo() },
 };
 
+// Sala online: el anfitrión decide el imprevisto (y el vuelo) y se lo pasa a los demás, así todo el hall
+// vive lo mismo. Cada compañero lo ve al llamar a su próximo pasajero.
+export function forceEvent(ev) { if (ev && RUNNERS[ev.kind]) E.queue.push(ev); }
+function forceDetails(kind) {
+  if (kind === 'cancel') { const t = cancelTarget(); return t ? { flight: t.f.no } : null; }
+  if (kind === 'delay') { const f = delayTarget(); return f ? { flight: f.no, mins: pick([150, 165, 180, 195]) } : null; }
+  if (kind === 'celebrity') { const f = pick(intlOpen()); return f ? { flight: f.no, celeb: rnd(0, CELEBS.length - 1) } : null; }
+  return {};
+}
+
 // Se llama al pedir el siguiente pasajero: si toca un imprevisto, lo corre y después sigue
 export function maybeEvent(next) {
   if (E.active) return true;
-  const nextIdx = G.idx + 1;
-  const ev = E.plan.find((e) => !e.done && e.at <= nextIdx && nextIdx < G.pax.length);
-  if (!ev) return false;
-  ev.done = true;
-  // Si el planeado ya no es posible (p. ej. cerró el vuelo), va otro que no se haya usado
-  const used = E.plan.filter((e) => e.done).map((e) => e.ran);
-  const kind = RUNNERS[ev.kind].ok() ? ev.kind : shuffle(Object.keys(RUNNERS)).find((k) => !used.includes(k) && RUNNERS[k].ok()) || 'unattended';
-  ev.ran = kind;
+  let kind;
+  const forced = E.queue.shift();
+  if (forced) {
+    // Imprevisto que mandó el anfitrión: si para este mostrador ya no aplica (p. ej. cerró ese vuelo), se saltea
+    E.force = forced;
+    if (!RUNNERS[forced.kind].ok()) { E.force = null; return false; }
+    kind = forced.kind;
+  } else {
+    const nextIdx = G.idx + 1;
+    const ev = E.plan.find((e) => !e.done && e.at <= nextIdx && nextIdx < G.pax.length);
+    if (!ev) return false;
+    ev.done = true;
+    // Si el planeado ya no es posible (p. ej. cerró el vuelo), va otro que no se haya usado
+    const used = E.plan.filter((e) => e.done).map((e) => e.ran);
+    kind = RUNNERS[ev.kind].ok() ? ev.kind : shuffle(Object.keys(RUNNERS)).find((k) => !used.includes(k) && RUNNERS[k].ok()) || 'unattended';
+    ev.ran = kind;
+    // Anfitrión de una sala: fija el vuelo y los detalles, y se los manda a los compañeros
+    if (api.roomEmit) { const d = forceDetails(kind); if (d) { E.force = { kind, ...d }; api.roomEmit(E.force); } }
+  }
   const run = RUNNERS[kind].run;
   E.active = kind;
   $('#view3d').classList.add('evtOn');
-  run().catch((e) => console.error(e)).finally(() => { E.active = null; hideCard(); $('#view3d').classList.remove('evtOn'); $('#team')?.classList.remove('dimmed'); next(); });
+  run().catch((e) => console.error(e)).finally(() => { E.active = null; E.force = null; hideCard(); $('#view3d').classList.remove('evtOn'); $('#team')?.classList.remove('dimmed'); next(); });
   return true;
 }
 
@@ -353,6 +374,11 @@ async function runUnattended() {
 // 2) VUELO CANCELADO (Res. ANAC 1532/98)
 // ------------------------------------------------------------------
 function cancelTarget() {
+  if (E.force?.flight) {
+    const f = G.flights.find((x) => x.no === E.force.flight && !x.cancelled && G.now < x.closeTime);
+    const next = f && G.flights.filter((g) => g.dest === f.dest && g.depTime > f.depTime).sort((a, b) => a.depTime - b.depTime)[0];
+    return f && next ? { f, next } : null;
+  }
   const open = G.flights.filter((f) => G.now >= f.openTime && (f.closeTime - G.now) / 60000 > 15);
   const cands = open.map((f) => ({ f, next: G.flights.filter((g) => g.dest === f.dest && g.depTime > f.depTime).sort((a, b) => a.depTime - b.depTime)[0] })).filter((x) => x.next);
   return cands.length ? pick(cands) : null;
@@ -518,6 +544,7 @@ async function quiz(ev, steps) {
 // ------------------------------------------------------------------
 const CONNECT = { MIA: ['Miami', 'Orlando'], MAD: ['Madrid', 'Roma'], GRU: ['São Paulo', 'Recife'], SCL: ['Santiago', 'Lima'], BRC: ['Bariloche', 'El Calafate'], IGR: ['Iguazú', 'Asunción'] };
 function delayTarget() {
+  if (E.force?.flight) return G.flights.find((x) => x.no === E.force.flight && !x.delayed && G.now < x.closeTime) || null;
   // Demora de unas 3 horas sin pasar la medianoche (no hay pernocte)
   const c = G.flights.filter((f) => openNow(f, 10) && !f.delayed && f.depTime.getHours() * 60 + f.depTime.getMinutes() + 210 < 24 * 60);
   return c.length ? pick(c) : null;
@@ -525,7 +552,7 @@ function delayTarget() {
 
 async function runDelay() {
   const f = delayTarget();
-  const mins = pick([150, 165, 180, 195]);
+  const mins = E.force?.mins || pick([150, 165, 180, 195]);
   const etd = new Date(f.depTime.getTime() + mins * 60000);
   f.delayed = fmtTime(etd);
   api.boardUpdate();
@@ -617,8 +644,8 @@ const CELEBS = [
   { name: 'Mía Galván', what: 'influencer y actriz de tiras', sex: 'F', fans: ['MÍA TE AMO', '¡UNA SELFIE!', 'FAN #1 DE MÍA'] },
 ];
 async function runCelebrity() {
-  const f = pick(intlOpen());
-  const c = pick(CELEBS);
+  const f = (E.force?.flight && G.flights.find((x) => x.no === E.force.flight)) || pick(intlOpen());
+  const c = E.force?.celeb != null ? CELEBS[E.force.celeb] : pick(CELEBS);
 
   card('🌟', `¡${c.name} en el hall!`, 'Imprevisto', `Llega ${c.name} (${c.what}) a hacer el check-in del ${f.no} a ${f.city}, con anteojos oscuros y su representante. En treinta segundos se arma una ronda de fans con celulares.`);
   // El famoso, su representante y los fans

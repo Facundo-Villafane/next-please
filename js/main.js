@@ -4,7 +4,7 @@ import { startBoarding, boardingActive, resumeBoarding, gateHint } from './board
 import { vivSay, HINT_COST, resetHints, hintCount } from './hints.js';
 import { initCareer, showHome, showPlay, showProfile } from './career.js';
 import { initQueue, resetQueue, queueTick, queuePaxDone } from './queue.js';
-import { initEvents, planEvents, maybeEvent, eventsOnPax, eventsSummaryHTML, eventLog } from './events.js';
+import { initEvents, planEvents, maybeEvent, eventsOnPax, eventsSummaryHTML, eventLog, forceEvent } from './events.js';
 import { initTeam, teamStart, teamStop, teamTick, teamSyncQueue, teamOn, teamWaiting, teamSummaryHTML, teamLocal } from './team.js';
 import { initOnline, showOnline } from './online.js';
 import { openBook } from './book.js';
@@ -216,7 +216,9 @@ function startShift(opts = {}) {
   teamStart({ on: opts.team !== undefined ? opts.team : G.teamPref !== false, consults: opts.consults !== false, online: opts.online || null });
   if (teamOn()) { scene.setQueue([]); teamSyncQueue(); } else scene.setQueue(G.pax);
   // Imprevistos (sólo Práctica libre): valija desatendida, vuelo cancelado...
-  planEvents({ on: (opts.events === 'force' || (!opts.deck && opts.events !== false && G.eventsPref !== false)) && !opts.online });
+  // En una sala, los imprevistos los decide el anfitrión (si los activó) y se los pasa a los demás
+  EV_API.roomEmit = opts.online?.host && opts.online.events ? (ev) => opts.online.emit({ t: 'evt', ev }) : null;
+  planEvents({ on: opts.online ? !!(opts.online.host && opts.online.events) : opts.events === 'force' || (!opts.deck && opts.events !== false && G.eventsPref !== false) });
   scene.updateBoard(boardFlights(), G.now);
   updateTop();
   nextPassenger();
@@ -1121,7 +1123,8 @@ $('#btnPause').onclick = () => {
 initMobile();
 initQueue(G, scene, { openModal, closeModal, modalOpen });
 initTeam(G, scene);
-initEvents(G, scene, { boardUpdate: () => { scene.updateBoard(boardFlights(), G.now); if (G.tab === 'ident') renderPane(); } });
+const EV_API = { boardUpdate: () => { scene.updateBoard(boardFlights(), G.now); if (G.tab === 'ident') renderPane(); }, roomEmit: null };
+initEvents(G, scene, EV_API);
 initOutage(G, { openModal, closeModal, sys, renderPane, renderTabs, marta: (w) => faceSVG(MARTA, { w, h: Math.round(w * 1.25), bg: '#dce7f0' }) });
 initCareer({
   openModal, closeModal, modalOpen, scene, faceSVG,
@@ -1190,7 +1193,7 @@ function startOnline(o) {
   $('#tAvatar').innerHTML = faceSVG(playerFace(), { w: 30, h: 37, bg: '#dce7f0' });
   startShift({
     team: true, consults: true, counterLabel: `Mostrador ${o.seat} · Todos los vuelos`,
-    online: { mySeat: o.seat, players: o.players.filter((p) => p.seat !== o.seat), bots: o.bots, host: o.host, emit: o.emit },
+    online: { mySeat: o.seat, players: o.players.filter((p) => p.seat !== o.seat), bots: o.bots, host: o.host, emit: o.emit, events: !!o.events },
   });
   if (o.shared) {
     Object.entries(o.shared.seatMaps).forEach(([k, arr]) => { G.seatMaps[k] = new Set(arr); });
@@ -1207,7 +1210,7 @@ function toast(html) {
   clearTimeout(toast.t);
   toast.t = setTimeout(() => t.classList.add('hidden'), 8000);
 }
-initOnline({ openModal, closeModal, showHome: showPlay, startOnline, toast });
+initOnline({ openModal, closeModal, showHome: showPlay, startOnline, toast, roomEvent: forceEvent });
 // Menú de pausa y Configuración
 initMenu({
   openModal, closeModal, confirm: askConfirm,

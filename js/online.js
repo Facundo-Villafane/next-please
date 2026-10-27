@@ -11,6 +11,17 @@ const $ = (s) => document.querySelector(s);
 const PEER_URL = 'https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js';
 const PREFIX = 'aeroplata-ckin-';
 const SEATS = [22, 21, 23];
+// Servidores para encontrarse y, si la red no deja conectar directo (facultad, trabajo, datos del celu),
+// un relé público que pasa los mensajes. Sin el relé, en esas redes la sala no conecta.
+const PEER_OPTS = {
+  config: {
+    iceServers: [
+      { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+      { urls: 'stun:global.stun.twilio.com:3478' },
+      { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' },
+    ],
+  },
+};
 let api;
 let R = null; // estado de la sala
 
@@ -70,7 +81,7 @@ async function createRoom(tries = 0) {
   let Peer;
   try { Peer = await loadPeer(); } catch (e) { msg(e.message); return; }
   const code = newCode();
-  const peer = new Peer(PREFIX + code);
+  const peer = new Peer(PREFIX + code, PEER_OPTS);
   R = { host: true, code, peer, conns: new Map(), players: [{ id: 'host', seat: 22, ...me() }], started: false };
   R.seen = new Map();
   // Latido: WebRTC puede tardar mucho en avisar que alguien cerró la ventana
@@ -131,7 +142,7 @@ function onHostClose(conn) {
 const sendRoster = () => broadcast({ t: 'roster', players: R.players, code: R.code });
 
 function hostStart() {
-  const level = $('#onLevel').value, mode = $('#onPace').value;
+  const level = $('#onLevel').value, mode = $('#onPace').value, events = $('#onEvents').value === 'on';
   const empty = SEATS.filter((s) => !R.players.some((p) => p.seat === s));
   const bots = pickBots(empty, R.players.map((p) => p.name).join(' '));
   R.started = true;
@@ -139,8 +150,8 @@ function hostStart() {
   // Lo que pase antes de que los demás reciban el "start" se guarda y se manda después
   let ready = false;
   const buf = [];
-  const shared = api.startOnline({ seat: 22, players: R.players, bots, host: true, level, mode, emit: (m) => (ready ? broadcast(m) : buf.push(m)) });
-  broadcast({ t: 'start', level, mode, players: R.players, bots, shared });
+  const shared = api.startOnline({ seat: 22, players: R.players, bots, host: true, level, mode, events, emit: (m) => (ready ? broadcast(m) : buf.push(m)) });
+  broadcast({ t: 'start', level, mode, events, players: R.players, bots, shared });
   ready = true;
   buf.forEach((m) => broadcast(m));
 }
@@ -152,7 +163,7 @@ async function joinRoom(code) {
   msg('Conectando...');
   let Peer;
   try { Peer = await loadPeer(); } catch (e) { msg(e.message); return; }
-  const peer = new Peer();
+  const peer = new Peer(PEER_OPTS);
   R = { host: false, code, peer, conn: null, players: [], started: false };
   R.seenHost = performance.now();
   R.beat = setInterval(() => {
@@ -167,7 +178,9 @@ async function joinRoom(code) {
   peer.on('open', () => {
     const conn = peer.connect(PREFIX + code, { reliable: true });
     R.conn = conn;
-    conn.on('open', () => conn.send({ t: 'hello', ...me() }));
+    conn.on('open', () => { clearTimeout(R?.joinT); conn.send({ t: 'hello', ...me() }); });
+    // Si en unos segundos no conecta, casi siempre es la red (wifi con restricciones): se avisa
+    R.joinT = setTimeout(() => { if (R && !R.conn?.open) msg('No pudimos conectar con la sala. Puede ser la red (wifis de oficinas o instituciones a veces lo bloquean): probá con otra red o con los datos del celu, y revisá el código.'); }, 15000);
     conn.on('data', onClientData);
 conn.on('close', hostLost);
   });
@@ -188,13 +201,14 @@ function onClientData(m) {
   }
   if (m.t === 'desk') teamRemote(m);
   if (m.t === 'botify') teamBotify(m.seat, m.key);
+  if (m.t === 'evt') api.roomEvent?.(m.ev);
 }
 
 // ------------------------------------------------------------------
 // Sala de espera
 // ------------------------------------------------------------------
 function lobby() {
-  const prev = { level: $('#onLevel')?.value, pace: $('#onPace')?.value };
+  const prev = { level: $('#onLevel')?.value, pace: $('#onPace')?.value, events: $('#onEvents')?.value };
   if (!R) return;
   const seat = (s) => {
     const p = R.players.find((x) => x.seat === s);
@@ -210,6 +224,7 @@ function lobby() {
     <div class="rSeats">${[21, 22, 23].map(seat).join('')}</div>
     ${R.host ? `<div class="row gap wrap">
       <label>Nivel<select id="onLevel"><option value="basico">Básico</option><option value="intermedio" selected>Intermedio</option><option value="avanzado">Avanzado</option></select></label>
+      <label>Imprevistos<select id="onEvents"><option value="on" selected>⚠ Sí · los vive toda la sala a la vez</option><option value="off">Sin imprevistos</option></select></label>
       <label>Modo<select id="onPace"><option value="challenge" selected>⏱ Desafío · el reloj corre igual para todos</option><option value="learn">📘 Aprendizaje · cada uno a su ritmo</option></select></label>
     </div>` : ''}
     <p class="hint">Cada uno atiende sus propios pasajeros, pero la fila, los vuelos y los asientos son de todos.</p>
@@ -219,6 +234,7 @@ function lobby() {
   if (R.host) {
     if (prev.level) $('#onLevel').value = prev.level;
     if (prev.pace) $('#onPace').value = prev.pace;
+    if (prev.events) $('#onEvents').value = prev.events;
     $('#onStart').onclick = hostStart;
   }
 }
