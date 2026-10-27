@@ -156,6 +156,7 @@ export function docTitle(d) {
     case 'PET_CVI': return 'Certificado veterinario';
     case 'ESCORT_ID': return 'Credencial de escolta';
     case 'LEGAL_ORDER': return d.kind === 'DEPA' ? 'Oficio judicial' : 'Disposición de expulsión';
+    case 'INAD_NOTICE': return 'Acta de inadmisión (Migraciones)';
     case 'RESIDENCE': return d.country === 'US' ? 'Green Card' : 'TIE (residencia)';
     case 'BIRTH_CERT': return 'Partida de nacimiento';
     case 'DEATH_CERT': return 'Acta de defunción';
@@ -182,6 +183,7 @@ export function renderDoc(d) {
     case 'PET_CVI': return renderPetCvi(d);
     case 'ESCORT_ID': return renderEscortId(d);
     case 'LEGAL_ORDER': return renderLegalOrder(d);
+    case 'INAD_NOTICE': return renderInadNotice(d);
     case 'RESIDENCE': return renderResidence(d);
     case 'BIRTH_CERT': return renderBirthCert(d);
     case 'DEATH_CERT': return renderDeathCert(d);
@@ -234,6 +236,17 @@ function renderLegalOrder(d) {
     <div class="ph2"><b>${title}</b><span>${head} · N° ${esc(d.number)}</span></div>
     <p>Buenos Aires, ${fmtDate(d.date)}. ${body}</p>
     <div class="sigs"><span>${depa ? 'Juez/a' : 'Director/a de Extranjería'}</span><span class="seal">${depa ? 'PODER<br>JUDICIAL' : 'DNM'}</span></div>
+  </div>`;
+}
+
+// Acta de Migraciones de un pasajero no admitido (INAD) que la compañía tiene que llevar de vuelta
+function renderInadNotice(d) {
+  return `<div class="doc paper auth">
+    <div class="ph2"><b>ACTA DE INADMISIÓN · PASAJERO INAD</b><span>DIRECCIÓN NACIONAL DE MIGRACIONES · Delegación Aeropuerto · N° ${esc(d.number)}</span></div>
+    <p>En el día ${fmtDate(d.date)} se deja constancia de que <b>${esc(d.first.toUpperCase())} ${esc(d.last.toUpperCase())}</b> (${esc(COUNTRIES[d.nationality]?.name || d.nationality)}, pasaporte ${esc(d.passport)}), arribado/a en el vuelo <b>${esc(d.arrived)}</b> procedente de ${esc(d.from)}, <b>no fue admitido/a</b> en el territorio nacional.</p>
+    <p><b>Motivo:</b> ${esc(d.reason)}</p>
+    <p>La compañía transportadora deberá reembarcarlo/a hacia su origen en el primer vuelo disponible: <b>${esc(d.flightNo)}</b> a <b>${esc(d.dest)}</b>.</p>
+    <div class="sigs"><span>Inspector/a de Migraciones</span><span class="seal">DNM</span></div>
   </div>`;
 }
 

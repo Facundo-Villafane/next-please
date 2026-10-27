@@ -482,6 +482,16 @@ export function gateLines(p, { city, otherCity, country }) {
       carry: 'Una mochila cada uno. El detenido no lleva nada.',
       board: 'Gracias. (embarcan los tres)',
     }); break;
+    case 'inad': case 'inad_noseat': Object.assign(L, {
+      greet: S('(cansado, con un sobre de Migraciones) Hola... Me dijeron que tengo que volver hoy a mi país. Esto es lo que me dieron.', "(tired, holding an Immigration envelope) Hi... They told me I have to fly back home today. This is what they gave me.", '(cansado, com um envelope da Migração) Oi... Me disseram que tenho que voltar hoje pro meu país. Foi isso que me deram.'),
+      docs: S('Mi pasaporte, la tarjeta y el acta de Migraciones.', "My passport, the boarding pass and the Immigration paper.", 'Meu passaporte, o cartão e o termo da Migração.'),
+      companion: S(`Sol${o}. Me acompañó alguien de la aerolínea hasta acá.`, 'Alone. Someone from the airline walked me here.', `Sozinh${o}. Alguém da companhia me acompanhou até aqui.`),
+      ret: S('¿Regreso? Justamente: vuelvo a casa.', "Return? That's exactly it: I'm going home.", 'Volta? Pois é: estou voltando pra casa.'),
+      board: S('Gracias. Por lo menos alguien me trató bien hoy.', "Thanks. At least someone was nice to me today.", `Obrigad${o}. Pelo menos alguém me tratou bem hoje.`),
+      hold: S('¿Sin asiento? Pero me dijeron que me tenía que ir sí o sí... Bueno, espero acá.', "No seat? They told me I had to leave no matter what... Okay, I'll wait here.", 'Sem assento? Me disseram que eu tinha que ir de qualquer jeito... Tá, espero aqui.'),
+      reseat: S('¡Gracias! No sabe lo que es pasar la noche en Migraciones.', "Thank you! You have no idea what a night at Immigration is like.", 'Obrigado! Você não sabe o que é passar a noite na Migração.'),
+      deny: S('¿Y entonces qué hago? No me dejan entrar al país y ustedes no me llevan...', "So what do I do? They won't let me into the country and you won't fly me home...", 'E agora? Não me deixam entrar no país e vocês não me levam...'),
+    }); break;
     case 'gate_carryon': Object.assign(L, {
       greet: '¡Hola! Zona 4, ¿ya subo? (arrastra una valija enorme, una mochila y una almohada de viaje)',
       carry: '¿La valija? Va arriba conmigo, como siempre. ¿Por qué?',

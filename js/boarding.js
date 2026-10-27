@@ -45,14 +45,14 @@ const KINDS = {
   wchr: { zone: 1 }, inf_stroller: { zone: 1 }, senior_zone4: { zone: 1, lv: 2 }, early: { zone: 1 }, influencer: { zone: 1 },
   ok: { zone: 2 }, wrong_flight: { zone: 2 }, vaper: { zone: 2 },
   exit_minor: { zone: 3 }, name_mismatch: { zone: 3, lv: 2 }, no_return: { zone: 3, ret: true, lv: 2 }, pet_exit: { zone: 3, lv: 3 }, dead_phone: { zone: 3, lv: 2 },
-  drunk: { zone: 4 }, impostor: { zone: 4, lv: 2 }, dutyfree: { zone: 4 }, dup_bp: { zone: 4, lv: 2 }, web_yesterday: { zone: 2, lv: 2 }, gate_carryon: { zone: 4 }, gate_smoker: { zone: 3, lv: 2 }, gate_rage: { zone: 3, lv: 3 }, depa: { zone: 1, lv: 2 }, inop_seat: { zone: 3, lv: 3 },
+  drunk: { zone: 4 }, impostor: { zone: 4, lv: 2 }, dutyfree: { zone: 4 }, dup_bp: { zone: 4, lv: 2 }, web_yesterday: { zone: 2, lv: 2 }, gate_carryon: { zone: 4 }, gate_smoker: { zone: 3, lv: 2 }, gate_rage: { zone: 3, lv: 3 }, depa: { zone: 1, lv: 2 }, inad: { zone: 1, lv: 2 }, inad_noseat: { zone: 1, lv: 3 }, inop_seat: { zone: 3, lv: 3 },
 };
-const PRACTICE_CASES = ['inop_seat', 'wchr', 'inf_stroller', 'senior_zone4', 'early', 'influencer', 'ok', 'wrong_flight', 'vaper', 'exit_minor', 'name_mismatch', 'no_return', 'pet_exit', 'dead_phone', 'drunk', 'impostor', 'dutyfree', 'dup_bp', 'web_yesterday', 'gate_carryon', 'gate_smoker', 'gate_rage', 'depa', 'ok'];
+const PRACTICE_CASES = ['inop_seat', 'wchr', 'inf_stroller', 'senior_zone4', 'early', 'influencer', 'ok', 'wrong_flight', 'vaper', 'exit_minor', 'name_mismatch', 'no_return', 'pet_exit', 'dead_phone', 'drunk', 'impostor', 'dutyfree', 'dup_bp', 'web_yesterday', 'gate_carryon', 'gate_smoker', 'gate_rage', 'depa', 'inad', 'ok'];
 export const KIND_LABEL = {
   wchr: 'Pasajero PMR (WCHR)', inf_stroller: 'Pasajera con infante y cochecito', senior_zone4: 'Mayor de 60 con zona 4', early: 'Se adelanta a su zona',
   influencer: 'Influencer que quiere pasar primero', ok: 'Pasajero sin novedades', wrong_flight: 'Tarjeta de otro vuelo', vaper: 'Vapeando en la fila',
   exit_minor: 'Menor de 15 en salida de emergencia', name_mismatch: 'Tarjetas cruzadas con su acompañante', partner: 'Tarjetas cruzadas (acompañante)',
-  dup_bp: 'Tarjeta duplicada (misma que su acompañante)', dead_phone: 'Celular sin batería (sin tarjeta)', no_return: 'Solo ida sin pasaje de regreso', web_yesterday: 'Tarjeta del vuelo de ayer (no show)', gate_carryon: 'Se niega al Gate Dispatch (CAT 1)', gate_smoker: 'Fuma en el embarque y no desiste (CAT 2)', gate_rage: 'Arroja objetos por su asiento (CAT 3)', depa: 'Detenido con escoltas (DEPA)', carry_ret: 'Chequeado sin pasaje de regreso',
+  dup_bp: 'Tarjeta duplicada (misma que su acompañante)', dead_phone: 'Celular sin batería (sin tarjeta)', no_return: 'Solo ida sin pasaje de regreso', web_yesterday: 'Tarjeta del vuelo de ayer (no show)', gate_carryon: 'Se niega al Gate Dispatch (CAT 1)', gate_smoker: 'Fuma en el embarque y no desiste (CAT 2)', gate_rage: 'Arroja objetos por su asiento (CAT 3)', depa: 'Detenido con escoltas (DEPA)', inad: 'Pasajero inadmisible que vuelve a su país (INAD)', inad_noseat: 'INAD sin asiento en un vuelo sobrevendido', carry_ret: 'Chequeado sin pasaje de regreso',
   pet_exit: 'Mascota en cabina en salida de emergencia', drunk: 'Pasajero alcoholizado', impostor: 'Foto no coincide', dutyfree: 'Cargado de free shop',
   standby: 'Voluntario en stand-by (embarque manual)', late_runner: 'Pasajero demorado (llamado por nombre)', no_seat: 'Pasajero sin asiento (sobreventa)', gate_volunteer: 'Voluntario en la puerta', inop_seat: 'Chequeado en asiento inoperativo', sleeper: 'Dormido en la sala', carry: 'Pasajero que chequeaste vos', carry_doc: 'Chequeado sin cumplir requisitos',
 };
@@ -170,6 +170,8 @@ export function startBoarding(opts) {
   // Sobreventa en el embarque: pasajeros sin asiento (no seat)
   const noSeat = opts.ovbk ? opts.ovbk.noSeat : (lvl >= 3 && !opts.cases ? 1 : 0);
   B.ovbk = noSeat ? { noSeat: Array.from({ length: noSeat }, () => makeGatePax('no_seat')), offer: OVBK_POLICY.comp.intl.same, authorized: null, searches: 0, poolBase: 1, poolRaised: 1, freed: 0, used: 0, volunteers: 0, called: false } : null;
+  // Con sobreventa, a veces Migraciones trae un INAD que no tiene lugar: hay que conseguirle un voluntario
+  if (B.ovbk && !opts.cases && chance(0.5)) B.byZone[1].push(makeGatePax('inad_noseat', { zone: 1 }));
   // Chequeados con problemas documentales: el control de salida (Migraciones / PSA) los frena antes de la puerta
   B.stopped = (opts.stopped || []).map((c, i) => ({ ...c, at: at(-rnd(50, 36) + i * 3), informed: false }));
   const individuals = Object.values(B.byZone).flat().filter((p) => p.kind !== 'wrong_flight').length + noSeat + B.depa.reduce((t, p) => t + (p.party?.seatHolders || 1), 0);
@@ -178,6 +180,8 @@ export function startBoarding(opts) {
   buildUI();
   radio(`Despacho: aeronave en posición en la puerta ${FLIGHT.gate}, tripulación a bordo preparando la cabina.`);
   if (B.standby.length) radio(`Counter: ${B.standby.length} voluntario(s) VDBC en stand-by para este vuelo. Embarque manual solo si se liberan asientos por no show.`);
+  const inads = B.byZone[1].filter((p) => p.kind === 'inad' || p.kind === 'inad_noseat');
+  inads.forEach((p) => radio(`Migraciones: pasajero INAD ${norm(p.last)}/${norm(p.first)} (no admitido), reembarcado en este vuelo hacia ${FLIGHT.city}. Lo acompañan a la puerta.${p.kind === 'inad_noseat' ? ' ATENCIÓN: no tiene asiento asignado (vuelo completo).' : ''}`));
   if (B.ovbk) radio(`Sistema: ${B.ovbk.noSeat.length} pasajero(s) chequeado(s) SIN ASIENTO (no seat) por un problema de sistema. Vuelo completo.`);
   if (B.asepsis) B.events.asepsis = at(-47);
   tick();
@@ -292,6 +296,9 @@ function makeGatePax(kind, extra = {}) {
     case 'inop_seat': seat = '20A'; zone = 3; break;
     case 'no_seat': seat = 'STBY'; zone = 4; bags = rnd(1, 2); break;
     case 'standby': seat = 'STBY'; zone = 4; bags = 0; break;
+    // INAD: no lo admitieron en Argentina y vuelve a su país (el del destino de este vuelo). Lo traen a la puerta
+    case 'inad': nat = FLIGHT.country; seat = `${rnd(26, 31)}${pick(['A', 'F'])}`; zone = 1; ssr = 'INAD'; bags = 0; break;
+    case 'inad_noseat': nat = FLIGHT.country; seat = 'STBY'; zone = 1; ssr = 'INAD'; bags = 0; break;
   }
   if (extra.sex) sex = extra.sex;
   if (extra.nat) nat = extra.nat;
@@ -317,7 +324,7 @@ function makeGatePax(kind, extra = {}) {
   }
   if (kind === 'web_yesterday') { bp.date = addDays(today, -1); ownBp.date = bp.date; }
   const WEB_ALWAYS = ['wrong_flight', 'no_return', 'web_yesterday', 'inop_seat', 'dup_bp', 'dead_phone'];
-  const WEB_NEVER = ['standby', 'no_seat', 'gate_volunteer', 'late_runner', 'wchr', 'pet_exit'];
+  const WEB_NEVER = ['standby', 'no_seat', 'gate_volunteer', 'late_runner', 'wchr', 'pet_exit', 'inad', 'inad_noseat'];
   const web = WEB_ALWAYS.includes(kind) || (!WEB_NEVER.includes(kind) && chance(0.45));
   if (web) { bp.web = true; ownBp.web = true; bags = 0; }
   let party = null, legal = null;
@@ -327,12 +334,18 @@ function makeGatePax(kind, extra = {}) {
     party = { relation: 'custody', members: escorts, seatHolders: 3 };
     legal = { type: 'DEPA', cuffed: chance(0.5) };
   }
+  if (kind === 'inad' || kind === 'inad_noseat') {
+    // Acta de Migraciones: llegó ayer o hoy en un vuelo de la compañía y no fue admitido
+    docs.push({ type: 'INAD_NOTICE', first: p.first, last: p.last, nationality: nat, passport: passport.number, arrived: `${AIRLINE.code}${rnd(1000, 1299)}`, from: FLIGHT.city, date: addDays(today, -rnd(0, 1)), flightNo: FLIGHT.no, dest: FLIGHT.city, reason: pick(INAD_REASONS), number: `${rnd(100, 999)}/${today.getFullYear()}` });
+  }
   const noBp = kind === 'dead_phone';
   const pax = { id: Math.random().toString(36).slice(2, 8), kind, ...p, docs: noBp ? docs : [bp, ...docs], bp, ownBp, companion, bags, accessory, drunk: kind === 'drunk', noBp, web, ...(party ? { party, legal } : {}), retDate: kind === 'no_return' ? null : addDays(today, rnd(7, 25)) };
   pax.docs.forEach((d, i) => { d.id = `${pax.id}-${i}`; });
   pax.lines = gateLines(pax);
   return pax;
 }
+
+const INAD_REASONS = ['No acreditó el motivo del viaje ni medios de vida suficientes para su estadía.', 'No presentó pasaje de regreso ni de continuación, siendo turista no residente.', 'No cumplió con los requisitos sanitarios exigidos para el ingreso.', 'Presentó un documento de viaje dañado, que no permite verificar su identidad.'];
 
 // Convierte un pasajero aceptado en el check-in en pasajero de puerta
 function fromCheckin(c) {
@@ -378,6 +391,9 @@ export function canReprint() {
 function expected(p) {
   if (p.kind === 'wrong_flight') return { kind: 'redirect' };
   if (p.kind === 'depa') return { kind: 'board' };
+  // INAD: vuelve a su país, tiene prioridad y no se le deniega el embarque. Sin asiento: se aparta hasta conseguir un voluntario
+  if (p.kind === 'inad') return { kind: 'board' };
+  if (p.kind === 'inad_noseat') return B.ovbk.freed - B.ovbk.used > 0 || B.act?.reseated ? { kind: 'board', reseat: true } : { kind: 'hold' };
   if (p.kind === 'gate_volunteer') return { kind: 'volunteer' };
   if (p.kind === 'standby') return { kind: 'board' };
   if (p.kind === 'no_seat') return B.ovbk.freed - B.ovbk.used > 0 || B.act?.reseated ? { kind: 'board', reseat: true } : { kind: 'dnbd' };
@@ -687,7 +703,7 @@ function paneBoard(pane) {
   on('bDnbd', () => ovbkForm('DNBD'));
   on('bGD', () => { a.gateDispatch = true; say(agentSays('Le coloco una etiqueta Gate Dispatch: lo dejamos en la puerta del avión y se lo entregan al bajar.', "I'll tag this Gate Dispatch: we'll leave it at the aircraft door and you'll get it back when you deplane."), B.cur.lines.gd); renderPane(); });
   on('bSeat', () => {
-    if (B.cur.kind === 'no_seat') {
+    if (B.cur.kind === 'no_seat' || B.cur.kind === 'inad_noseat') {
       if (B.ovbk.freed - B.ovbk.used <= 0) { sys('NO HAY ASIENTOS LIBERADOS · Buscá voluntarios o gestioná DNBD', 'err'); return; }
       B.ovbk.used++;
     }
@@ -695,7 +711,12 @@ function paneBoard(pane) {
     a.newSeat = `${rnd(24, 29)}${pick(['B', 'C', 'D', 'E'])}`;
     B.cur.bp.seat = a.newSeat;
     B.cur.docs[0] = { ...B.cur.bp, id: B.cur.docs[0].id };
-    say(agentSays('Por seguridad, ese asiento de salida de emergencia no le corresponde. Le asigno otro asiento.', "For safety reasons you can't sit in the exit row. I'm assigning you another seat."), B.cur.lines.reseat);
+    // Lo que dice el agente depende de por qué cambia el asiento
+    const k = B.cur.kind;
+    const why = k === 'no_seat' || k === 'inad_noseat' ? [`Se liberó un lugar: le asigno el asiento ${a.newSeat}.`, `A seat has opened up: I'm assigning you seat ${a.newSeat}.`]
+      : k === 'inop_seat' ? [`Ese asiento está inoperativo, lo bloqueó Mantenimiento. Le asigno el ${a.newSeat}, de la misma categoría.`, `That seat is out of service. I'm moving you to ${a.newSeat}, same cabin.`]
+        : ['Por seguridad, ese asiento de salida de emergencia no le corresponde. Le asigno otro asiento.', "For safety reasons you can't sit in the exit row. I'm assigning you another seat."];
+    say(agentSays(...why), B.cur.lines.reseat);
     sys(`ASIENTO REASIGNADO ${a.newSeat}`, 'ok');
     renderDesk(); renderPane();
   });
@@ -948,7 +969,8 @@ function callHeld() {
     p.returned = true;
     p.resolved = !!(p.partner && list.includes(p.partner));
     if (p.resolved) { p.bp = { ...p.ownBp }; p.docs[0] = { ...p.bp, id: p.docs[0].id }; }
-    p.lines.greet = p.resolved ? p.lines.returnOk : p.lines.returnBad;
+    // (las tarjetas cruzadas tienen sus frases de vuelta; el resto, como el INAD sin asiento, repite su saludo)
+    if (p.lines.returnOk) p.lines.greet = p.resolved ? p.lines.returnOk : p.lines.returnBad;
   });
   B.pending = B.pending.filter((x) => !x.held);
   announceBanner('Pasajeros apartados, por favor acérquense al podio.', 'Passengers asked to wait, please come to the podium.');
@@ -1018,6 +1040,8 @@ function decide(d) {
     gate_carryon: 'Compartimientos llenos: la valija adicional va con Gate Dispatch. Se resuelve con empatía y explicación (objetos de valor y remedios en mano). CAT 1: lo resuelve el agente.',
     gate_smoker: 'Fumador que no desiste en el embarque: CAT 2. Supervisor o seguridad, no embarca y se da aviso.',
     gate_rage: 'Arrojó un objeto y dañó elementos de la compañía: CAT 3. Se resguarda a los pasajeros, interviene la PSA y no embarca.',
+    inad: 'INAD: no fue admitido en Argentina y vuelve a su país. Su documentación no le impide volver a casa: se embarca, con prioridad (es el primer vuelo de su itinerario). Si el pasaje de regreso era para otra fecha, se le cambió; si no tenía, se le emitió uno.',
+    inad_noseat: 'INAD sin asiento: no puede quedar en tierra. Se lo aparta, se buscan voluntarios y, cuando se libera un asiento, se le reasigna y embarca. Negarle el embarque (DNBD) no corresponde.',
     depa: 'Detenido (DEPA): embarca PRIMERO con sus escoltas, antes que el resto del pasaje, y permanece esposado desde la puerta de embarque hasta que desciende (nunca esposado a partes fijas del avión). Si no es posible, se embarca por la puerta trasera coordinando con la autoridad aeronáutica.',
     web_yesterday: 'Tarjeta del vuelo de ayer: el pasajero no se presentó (no show) y esa tarjeta ya no vale, aunque sea el mismo número de vuelo. No embarca: Ventas evalúa la reprogramación según su tarifa.',
     inop_seat: 'Asiento inoperativo: se remueve al pasajero, se bloquea el asiento y se le asigna uno de igual o superior categoría con nueva tarjeta.',
@@ -1288,6 +1312,10 @@ function showGateManual() {
       ch('account-multiple-plus', 'Sobreventa y stand-by', `
         <p><b>Sobreventa:</b> con pasajeros sin asiento, buscá voluntarios antes de embarcar (el gerente puede autorizar un aumento). Voluntario: VDBC. Sin voluntarios: DNBD y protección en el vuelo más próximo. Compensación y servicios según la matriz.</p>
         <p><b>Stand-by:</b> los voluntarios del counter en stand-by embarcan con boarding manual si se liberan lugares por no show (des-chequeo); si no, reciben la compensación acordada.</p>`),
+      ch('shield-account', 'Detenidos e INAD', `
+        <p><b>Detenido (DEPA):</b> embarca primero, con sus escoltas y esposado desde la puerta hasta que baja del avión.</p>
+        <p><b>INAD (pasajero no admitido):</b> Migraciones no lo dejó entrar y la compañía lo lleva de vuelta a su origen o a su país. Viene con el acta de inadmisión. Su documentación no le impide volver a casa: <b>se embarca</b>, con prioridad en el primer vuelo de su itinerario.</p>
+        <p><b>INAD sin asiento:</b> no puede quedar en tierra. Se lo aparta, se buscan voluntarios y se le reasigna el asiento liberado.</p>`),
       ch('account-alert', 'Conducta', `
         <p><b>CAT 1</b> (vapear, protestar): lo resolvés vos.</p>
         <p><b>CAT 2/3 o alcohol:</b> no embarca, con supervisor / PSA.</p>`),
